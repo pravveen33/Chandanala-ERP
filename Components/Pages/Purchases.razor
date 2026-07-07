@@ -1,0 +1,561 @@
+@page "/purchases"
+@rendermode InteractiveServer
+
+@using Chandanala.ERP.Web.Data
+@using Chandanala.ERP.Web.Models
+@using Chandanala.ERP.Web.Services
+@using Microsoft.EntityFrameworkCore
+
+@inject AppDbContext Db
+@inject PurchaseService PurchaseService
+@inject IJSRuntime JS
+@inject ILogger<Purchases> Logger
+
+<PageTitle>Purchases</PageTitle>
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+        <h3 class="mb-0">Purchase GRN</h3>
+        <small class="text-muted">Receive supplier invoices and automatically update inventory.</small>
+    </div>
+    <div class="btn-toolbar gap-2">
+        <button class="btn btn-primary" @onclick="NewPurchase">New GRN</button>
+        <button class="btn btn-outline-secondary" @onclick="RefreshAsync" disabled="@isLoading">Refresh</button>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div class="alert @(isSuccessMessage ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+        @message
+        <button type="button" class="btn-close" @onclick="ClearMessage"></button>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-xl-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <strong>@(editingId is null ? "Create Purchase" : "Edit Purchase")</strong>
+                <span>@(string.IsNullOrWhiteSpace(purchase.PurchaseNumber) ? "Auto-generated" : purchase.PurchaseNumber)</span>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrWhiteSpace(validationMessage))
+                {
+                    <div class="alert alert-danger">@validationMessage</div>
+                }
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Purchase Number</label>
+                        <input class="form-control" value="@(string.IsNullOrWhiteSpace(purchase.PurchaseNumber) ? "Auto" : purchase.PurchaseNumber)" readonly />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Supplier *</label>
+                        <select class="form-select" @bind="purchase.SupplierId">
+                            <option value="0">-- Select Supplier --</option>
+                            @foreach (var supplier in suppliers)
+                            {
+                                <option value="@supplier.Id">@supplier.SupplierName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Invoice Number *</label>
+                        <input class="form-control" @bind="purchase.InvoiceNumber" maxlength="50" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Invoice Date *</label>
+                        <InputDate class="form-control" @bind-Value="purchase.InvoiceDate" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Purchase Date *</label>
+                        <InputDate class="form-control" @bind-Value="purchase.PurchaseDate" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Other Charges</label>
+                        <input type="number" step="0.01" class="form-control" @bind="purchase.OtherCharges" @bind:event="oninput" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Round Off</label>
+                        <input type="number" step="0.01" class="form-control" @bind="purchase.RoundOff" @bind:event="oninput" />
+                    </div>
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label">Remarks</label>
+                        <input class="form-control" @bind="purchase.Remarks" maxlength="500" />
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <strong>Purchase Items</strong>
+                    <button class="btn btn-sm btn-outline-primary" @onclick="AddItem">Add Item</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="min-width: 220px;">Medicine *</th>
+                                <th style="min-width: 120px;">Batch *</th>
+                                <th style="min-width: 145px;">Mfg Date</th>
+                                <th style="min-width: 145px;">Expiry *</th>
+                                <th style="min-width: 110px;">Purchase Rate *</th>
+                                <th style="min-width: 100px;">MRP *</th>
+                                <th style="min-width: 110px;">Selling Price</th>
+                                <th style="min-width: 90px;">GST %</th>
+                                <th style="min-width: 90px;">Qty *</th>
+                                <th style="min-width: 90px;">Free</th>
+                                <th style="min-width: 90px;">Disc %</th>
+                                <th class="text-end" style="min-width: 110px;">Line Total</th>
+                                <th style="width: 60px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var index = 0; index < items.Count; index++)
+                            {
+                                var item = items[index];
+                                <tr>
+                                    <td>
+                                        <select class="form-select form-select-sm" value="@item.MedicineId" @onchange="e => OnMedicineChanged(item, e)">
+                                            <option value="0">-- Medicine --</option>
+                                            @foreach (var medicine in medicines)
+                                            {
+                                                <option value="@medicine.Id">@MedicineLabel(medicine)</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td><input class="form-control form-control-sm" @bind="item.BatchNumber" maxlength="50" /></td>
+                                    <td><InputDate class="form-control form-control-sm" @bind-Value="item.ManufactureDate" /></td>
+                                    <td><InputDate class="form-control form-control-sm" @bind-Value="item.ExpiryDate" /></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" @bind="item.PurchaseRate" @bind:event="oninput" /></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" @bind="item.MRP" @bind:event="oninput" /></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" @bind="item.SellingPrice" @bind:event="oninput" /></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" @bind="item.GSTPercentage" @bind:event="oninput" /></td>
+                                    <td><input type="number" class="form-control form-control-sm" @bind="item.Quantity" @bind:event="oninput" /></td>
+                                    <td><input type="number" class="form-control form-control-sm" @bind="item.FreeQuantity" @bind:event="oninput" /></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" @bind="item.DiscountPercentage" @bind:event="oninput" /></td>
+                                    <td class="text-end">@LineTotal(item).ToString("N2")</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItem(item)" disabled="@(items.Count == 1)">Remove</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-success" disabled="@isSaving" @onclick="SaveAsync">
+                        @(isSaving ? "Saving..." : "Save")
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="NewPurchase">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light"><strong>Summary</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr><td>Subtotal</td><td class="text-end">@Subtotal.ToString("N2")</td></tr>
+                        <tr><td>Discount</td><td class="text-end">@Discount.ToString("N2")</td></tr>
+                        <tr><td>GST</td><td class="text-end">@Gst.ToString("N2")</td></tr>
+                        <tr><td>Other Charges</td><td class="text-end">@purchase.OtherCharges.ToString("N2")</td></tr>
+                        <tr><td>Round Off</td><td class="text-end">@purchase.RoundOff.ToString("N2")</td></tr>
+                        <tr class="fw-bold"><td>Grand Total</td><td class="text-end">@GrandTotal.ToString("N2")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-3">
+    <div class="card-header bg-light">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <strong>Purchase History</strong>
+            <input class="form-control" style="max-width: 360px;" placeholder="Search GRN, supplier, invoice, date..."
+                   value="@searchText" @oninput="OnSearchChanged" />
+        </div>
+    </div>
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+        }
+        else if (!purchases.Any())
+        {
+            <p class="text-muted mb-0">No purchases found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Purchase #</th>
+                            <th>Supplier</th>
+                            <th>Invoice</th>
+                            <th>Invoice Date</th>
+                            <th>Purchase Date</th>
+                            <th class="text-end">Grand Total</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in purchases)
+                        {
+                            <tr>
+                                <td>@row.PurchaseNumber</td>
+                                <td>@row.SupplierName</td>
+                                <td>@row.InvoiceNumber</td>
+                                <td>@row.InvoiceDate.ToString("dd-MMM-yyyy")</td>
+                                <td>@row.PurchaseDate.ToString("dd-MMM-yyyy")</td>
+                                <td class="text-end">@row.GrandTotal.ToString("N2")</td>
+                                <td>
+                                    <span class="badge @(row.Status == PurchaseStatus.Cancelled ? "bg-danger" : "bg-success")">@row.Status</span>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    @if (row.Status == PurchaseStatus.Completed)
+                                    {
+                                        <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditAsync(row.Id)">Edit</button>
+                                        <button class="btn btn-sm btn-outline-warning me-1" @onclick="() => CancelPurchaseAsync(row.Id)">Cancel</button>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePurchaseAsync(row.Id)">Delete</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Supplier> suppliers = new();
+    private List<Medicine> medicines = new();
+    private List<PurchaseListItem> purchases = new();
+    private List<PurchaseItem> items = new();
+    private Purchase purchase = NewPurchaseModel();
+
+    private int? editingId;
+    private string searchText = string.Empty;
+    private string message = string.Empty;
+    private string validationMessage = string.Empty;
+    private bool isSuccessMessage;
+    private bool isLoading = true;
+    private bool isSaving;
+
+    private decimal Subtotal => items.Sum(i => i.Quantity * i.PurchaseRate);
+    private decimal Discount => items.Sum(i => (i.Quantity * i.PurchaseRate) * (i.DiscountPercentage / 100m));
+    private decimal Gst => items.Sum(i => ((i.Quantity * i.PurchaseRate) * (1 - i.DiscountPercentage / 100m)) * (i.GSTPercentage / 100m));
+    private decimal GrandTotal => Subtotal - Discount + Gst + purchase.OtherCharges + purchase.RoundOff;
+
+    protected override async Task OnInitializedAsync()
+    {
+        NewPurchase();
+        await LoadReferenceDataAsync();
+        await LoadPurchasesAsync();
+    }
+
+    private async Task LoadReferenceDataAsync()
+    {
+        suppliers = await Db.Suppliers.AsNoTracking()
+            .Where(s => !s.IsDeleted && s.IsActive)
+            .OrderBy(s => s.SupplierName)
+            .ToListAsync();
+
+        medicines = await Db.Medicines.AsNoTracking()
+            .Where(m => !m.IsDeleted && m.IsActive)
+            .OrderBy(m => m.BrandName)
+            .ThenBy(m => m.Strength)
+            .ToListAsync();
+    }
+
+    private async Task LoadPurchasesAsync()
+    {
+        isLoading = true;
+        try
+        {
+            purchases = string.IsNullOrWhiteSpace(searchText)
+                ? await PurchaseService.GetAllAsync()
+                : await PurchaseService.SearchAsync(searchText);
+        }
+        catch (PurchaseServiceException ex)
+        {
+            ShowError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while loading purchases");
+            ShowError("Could not load purchases. Please refresh the page.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        isSaving = true;
+        validationMessage = string.Empty;
+        ClearMessage();
+
+        try
+        {
+            purchase.Subtotal = Subtotal;
+            purchase.DiscountAmount = Discount;
+            purchase.GSTAmount = Gst;
+            purchase.GrandTotal = GrandTotal;
+
+            if (editingId is null)
+            {
+                await PurchaseService.CreatePurchaseAsync(purchase, items);
+                ShowSuccess("Purchase saved successfully.");
+            }
+            else
+            {
+                purchase.Id = editingId.Value;
+                await PurchaseService.UpdatePurchaseAsync(purchase, items);
+                ShowSuccess("Purchase updated successfully.");
+            }
+
+            NewPurchase();
+            await LoadPurchasesAsync();
+        }
+        catch (PurchaseValidationException ex)
+        {
+            validationMessage = ex.Message;
+        }
+        catch (PurchaseServiceException ex)
+        {
+            ShowError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while saving purchase");
+            ShowError("Something went wrong while saving this purchase. Please try again.");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task EditAsync(int id)
+    {
+        try
+        {
+            var details = await PurchaseService.GetByIdAsync(id);
+            if (details is null)
+            {
+                ShowError("Purchase was not found.");
+                return;
+            }
+
+            purchase = CopyPurchase(details.Purchase);
+            items = details.Items.Select(CopyItem).ToList();
+            editingId = id;
+            validationMessage = string.Empty;
+            ClearMessage();
+        }
+        catch (PurchaseServiceException ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private async Task CancelPurchaseAsync(int id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Cancel this purchase and reverse its stock receipt?");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            await PurchaseService.CancelPurchaseAsync(id, "Cancelled from Purchase GRN screen");
+            ShowSuccess("Purchase cancelled successfully.");
+            await LoadPurchasesAsync();
+        }
+        catch (PurchaseValidationException ex)
+        {
+            ShowError(ex.Message);
+        }
+        catch (PurchaseServiceException ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private async Task DeletePurchaseAsync(int id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Delete this purchase and reverse its stock receipt?");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            await PurchaseService.DeletePurchaseAsync(id);
+            ShowSuccess("Purchase deleted successfully.");
+            await LoadPurchasesAsync();
+        }
+        catch (PurchaseValidationException ex)
+        {
+            ShowError(ex.Message);
+        }
+        catch (PurchaseServiceException ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        await LoadReferenceDataAsync();
+        await LoadPurchasesAsync();
+        ShowSuccess("Purchases refreshed.");
+    }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? string.Empty;
+        await LoadPurchasesAsync();
+    }
+
+    private void NewPurchase()
+    {
+        purchase = NewPurchaseModel();
+        items = new List<PurchaseItem> { NewItem() };
+        editingId = null;
+        validationMessage = string.Empty;
+    }
+
+    private void AddItem()
+    {
+        items.Add(NewItem());
+    }
+
+    private void RemoveItem(PurchaseItem item)
+    {
+        if (items.Count <= 1)
+        {
+            return;
+        }
+
+        items.Remove(item);
+    }
+
+    private void OnMedicineChanged(PurchaseItem item, ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var medicineId))
+        {
+            medicineId = 0;
+        }
+
+        item.MedicineId = medicineId;
+        var medicine = medicines.FirstOrDefault(m => m.Id == medicineId);
+        if (medicine is null)
+        {
+            return;
+        }
+
+        item.PurchaseRate = medicine.PurchasePrice;
+        item.MRP = medicine.MRP;
+        item.SellingPrice = medicine.SellingPrice;
+        item.GSTPercentage = medicine.GstPercent;
+    }
+
+    private string MedicineLabel(Medicine medicine)
+    {
+        return string.IsNullOrWhiteSpace(medicine.Strength)
+            ? medicine.BrandName
+            : $"{medicine.BrandName} ({medicine.Strength})";
+    }
+
+    private static decimal LineTotal(PurchaseItem item)
+    {
+        var gross = item.Quantity * item.PurchaseRate;
+        var discount = gross * (item.DiscountPercentage / 100m);
+        var taxable = gross - discount;
+        var gst = taxable * (item.GSTPercentage / 100m);
+        return taxable + gst;
+    }
+
+    private static Purchase NewPurchaseModel() => new()
+    {
+        InvoiceDate = DateTime.Today,
+        PurchaseDate = DateTime.Today,
+        Status = PurchaseStatus.Completed
+    };
+
+    private static PurchaseItem NewItem() => new()
+    {
+        ExpiryDate = DateTime.Today.AddYears(1),
+        Quantity = 1
+    };
+
+    private static Purchase CopyPurchase(Purchase source) => new()
+    {
+        Id = source.Id,
+        PurchaseNumber = source.PurchaseNumber,
+        SupplierId = source.SupplierId,
+        InvoiceNumber = source.InvoiceNumber,
+        InvoiceDate = source.InvoiceDate,
+        PurchaseDate = source.PurchaseDate,
+        Subtotal = source.Subtotal,
+        DiscountAmount = source.DiscountAmount,
+        GSTAmount = source.GSTAmount,
+        OtherCharges = source.OtherCharges,
+        RoundOff = source.RoundOff,
+        GrandTotal = source.GrandTotal,
+        Status = source.Status,
+        Remarks = source.Remarks,
+        CreatedAt = source.CreatedAt,
+        UpdatedAt = source.UpdatedAt
+    };
+
+    private static PurchaseItem CopyItem(PurchaseItem source) => new()
+    {
+        Id = source.Id,
+        PurchaseId = source.PurchaseId,
+        MedicineId = source.MedicineId,
+        BatchNumber = source.BatchNumber,
+        ManufactureDate = source.ManufactureDate,
+        ExpiryDate = source.ExpiryDate,
+        PurchaseRate = source.PurchaseRate,
+        MRP = source.MRP,
+        SellingPrice = source.SellingPrice,
+        GSTPercentage = source.GSTPercentage,
+        Quantity = source.Quantity,
+        FreeQuantity = source.FreeQuantity,
+        DiscountPercentage = source.DiscountPercentage,
+        LineTotal = source.LineTotal
+    };
+
+    private void ShowSuccess(string text)
+    {
+        message = text;
+        isSuccessMessage = true;
+    }
+
+    private void ShowError(string text)
+    {
+        message = text;
+        isSuccessMessage = false;
+    }
+
+    private void ClearMessage()
+    {
+        message = string.Empty;
+    }
+}

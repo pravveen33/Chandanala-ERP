@@ -1,0 +1,13 @@
+# Query: Medicine.Name
+# ContextLines: 1
+
+2 results - 1 file
+
+Components\Medicines.razor:
+   7      <label>Medicine Name</label>
+   8:     <input class="form-control" @bind="medicine.BrName" />
+   9  </div>
+
+  37  
+  38:         Console.WriteLine($"Medicine.BrandName: {medicine.Name}");
+  39          Console.WriteLine($"Generic Name: {medicine.GenericName}");
