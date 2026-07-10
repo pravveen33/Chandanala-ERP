@@ -509,7 +509,9 @@
         IsActive = source.IsActive,
         IsDeleted = source.IsDeleted,
         CreatedAt = source.CreatedAt,
-        UpdatedAt = source.UpdatedAt
+        UpdatedAt = source.UpdatedAt,
+        CurrentVersion = source.CurrentVersion,
+        RowVersion = source.RowVersion
     };
 
     private void ShowSuccess(string text)

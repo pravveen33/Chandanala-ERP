@@ -1,3 +1,23 @@
 {
-    "snyk.advanced.autoSelectOrganization": true
+  "version": "0.2",
+  "words": [
+    "Antiforgery",
+    "Ayurvedic",
+    "Chandanala",
+    "citext",
+    "Dolo",
+    "DOLO",
+    "FEFO",
+    "GSTIN",
+    "Hsts",
+    "nameof",
+    "nowrap",
+    "Npgsql",
+    "onchange",
+    "onclick",
+    "oninput",
+    "Pincode",
+    "rendermode"
+  ],
+  "snyk.advanced.autoSelectOrganization": true
 }

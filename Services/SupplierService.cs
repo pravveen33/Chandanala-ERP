@@ -110,7 +110,7 @@ public class SupplierService
         }
     }
 
-    public async Task<Supplier> UpdateAsync(Supplier supplier)
+    public async Task<Supplier> UpdateAsync(Supplier supplier, string? reason = null)
     {
         Normalize(supplier);
         await ValidateSupplierAsync(supplier);
@@ -125,6 +125,37 @@ public class SupplierService
                 throw new SupplierValidationException("Supplier was not found or has already been deleted.");
             }
 
+            // Enforce optimistic concurrency using the token the caller loaded
+            // this record with — not the token on the freshly-fetched `existing`.
+            // If someone else saved a change in between, this mismatch is what
+            // makes SaveChangesAsync throw DbUpdateConcurrencyException below.
+            db.Entry(existing).Property(e => e.RowVersion).OriginalValue = supplier.RowVersion;
+
+            // Snapshot the current (about-to-be-overwritten) state into history
+            // before applying the new values, tagged with the version it was at.
+            db.SupplierHistories.Add(new SupplierHistory
+            {
+                SupplierId = existing.Id,
+                VersionNumber = existing.CurrentVersion,
+                SupplierCode = existing.SupplierCode,
+                SupplierName = existing.SupplierName,
+                GSTIN = existing.GSTIN,
+                DrugLicenseNumber = existing.DrugLicenseNumber,
+                ContactPerson = existing.ContactPerson,
+                MobileNumber = existing.MobileNumber,
+                Email = existing.Email,
+                Address = existing.Address,
+                City = existing.City,
+                State = existing.State,
+                Pincode = existing.Pincode,
+                CreditDays = existing.CreditDays,
+                CreditLimit = existing.CreditLimit,
+                IsActive = existing.IsActive,
+                ChangedBy = "System",
+                Reason = reason
+            });
+
+            existing.CurrentVersion += 1;
             existing.SupplierCode = supplier.SupplierCode;
             existing.SupplierName = supplier.SupplierName;
             existing.GSTIN = supplier.GSTIN;
@@ -139,11 +170,17 @@ public class SupplierService
             existing.CreditDays = supplier.CreditDays;
             existing.CreditLimit = supplier.CreditLimit;
             existing.IsActive = supplier.IsActive;
+            existing.UpdatedAt = DateTime.UtcNow;
 
             await db.SaveChangesAsync();
             await AddAuditAsync(existing, AuditActions.Update);
 
             return existing;
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            logger.LogWarning(ex, "Concurrency conflict while updating supplier {SupplierId}", supplier.Id);
+            throw new SupplierServiceException("This supplier was changed by someone else after you loaded it. Please refresh and try again.", ex);
         }
         catch (DbUpdateException ex)
         {
@@ -154,6 +191,29 @@ public class SupplierService
         {
             logger.LogError(ex, "Failed to update supplier {SupplierId}", supplier.Id);
             throw new SupplierServiceException("Something went wrong while updating this supplier. Please try again.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Full version history for a distributor, most recent first — the point-in-time
+    /// audit trail described in the Distributor History design (separate from
+    /// Purchase-level commercial snapshots, which copy values directly onto the
+    /// Purchase itself rather than referencing this table).
+    /// </summary>
+    public async Task<List<SupplierHistory>> GetHistoryAsync(int supplierId)
+    {
+        try
+        {
+            return await db.SupplierHistories
+                .AsNoTracking()
+                .Where(h => h.SupplierId == supplierId)
+                .OrderByDescending(h => h.VersionNumber)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to load supplier history for {SupplierId}", supplierId);
+            throw new SupplierServiceException("Could not load this distributor's change history. Please try again.", ex);
         }
     }
 

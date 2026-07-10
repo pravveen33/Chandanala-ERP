@@ -1,0 +1,426 @@
+@page "/stock"
+@rendermode InteractiveServer
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Forms
+@using Chandanala.ERP.Web.Models
+@using Chandanala.ERP.Web.Data
+
+@inject AppDbContext Db
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+<h3 class="mb-4">Stock &amp; Batch Ledger</h3>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div class="alert @(message.Contains("Successfully") ? "alert-success" : "alert-danger") alert-dismissible fade show">
+        @message
+        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
+    </div>
+}
+
+<div class="row">
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <strong>Receive Stock (New Batch)</strong>
+            </div>
+            <div class="card-body">
+                <EditForm Model="@newBatch" OnValidSubmit="ReceiveBatch">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label class="form-label">Medicine *</label>
+                        <select class="form-select" @bind="newBatch.MedicineId">
+                            <option value="0">-- Select Medicine --</option>
+                            @foreach (var m in medicines)
+                            {
+                                <option value="@m.Id">@m.BrandName (@m.Strength)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Batch No *</label>
+                            <input class="form-control" @bind="newBatch.BatchNo" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Expiry Date *</label>
+                            <input type="date" class="form-control" @bind="newBatch.ExpiryDate" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Manufacturing Date</label>
+                            <input type="date" class="form-control" @bind="newBatch.ManufacturingDate" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Quantity Received *</label>
+                            <input type="number" class="form-control" @bind="newBatch.QuantityReceived" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Purchase Rate</label>
+                            <input type="number" step="0.01" class="form-control" @bind="newBatch.PurchaseRate" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">MRP</label>
+                            <input type="number" step="0.01" class="form-control" @bind="newBatch.MRP" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Remarks</label>
+                        <input class="form-control" @bind="receiveRemarks" placeholder="e.g. opening stock, manual entry pending Purchase module" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" disabled="@isSavingBatch">
+                        @(isSavingBatch ? "Saving..." : "Receive Batch")
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-secondary text-white">
+                <strong>Adjust Existing Batch</strong>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Batch</label>
+                    <select class="form-select" @bind="adjustBatchId">
+                        <option value="0">-- Select Batch --</option>
+                        @foreach (var b in batches.OrderBy(x => x.ExpiryDate))
+                        {
+                            <option value="@b.Id">@MedicineName(b.MedicineId) — @b.BatchNo (Avail: @b.QuantityAvailable, Exp: @b.ExpiryDate.ToString("MM/yyyy"))</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" @bind="adjustType">
+                            <option value="@StockTransactionTypes.Adjustment">Adjustment (count correction)</option>
+                            <option value="@StockTransactionTypes.Writeoff">Write-off (expired/damaged)</option>
+                            <option value="@StockTransactionTypes.ReturnIn">Return In (customer return)</option>
+                            <option value="@StockTransactionTypes.ReturnOut">Return Out (to supplier)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Quantity Change *</label>
+                        <input type="number" class="form-control" @bind="adjustQuantity"
+                               placeholder="Positive to add, negative to remove" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Reason / Remarks *</label>
+                    <input class="form-control" @bind="adjustRemarks" placeholder="Required — explains why this movement happened" />
+                </div>
+
+                <button class="btn btn-secondary" disabled="@isSavingAdjustment" @onclick="RecordAdjustment">
+                    @(isSavingAdjustment ? "Saving..." : "Record Adjustment")
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <strong>Batch List — FEFO order (@FilteredBatches.Count() total)</strong>
+        <div style="min-width: 260px;">
+            <input class="form-control" placeholder="Search medicine or batch no..."
+                   value="@searchText" @oninput="OnSearchChanged" />
+        </div>
+    </div>
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+        }
+        else if (!FilteredBatches.Any())
+        {
+            <p class="text-muted mb-0">No batches found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Batch No</th>
+                            <th>Expiry</th>
+                            <th>Qty Available</th>
+                            <th>Qty Received</th>
+                            <th>Purchase Rate</th>
+                            <th>MRP</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var b in FilteredBatches.OrderBy(x => x.ExpiryDate))
+                        {
+                            <tr class="@(b.IsExpired ? "table-danger" : b.IsNearExpiry ? "table-warning" : "")">
+                                <td>@MedicineName(b.MedicineId)</td>
+                                <td>@b.BatchNo</td>
+                                <td>@b.ExpiryDate.ToString("dd-MMM-yyyy")</td>
+                                <td>@b.QuantityAvailable</td>
+                                <td>@b.QuantityReceived</td>
+                                <td>@b.PurchaseRate.ToString("N2")</td>
+                                <td>@b.MRP.ToString("N2")</td>
+                                <td>
+                                    @if (b.IsExpired)
+                                    {
+                                        <span class="badge bg-danger">Expired</span>
+                                    }
+                                    else if (b.IsNearExpiry)
+                                    {
+                                        <span class="badge bg-warning text-dark">Near Expiry</span>
+                                    }
+                                    else if (b.QuantityAvailable <= 0)
+                                    {
+                                        <span class="badge bg-secondary">Out of Stock</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">OK</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Medicine> medicines = new();
+    private List<Batch> batches = new();
+
+    private Batch newBatch = new() { ExpiryDate = DateTime.UtcNow.Date.AddYears(1) };
+    
+    private string receiveRemarks = string.Empty;
+
+    private int adjustBatchId = 0;
+    private string adjustType = StockTransactionTypes.Adjustment;
+    private int adjustQuantity = 0;
+    private string adjustRemarks = string.Empty;
+
+    private string searchText = string.Empty;
+    private string message = string.Empty;
+
+    private bool isLoading = true;
+    private bool isSavingBatch = false;
+    private bool isSavingAdjustment = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            medicines = await Db.Medicines.AsNoTracking()
+                .Where(m => !m.IsDeleted && m.IsActive)
+                .OrderBy(m => m.BrandName)
+                .ToListAsync();
+
+            batches = await Db.Batches.AsNoTracking()
+                .Where(b => !b.IsDeleted)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            message = $"Failed to load stock data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string MedicineName(int medicineId) =>
+        medicines.FirstOrDefault(m => m.Id == medicineId)?.BrandName ?? $"(Medicine #{medicineId})";
+
+    private IEnumerable<Batch> FilteredBatches =>
+        batches.Where(b =>
+            string.IsNullOrWhiteSpace(searchText) ||
+            MedicineName(b.MedicineId).Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            b.BatchNo.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+
+    private void OnSearchChanged(ChangeEventArgs e) =>
+        searchText = e.Value?.ToString() ?? string.Empty;
+
+    private async Task ReceiveBatch()
+    {
+        isSavingBatch = true;
+        message = string.Empty;
+
+        try
+        {
+            if (newBatch.MedicineId <= 0)
+            {
+                message = "Please select a Medicine.";
+                return;
+            }
+            if (newBatch.QuantityReceived <= 0)
+            {
+                message = "Quantity Received must be greater than zero.";
+                return;
+            }
+
+            // Duplicate batch check — same Medicine + BatchNo shouldn't be entered twice
+            // as separate rows; if this batch already exists, direct the user to Adjust
+            // instead, so QuantityAvailable stays a single accurate number per batch.
+            var duplicate = await Db.Batches.AsNoTracking()
+                .AnyAsync(b => !b.IsDeleted
+                    && b.MedicineId == newBatch.MedicineId
+                    && b.BatchNo.ToLower() == newBatch.BatchNo.ToLower());
+
+            if (duplicate)
+            {
+                message = "This Batch No already exists for this Medicine. Use 'Adjust Existing Batch' to add more quantity to it instead.";
+                return;
+            }
+
+            // HTML date inputs produce Kind=Unspecified, which Npgsql rejects for
+            // timestamptz columns. Force UTC explicitly BEFORE the entity is ever
+            // added/tracked, since the very first SaveChangesAsync below is what
+            // inserts this row.
+            newBatch.ExpiryDate = DateTime.SpecifyKind(newBatch.ExpiryDate, DateTimeKind.Utc);
+            if (newBatch.ManufacturingDate.HasValue)
+            {
+                newBatch.ManufacturingDate = DateTime.SpecifyKind(newBatch.ManufacturingDate.Value, DateTimeKind.Utc);
+            }
+
+            newBatch.QuantityAvailable = newBatch.QuantityReceived;
+            newBatch.CreatedDate = DateTime.UtcNow;
+            Db.Batches.Add(newBatch);
+            await Db.SaveChangesAsync();
+
+            Db.StockTransactions.Add(new StockTransaction
+            {
+                MedicineId = newBatch.MedicineId,
+                BatchId = newBatch.Id,
+                TransactionType = StockTransactionTypes.OpeningStock,
+                Quantity = newBatch.QuantityReceived,
+                ReferenceType = "Manual",
+                Remarks = string.IsNullOrWhiteSpace(receiveRemarks) ? "Manual batch receipt" : receiveRemarks
+            });
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                Module = "Stock",
+                EntityName = nameof(Batch),
+                EntityId = newBatch.Id,
+                Action = AuditActions.Create,
+                Details = $"Received {newBatch.QuantityReceived} units of {MedicineName(newBatch.MedicineId)} — Batch {newBatch.BatchNo}"
+            });
+
+            await Db.SaveChangesAsync();
+
+            message = "Batch Received Successfully.";
+            newBatch = new Batch { ExpiryDate = DateTime.Today.AddYears(1) };
+            receiveRemarks = string.Empty;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            message = $"Error receiving batch: {ex.Message}";
+        }
+        finally
+        {
+            isSavingBatch = false;
+        }
+    }
+
+    private async Task RecordAdjustment()
+    {
+        isSavingAdjustment = true;
+        message = string.Empty;
+
+        try
+        {
+            if (adjustBatchId <= 0)
+            {
+                message = "Please select a batch to adjust.";
+                return;
+            }
+            if (adjustQuantity == 0)
+            {
+                message = "Quantity Change cannot be zero.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(adjustRemarks))
+            {
+                message = "A reason is required for every stock adjustment — this becomes part of the permanent ledger.";
+                return;
+            }
+
+            var batch = await Db.Batches.FindAsync(adjustBatchId);
+            if (batch is null || batch.IsDeleted)
+            {
+                message = "Selected batch was not found.";
+                return;
+            }
+
+            var newAvailable = batch.QuantityAvailable + adjustQuantity;
+            if (newAvailable < 0)
+            {
+                message = $"This adjustment would take available quantity negative (currently {batch.QuantityAvailable}). Refusing to save.";
+                return;
+            }
+
+            batch.QuantityAvailable = newAvailable;
+            batch.ModifiedDate = DateTime.UtcNow;
+
+            Db.StockTransactions.Add(new StockTransaction
+            {
+                MedicineId = batch.MedicineId,
+                BatchId = batch.Id,
+                TransactionType = adjustType,
+                Quantity = adjustQuantity,
+                ReferenceType = "Manual",
+                Remarks = adjustRemarks
+            });
+
+            await Db.SaveChangesAsync();
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                Module = "Stock",
+                EntityName = nameof(Batch),
+                EntityId = batch.Id,
+                Action = AuditActions.Update,
+                Details = $"{adjustType} of {adjustQuantity} units on Batch {batch.BatchNo} — {adjustRemarks}"
+            });
+
+            await Db.SaveChangesAsync();
+
+            message = "Adjustment Recorded Successfully.";
+            adjustBatchId = 0;
+            adjustQuantity = 0;
+            adjustRemarks = string.Empty;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            message = $"Error recording adjustment: {ex.Message}";
+        }
+        finally
+        {
+            isSavingAdjustment = false;
+        }
+    }
+}

@@ -31,6 +31,8 @@ public class AppDbContext : DbContext
 
     public DbSet<Supplier> Suppliers => Set<Supplier>();
 
+    public DbSet<SupplierHistory> SupplierHistories => Set<SupplierHistory>();
+
     public DbSet<Purchase> Purchases => Set<Purchase>();
 
     public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
@@ -160,6 +162,51 @@ public class AppDbContext : DbContext
 
             entity.Property(s => s.UpdatedAt)
                 .HasColumnType("timestamp with time zone");
+
+            // Optimistic concurrency token backed by Postgres' native xmin
+            // system column — no extra storage, automatically maintained by
+            // Postgres on every row version.
+            entity.Property(s => s.RowVersion)
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
+        });
+
+        // ----- SupplierHistory -----
+        modelBuilder.Entity<SupplierHistory>(entity =>
+        {
+            entity.Property(h => h.SupplierCode).IsRequired().HasMaxLength(30);
+            entity.Property(h => h.SupplierName).IsRequired().HasMaxLength(200);
+            entity.Property(h => h.GSTIN).HasMaxLength(15);
+            entity.Property(h => h.DrugLicenseNumber).HasMaxLength(100);
+            entity.Property(h => h.ContactPerson).HasMaxLength(200);
+            entity.Property(h => h.MobileNumber).HasMaxLength(20);
+            entity.Property(h => h.Email).HasMaxLength(100);
+            entity.Property(h => h.Address).HasMaxLength(500);
+            entity.Property(h => h.City).HasMaxLength(100);
+            entity.Property(h => h.State).HasMaxLength(100);
+            entity.Property(h => h.Pincode).HasMaxLength(10);
+            entity.Property(h => h.ChangedBy).IsRequired().HasMaxLength(100);
+            entity.Property(h => h.Reason).HasMaxLength(500);
+
+            entity.Property(h => h.CreditLimit).HasPrecision(18, 2);
+
+            entity.Property(h => h.ChangedAt)
+                .HasColumnType("timestamp with time zone");
+
+            // Restrict, not Cascade: a supplier is soft-deleted (IsDeleted flag),
+            // never hard-deleted, so this should never fire in practice — but if
+            // it ever did, silently cascading away audit history would be wrong.
+            entity.HasOne(h => h.Supplier)
+                .WithMany()
+                .HasForeignKey(h => h.SupplierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // One history row per (SupplierId, VersionNumber) — guards against
+            // ever double-writing the same version if a save is retried.
+            entity.HasIndex(h => new { h.SupplierId, h.VersionNumber })
+                .IsUnique();
         });
 
         // ----- UserRole -----
