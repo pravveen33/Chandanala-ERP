@@ -125,6 +125,38 @@ public class SupplierService
                 throw new SupplierValidationException("Supplier was not found or has already been deleted.");
             }
 
+            var changedRegulatedFields = GetChangedRegulatedFields(existing, supplier);
+            if (changedRegulatedFields.Count > 0)
+            {
+                var changeRequest = new SupplierChangeRequest
+                {
+                    SupplierId = existing.Id,
+                    SupplierCode = supplier.SupplierCode,
+                    SupplierName = supplier.SupplierName,
+                    GSTIN = supplier.GSTIN,
+                    DrugLicenseNumber = supplier.DrugLicenseNumber,
+                    ContactPerson = supplier.ContactPerson,
+                    MobileNumber = supplier.MobileNumber,
+                    Email = supplier.Email,
+                    Address = supplier.Address,
+                    City = supplier.City,
+                    State = supplier.State,
+                    Pincode = supplier.Pincode,
+                    CreditDays = supplier.CreditDays,
+                    CreditLimit = supplier.CreditLimit,
+                    IsActive = supplier.IsActive,
+                    ChangedRegulatedFields = string.Join(", ", changedRegulatedFields),
+                    ExpectedRowVersion = supplier.RowVersion,
+                    RequestedBy = "System",
+                    RequestReason = reason
+                };
+
+                db.SupplierChangeRequests.Add(changeRequest);
+                await db.SaveChangesAsync();
+
+                throw new SupplierApprovalRequiredException(changeRequest.Id, changeRequest.ChangedRegulatedFields);
+            }
+
             // Enforce optimistic concurrency using the token the caller loaded
             // this record with — not the token on the freshly-fetched `existing`.
             // If someone else saved a change in between, this mismatch is what
@@ -187,7 +219,7 @@ public class SupplierService
             logger.LogError(ex, "Database error while updating supplier {SupplierId}", supplier.Id);
             throw new SupplierServiceException("Could not update this supplier. Please check for duplicate values and try again.", ex);
         }
-        catch (Exception ex) when (ex is not SupplierValidationException)
+        catch (Exception ex) when (ex is not SupplierValidationException and not SupplierApprovalRequiredException)
         {
             logger.LogError(ex, "Failed to update supplier {SupplierId}", supplier.Id);
             throw new SupplierServiceException("Something went wrong while updating this supplier. Please try again.", ex);
@@ -214,6 +246,172 @@ public class SupplierService
         {
             logger.LogError(ex, "Failed to load supplier history for {SupplierId}", supplierId);
             throw new SupplierServiceException("Could not load this distributor's change history. Please try again.", ex);
+        }
+    }
+
+    /// <summary>
+    /// The Master Data Review Queue for distributors — every request still
+    /// awaiting a decision, oldest first so reviewers clear the backlog in order.
+    /// </summary>
+    public async Task<List<SupplierChangeRequest>> GetPendingChangeRequestsAsync()
+    {
+        try
+        {
+            return await db.SupplierChangeRequests
+                .AsNoTracking()
+                .Include(r => r.Supplier)
+                .Where(r => r.Status == SupplierChangeRequestStatus.Pending)
+                .OrderBy(r => r.RequestedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to load pending supplier change requests");
+            throw new SupplierServiceException("Could not load the pending approvals list. Please try again.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Applies a pending request's proposed values to the live Supplier record,
+    /// writing a SupplierHistory snapshot the same way a direct UpdateAsync
+    /// would — approval is just a delayed, reviewed version of the same update.
+    /// </summary>
+    public async Task<Supplier> ApproveChangeRequestAsync(int requestId, string? reviewNotes = null)
+    {
+        try
+        {
+            var request = await db.SupplierChangeRequests
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+
+            if (request is null)
+            {
+                throw new SupplierValidationException("Change request was not found.");
+            }
+
+            if (request.Status != SupplierChangeRequestStatus.Pending)
+            {
+                throw new SupplierValidationException($"This request has already been {request.Status.ToLowerInvariant()} and can't be approved again.");
+            }
+
+            var existing = await db.Suppliers
+                .FirstOrDefaultAsync(s => s.Id == request.SupplierId && !s.IsDeleted);
+
+            if (existing is null)
+            {
+                throw new SupplierValidationException("The distributor this request was raised for was not found or has since been deleted.");
+            }
+
+            // Same concurrency guard as a direct update, but checked against
+            // the token captured when the request was submitted rather than
+            // one just loaded — if something else changed the supplier in the
+            // meantime, this throws instead of silently overwriting it.
+            db.Entry(existing).Property(e => e.RowVersion).OriginalValue = request.ExpectedRowVersion;
+
+            db.SupplierHistories.Add(new SupplierHistory
+            {
+                SupplierId = existing.Id,
+                VersionNumber = existing.CurrentVersion,
+                SupplierCode = existing.SupplierCode,
+                SupplierName = existing.SupplierName,
+                GSTIN = existing.GSTIN,
+                DrugLicenseNumber = existing.DrugLicenseNumber,
+                ContactPerson = existing.ContactPerson,
+                MobileNumber = existing.MobileNumber,
+                Email = existing.Email,
+                Address = existing.Address,
+                City = existing.City,
+                State = existing.State,
+                Pincode = existing.Pincode,
+                CreditDays = existing.CreditDays,
+                CreditLimit = existing.CreditLimit,
+                IsActive = existing.IsActive,
+                ChangedBy = "System",
+                Reason = $"Approved change request #{request.Id} ({request.ChangedRegulatedFields})"
+            });
+
+            existing.CurrentVersion += 1;
+            existing.SupplierCode = request.SupplierCode;
+            existing.SupplierName = request.SupplierName;
+            existing.GSTIN = request.GSTIN;
+            existing.DrugLicenseNumber = request.DrugLicenseNumber;
+            existing.ContactPerson = request.ContactPerson;
+            existing.MobileNumber = request.MobileNumber;
+            existing.Email = request.Email;
+            existing.Address = request.Address;
+            existing.City = request.City;
+            existing.State = request.State;
+            existing.Pincode = request.Pincode;
+            existing.CreditDays = request.CreditDays;
+            existing.CreditLimit = request.CreditLimit;
+            existing.IsActive = request.IsActive;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            request.Status = SupplierChangeRequestStatus.Approved;
+            request.ReviewedBy = "System";
+            request.ReviewedAt = DateTime.UtcNow;
+            request.ReviewNotes = reviewNotes;
+
+            await db.SaveChangesAsync();
+            await AddAuditAsync(existing, AuditActions.Update);
+
+            return existing;
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            logger.LogWarning(ex, "Concurrency conflict while approving change request {RequestId}", requestId);
+            throw new SupplierServiceException("This distributor was changed by someone else since the request was submitted. Please review the current record and resubmit.", ex);
+        }
+        catch (DbUpdateException ex)
+        {
+            logger.LogError(ex, "Database error while approving change request {RequestId}", requestId);
+            throw new SupplierServiceException("Could not approve this request. Please check for duplicate values and try again.", ex);
+        }
+        catch (Exception ex) when (ex is not SupplierValidationException)
+        {
+            logger.LogError(ex, "Failed to approve change request {RequestId}", requestId);
+            throw new SupplierServiceException("Something went wrong while approving this request. Please try again.", ex);
+        }
+    }
+
+    /// <summary>Rejects a pending request — per the governance design, this makes NO change to the Supplier record at all.</summary>
+    public async Task RejectChangeRequestAsync(int requestId, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new SupplierValidationException("A reason is required to reject a change request.");
+        }
+
+        try
+        {
+            var request = await db.SupplierChangeRequests
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+
+            if (request is null)
+            {
+                throw new SupplierValidationException("Change request was not found.");
+            }
+
+            if (request.Status != SupplierChangeRequestStatus.Pending)
+            {
+                throw new SupplierValidationException($"This request has already been {request.Status.ToLowerInvariant()} and can't be rejected.");
+            }
+
+            request.Status = SupplierChangeRequestStatus.Rejected;
+            request.ReviewedBy = "System";
+            request.ReviewedAt = DateTime.UtcNow;
+            request.ReviewNotes = reason.Trim();
+
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            logger.LogError(ex, "Database error while rejecting change request {RequestId}", requestId);
+            throw new SupplierServiceException("Could not reject this request. Please try again.", ex);
+        }
+        catch (Exception ex) when (ex is not SupplierValidationException)
+        {
+            logger.LogError(ex, "Failed to reject change request {RequestId}", requestId);
+            throw new SupplierServiceException("Something went wrong while rejecting this request. Please try again.", ex);
         }
     }
 
@@ -324,6 +522,30 @@ public class SupplierService
         var trimmed = value?.Trim();
         return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
     }
+
+    /// <summary>
+    /// Regulated fields per the Distributor governance design: changes to
+    /// these require approval before taking effect, unlike the rest of the
+    /// Supplier record which updates immediately. Compares against `proposed`
+    /// after Normalize() has already run on it, so both sides are consistently
+    /// trimmed/cased (GSTIN is stored upper-invariant).
+    /// </summary>
+    private static List<string> GetChangedRegulatedFields(Supplier existing, Supplier proposed)
+    {
+        var changed = new List<string>();
+
+        if (!string.Equals(existing.GSTIN, proposed.GSTIN, StringComparison.Ordinal))
+        {
+            changed.Add("GSTIN");
+        }
+
+        if (!string.Equals(existing.DrugLicenseNumber, proposed.DrugLicenseNumber, StringComparison.Ordinal))
+        {
+            changed.Add("Drug License Number");
+        }
+
+        return changed;
+    }
 }
 
 public class SupplierValidationException : Exception
@@ -337,5 +559,25 @@ public class SupplierServiceException : Exception
 {
     public SupplierServiceException(string message, Exception innerException) : base(message, innerException)
     {
+    }
+}
+
+/// <summary>
+/// Not an error — signals that an update was diverted into a pending
+/// SupplierChangeRequest because it touched a regulated field, and needs
+/// approval before it takes effect. Callers (e.g. Suppliers.razor) should
+/// catch this distinctly from real failures and show an informational
+/// "submitted for approval" message rather than an error.
+/// </summary>
+public class SupplierApprovalRequiredException : Exception
+{
+    public int RequestId { get; }
+    public string ChangedFields { get; }
+
+    public SupplierApprovalRequiredException(int requestId, string changedFields)
+        : base($"This change touches regulated field(s) ({changedFields}) and requires approval before it takes effect.")
+    {
+        RequestId = requestId;
+        ChangedFields = changedFields;
     }
 }

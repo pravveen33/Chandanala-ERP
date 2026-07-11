@@ -33,6 +33,8 @@ public class AppDbContext : DbContext
 
     public DbSet<SupplierHistory> SupplierHistories => Set<SupplierHistory>();
 
+    public DbSet<SupplierChangeRequest> SupplierChangeRequests => Set<SupplierChangeRequest>();
+
     public DbSet<Purchase> Purchases => Set<Purchase>();
 
     public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
@@ -207,6 +209,48 @@ public class AppDbContext : DbContext
             // ever double-writing the same version if a save is retried.
             entity.HasIndex(h => new { h.SupplierId, h.VersionNumber })
                 .IsUnique();
+        });
+
+        // ----- SupplierChangeRequest -----
+        modelBuilder.Entity<SupplierChangeRequest>(entity =>
+        {
+            entity.Property(r => r.SupplierCode).IsRequired().HasMaxLength(30);
+            entity.Property(r => r.SupplierName).IsRequired().HasMaxLength(200);
+            entity.Property(r => r.GSTIN).HasMaxLength(15);
+            entity.Property(r => r.DrugLicenseNumber).HasMaxLength(100);
+            entity.Property(r => r.ContactPerson).HasMaxLength(200);
+            entity.Property(r => r.MobileNumber).HasMaxLength(20);
+            entity.Property(r => r.Email).HasMaxLength(100);
+            entity.Property(r => r.Address).HasMaxLength(500);
+            entity.Property(r => r.City).HasMaxLength(100);
+            entity.Property(r => r.State).HasMaxLength(100);
+            entity.Property(r => r.Pincode).HasMaxLength(10);
+            entity.Property(r => r.ChangedRegulatedFields).IsRequired().HasMaxLength(200);
+            entity.Property(r => r.Status).IsRequired().HasMaxLength(20);
+            entity.Property(r => r.RequestedBy).IsRequired().HasMaxLength(100);
+            entity.Property(r => r.RequestReason).HasMaxLength(500);
+            entity.Property(r => r.ReviewedBy).HasMaxLength(100);
+            entity.Property(r => r.ReviewNotes).HasMaxLength(500);
+
+            entity.Property(r => r.CreditLimit).HasPrecision(18, 2);
+
+            entity.Property(r => r.RequestedAt)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(r => r.ReviewedAt)
+                .HasColumnType("timestamp with time zone");
+
+            // Restrict, matching SupplierHistory — a supplier is soft-deleted,
+            // never hard-deleted, so this is a safety net rather than a real path.
+            entity.HasOne(r => r.Supplier)
+                .WithMany()
+                .HasForeignKey(r => r.SupplierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Supports the review-queue query ("show me all Pending requests")
+            // without a full table scan as this grows.
+            entity.HasIndex(r => r.Status)
+                .HasDatabaseName("IX_SupplierChangeRequests_Status");
         });
 
         // ----- UserRole -----

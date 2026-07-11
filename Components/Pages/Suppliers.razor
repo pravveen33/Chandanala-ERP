@@ -27,9 +27,52 @@
 
 @if (!string.IsNullOrWhiteSpace(message))
 {
-    <div class="alert @(isSuccessMessage ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+    <div class="alert @MessageAlertClass alert-dismissible fade show" role="alert">
         @message
         <button type="button" class="btn-close" @onclick="ClearMessage"></button>
+    </div>
+}
+
+@if (pendingRequests.Any())
+{
+    <div class="card shadow-sm mb-4 border-warning">
+        <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center">
+            <strong>Pending Approvals</strong>
+            <span class="badge text-bg-warning">@pendingRequests.Count awaiting review</span>
+        </div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">
+                These edits touch a regulated field (GSTIN or Drug License Number) and are held here until approved — the distributor record is unchanged until then.
+            </p>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Distributor</th>
+                            <th>Changed Field(s)</th>
+                            <th>Requested</th>
+                            <th>Reason</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in pendingRequests)
+                        {
+                            <tr>
+                                <td>@(request.Supplier?.SupplierName ?? $"Supplier #{request.SupplierId}")</td>
+                                <td><span class="badge text-bg-secondary">@request.ChangedRegulatedFields</span></td>
+                                <td>@request.RequestedAt.ToLocalTime().ToString("dd-MMM-yyyy HH:mm")</td>
+                                <td>@(string.IsNullOrWhiteSpace(request.RequestReason) ? "—" : request.RequestReason)</td>
+                                <td class="text-end text-nowrap">
+                                    <button class="btn btn-sm btn-outline-success me-1" disabled="@isReviewing" @onclick="() => ApproveRequestAsync(request.Id)">Approve</button>
+                                    <button class="btn btn-sm btn-outline-danger" disabled="@isReviewing" @onclick="() => RejectRequestAsync(request.Id)">Reject</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 }
 
@@ -249,15 +292,20 @@
 
 @code {
     private List<Supplier> suppliers = new();
+    private List<SupplierChangeRequest> pendingRequests = new();
     private Supplier supplier = new();
 
     private string searchText = string.Empty;
     private string message = string.Empty;
     private string validationMessage = string.Empty;
 
-    private bool isSuccessMessage;
+    private enum MessageKind { Success, Error, Info }
+    
+    private string MessageAlertClass = "";
+    private MessageKind messageKind = MessageKind.Success;
     private bool isLoading = true;
     private bool isSaving;
+    private bool isReviewing;
     private bool showForm;
 
     private int? editingId;
@@ -270,6 +318,24 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadSuppliersAsync();
+        await LoadPendingRequestsAsync();
+    }
+
+    private async Task LoadPendingRequestsAsync()
+    {
+        try
+        {
+            pendingRequests = await SupplierService.GetPendingChangeRequestsAsync();
+        }
+        catch (SupplierServiceException ex)
+        {
+            ShowError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while loading pending supplier change requests");
+            ShowError("Could not load pending approvals. Please refresh the page.");
+        }
     }
 
     private async Task LoadSuppliersAsync()
@@ -412,6 +478,12 @@
             await LoadSuppliersAsync();
             CancelEdit();
         }
+        catch (SupplierApprovalRequiredException ex)
+        {
+            ShowInfo($"This change touches a regulated field ({ex.ChangedFields}) and has been submitted for approval (request #{ex.RequestId}). The distributor record is unchanged until it's reviewed.");
+            await LoadPendingRequestsAsync();
+            CancelEdit();
+        }
         catch (SupplierValidationException ex)
         {
             validationMessage = ex.Message;
@@ -428,6 +500,75 @@
         finally
         {
             isSaving = false;
+        }
+    }
+
+    private async Task ApproveRequestAsync(int requestId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Approve this change? It will be applied to the distributor immediately.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        isReviewing = true;
+        try
+        {
+            await SupplierService.ApproveChangeRequestAsync(requestId);
+            ShowSuccess("Change request approved and applied.");
+            await LoadSuppliersAsync();
+            await LoadPendingRequestsAsync();
+        }
+        catch (SupplierValidationException ex)
+        {
+            ShowError(ex.Message);
+        }
+        catch (SupplierServiceException ex)
+        {
+            ShowError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while approving supplier change request {RequestId}", requestId);
+            ShowError("Something went wrong while approving this request. Please try again.");
+        }
+        finally
+        {
+            isReviewing = false;
+        }
+    }
+
+    private async Task RejectRequestAsync(int requestId)
+    {
+        var reason = await JS.InvokeAsync<string?>("prompt", "Reason for rejecting this change request:");
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return;
+        }
+
+        isReviewing = true;
+        try
+        {
+            await SupplierService.RejectChangeRequestAsync(requestId, reason);
+            ShowSuccess("Change request rejected. No changes were made to the distributor.");
+            await LoadPendingRequestsAsync();
+        }
+        catch (SupplierValidationException ex)
+        {
+            ShowError(ex.Message);
+        }
+        catch (SupplierServiceException ex)
+        {
+            ShowError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while rejecting supplier change request {RequestId}", requestId);
+            ShowError("Something went wrong while rejecting this request. Please try again.");
+        }
+        finally
+        {
+            isReviewing = false;
         }
     }
 
@@ -517,13 +658,19 @@
     private void ShowSuccess(string text)
     {
         message = text;
-        isSuccessMessage = true;
+        mymessage = Messagekind."success";
+    }
+
+    private void ShowInfo(string text)
+    {
+        message = text;
+        mymessage = Messagekind."success";
     }
 
     private void ShowError(string text)
     {
         message = text;
-        isSuccessMessage = false;
+        messageKind = "error";
     }
 
     private void ClearMessage()
