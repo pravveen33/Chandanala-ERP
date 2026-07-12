@@ -1,4 +1,5 @@
-    - name: Build
-      # Replace with the actual path found by your build
-      run: dotnet build Chandanala.ERP.Web/Chandanala.ERP.Web.csproj --configuration Release
+- name: Run Migrations
+  run: |
+    chmod +x ./efbundle
+    ./efbundle --connection "$CONNECTION_STRING"
 
