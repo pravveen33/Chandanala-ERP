@@ -1,6 +1,11 @@
+name: .NET Core ERP Build
+
+on: [push, pull_request]
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     services:
       postgres:
         image: postgres:15
@@ -10,7 +15,6 @@ jobs:
           POSTGRES_DB: erp_db
         ports:
           - 5432:5432
-        # THIS IS THE KEY FIX
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -19,20 +23,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
           
-      # Build, then run migrations
       - name: Build
         run: dotnet build --configuration Release
         
       - name: Run Migrations
         env:
-          # Use 'postgres' (the service name) as the hostname
           CONNECTION_STRING: Host=postgres;Database=erp_db;Username=postgres;Password=password
         run: |
           dotnet tool install --global dotnet-ef
           dotnet ef database update --connection "$CONNECTION_STRING"
+
 
