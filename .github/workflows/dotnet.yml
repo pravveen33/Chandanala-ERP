@@ -5,7 +5,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
-    # 1. Define the PostgreSQL service container
+    # 1. PostgreSQL Service Container definition
     services:
       postgres:
         image: postgres:15
@@ -15,7 +15,6 @@ jobs:
           POSTGRES_DB: erp_db
         ports:
           - 5432:5432
-        # Health check to ensure the DB is ready before migrations run
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -30,15 +29,12 @@ jobs:
         with:
           dotnet-version: 9.0.x
           
-      - name: Restore dependencies
-        run: dotnet restore
-        
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --configuration Release
         
+      # 2. Run Migrations pointing to the service container
       - name: Run Migrations
         env:
-          # Use 'postgres' (the service name) as the hostname
           CONNECTION_STRING: Host=postgres;Database=erp_db;Username=postgres;Password=password
         run: |
           dotnet tool install --global dotnet-ef
