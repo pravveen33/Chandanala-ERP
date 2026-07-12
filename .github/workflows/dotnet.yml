@@ -1,36 +1,25 @@
+name: .NET Core ERP Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
 jobs:
-  build-and-migrate:
+  build:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_DB: erp_db
-          POSTGRES_PASSWORD: yourpassword
-        ports:
-          - 5432:5432
-        # Health check to ensure DB is ready
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - uses: actions/checkout@v4
-
-      # Add this wait step
-      - name: Wait for PostgreSQL
-        run: |
-          until pg_isready -h localhost -p 5432; do
-            echo "Waiting for postgres..."
-            sleep 2
-          done
-
-      - name: Run Migrations
-        run: |
-          dotnet tool install --global dotnet-ef
-          dotnet ef database update --connection "$CONNECTION_STRING"
-        env:
-          CONNECTION_STRING: Host=localhost;Database=erp_db;Username=postgres;Password=yourpassword
-
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+        
+    # Crucial: Specify the path to your project
+    - name: Restore dependencies
+      run: dotnet restore Chandanala.ERP.Web/Chandanala.ERP.Web.csproj
+      
+    - name: Build
+      run: dotnet build Chandanala.ERP.Web/Chandanala.ERP.Web.csproj --configuration Release --no-restore
