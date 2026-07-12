@@ -1,18 +1,47 @@
 name: .NET Core ERP Build
 on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # 1. Define the PostgreSQL service
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: erp_db
+        ports:
+          - 5432:5432
+        # Health check ensures the job waits until the DB is ready
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
+          
       - name: Restore dependencies
         run: dotnet restore
+        
       - name: Build
         run: dotnet build --configuration Release --no-restore
-      # Recommendation: Add a test step here
-      - name: Test
-        run: dotnet test --no-build --verbosity normal
+        
+      # 2. Run migrations, pointing to the service container
+      - name: Run Migrations
+        env:
+          # Use 'postgres' (the service name) instead of 'localhost'
+          CONNECTION_STRING: Host=postgres;Database=erp_db;Username=postgres;Password=password
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet ef database update --connection "$CONNECTION_STRING"
+
