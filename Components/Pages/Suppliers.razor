@@ -658,23 +658,27 @@
     private void ShowSuccess(string text)
     {
         message = text;
-        mymessage = Messagekind."success";
+        // Enum values should be referenced directly without quotes
+        messageKind = MessageKind.Success; 
     }
 
     private void ShowInfo(string text)
     {
         message = text;
-        mymessage = Messagekind."success";
+        // Corrected to Info enum value
+        messageKind = MessageKind.Info; 
     }
 
     private void ShowError(string text)
     {
         message = text;
-        messageKind = "error";
+        // Corrected to Error enum value
+        messageKind = MessageKind.Error; 
     }
 
     private void ClearMessage()
     {
         message = string.Empty;
+        // Optional: Reset kind to a default or keep as is
     }
 }
