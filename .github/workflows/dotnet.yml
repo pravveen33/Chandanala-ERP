@@ -1,20 +1,15 @@
-name: .NET Core ERP Build
-
-on: [push, pull_request]
-
 jobs:
-  build:
+  build-and-migrate:
     runs-on: ubuntu-latest
-    
     services:
       postgres:
-        image: postgres:15
+        image: postgres:latest
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
           POSTGRES_DB: erp_db
+          POSTGRES_PASSWORD: yourpassword
         ports:
           - 5432:5432
+        # Health check to ensure DB is ready
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -23,20 +18,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-          
-      - name: Build
-        run: dotnet build --configuration Release
-        
+
+      # Add this wait step
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
       - name: Run Migrations
-        env:
-          CONNECTION_STRING: Host=postgres;Database=erp_db;Username=postgres;Password=password
         run: |
           dotnet tool install --global dotnet-ef
           dotnet ef database update --connection "$CONNECTION_STRING"
-
+        env:
+          CONNECTION_STRING: Host=localhost;Database=erp_db;Username=postgres;Password=yourpassword
 
