@@ -1,10 +1,26 @@
-# docker-compose.yml snippet
-services:
+# CHANDANALA CORE™ - Zero Trust Agent Policy
+policy_version: 1.0.0
+enforcement_mode: strict
+
+agents:
   ramanujan-coder:
-    build: ./agents/coder
-    environment:
-      - AGENT_ROLE=BossCoder
-    volumes:
-      - ./compliance_rules:/app/rules
-    networks:
-      - internal_net
+    permissions:
+      - read: ["/app/rules/*"]
+      - write: ["/var/log/audit/"]
+      - network_egress: "denied"
+      - tool_access: ["gst_reconcile", "audit_log"]
+    sandbox:
+      readonly_root: true
+      max_memory: 512MB
+      
+  compliance-judge:
+    permissions:
+      - read: ["/app/rules/*", "/var/log/audit/"]
+      - network_egress: "denied"
+    sandbox:
+      readonly_root: true
+
+global_guardrails:
+  - no_internet_access: true
+  - automated_sast_scan: enabled
+  - tamper_proof_audit_spine: enabled
