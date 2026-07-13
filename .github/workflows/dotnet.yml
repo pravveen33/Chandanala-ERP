@@ -1,2 +1,3 @@
 - name: Install dependencies
+  working-directory: ./backend  # Replace 'backend' with your actual folder name
   run: pip install -r requirements.txt
