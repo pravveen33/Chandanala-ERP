@@ -1,28 +1,3 @@
-name: CHANDANALA Core Deploy
-
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          
       - name: Install dependencies
+        working-directory: ./path/to/your/folder # Change this to the folder containing requirements.txt
         run: pip install -r requirements.txt
-        
-      - name: Run Tests
-        run: python -m unittest discover tests/
-        
-      - name: Deploy to Server
-        if: success()
-        run: |
-          # Add your deployment commands here (e.g., rsync or ssh)
-          echo "Deploying to production..."
