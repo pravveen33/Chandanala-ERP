@@ -1,3 +1,4 @@
-- name: Install dependencies
-  working-directory: ./backend  # Replace 'backend' with your actual folder name
-  run: pip install -r requirements.txt
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
