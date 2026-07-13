@@ -1,26 +1,28 @@
-# CHANDANALA CORE™ - Zero Trust Agent Policy
-policy_version: 1.0.0
-enforcement_mode: strict
+name: CHANDANALA Core Deploy
 
-agents:
-  ramanujan-coder:
-    permissions:
-      - read: ["/app/rules/*"]
-      - write: ["/var/log/audit/"]
-      - network_egress: "denied"
-      - tool_access: ["gst_reconcile", "audit_log"]
-    sandbox:
-      readonly_root: true
-      max_memory: 512MB
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       
-  compliance-judge:
-    permissions:
-      - read: ["/app/rules/*", "/var/log/audit/"]
-      - network_egress: "denied"
-    sandbox:
-      readonly_root: true
-
-global_guardrails:
-  - no_internet_access: true
-  - automated_sast_scan: enabled
-  - tamper_proof_audit_spine: enabled
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        
+      - name: Run Tests
+        run: python -m unittest discover tests/
+        
+      - name: Deploy to Server
+        if: success()
+        run: |
+          # Add your deployment commands here (e.g., rsync or ssh)
+          echo "Deploying to production..."
