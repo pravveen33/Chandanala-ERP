@@ -1,2 +1,2 @@
-dotnet restore Chandanala-ERP.sln
-dotnet build Chandanala-ERP.sln --configuration Release --no-restore
+run: dotnet restore Chandanala.ERP.Web.csproj
+run: dotnet build Chandanala.ERP.Web.csproj --configuration Release --no-restore
