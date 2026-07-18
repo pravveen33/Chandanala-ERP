@@ -1,1 +1,2 @@
-- name: Install EF Tools
+- name: Test
+  run: dotnet test --configuration Release --no-build
