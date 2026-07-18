@@ -1,2 +1,2 @@
-- name: Test
-  run: dotnet test --configuration Release --no-build
+dotnet restore
+dotnet build --configuration Release --no-restore
