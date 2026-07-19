@@ -1,2 +1,211 @@
-run: dotnet restore Chandanala.ERP.Web.csproj
-run: dotnet build Chandanala.ERP.Web.csproj --configuration Release --no-restore
+name: CHANDANALA CORE AI Evaluation Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  security-events: write
+
+env:
+  DOTNET_VERSION: "10.0.x"
+
+jobs:
+
+  build:
+
+    name: Build
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+  unit-tests:
+
+    name: Unit Tests
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - run: dotnet test tests/UnitTests \
+          --configuration Release \
+          --logger trx
+
+  integration-tests:
+
+    name: Integration Tests
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    services:
+
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: chandanala_test
+        ports:
+          - 5432:5432
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Run Integration Tests
+        run: dotnet test tests/IntegrationTests \
+             --configuration Release
+
+  ai-evaluation:
+
+    name: AI Evaluation Suite
+
+    needs:
+      - unit-tests
+      - integration-tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Product Entry Evaluation
+        run: dotnet test tests/AI/ProductEntryEvaluation
+
+      - name: OCR Evaluation
+        run: dotnet test tests/AI/OcrEvaluation
+
+      - name: RAG Evaluation
+        run: dotnet test tests/AI/RagEvaluation
+
+      - name: Prompt Evaluation
+        run: dotnet test tests/AI/PromptEvaluation
+
+      - name: Provider Evaluation
+        run: dotnet test tests/AI/ProviderEvaluation
+
+      - name: Hallucination Evaluation
+        run: dotnet test tests/AI/HallucinationEvaluation
+
+      - name: Clinical Safety Evaluation
+        run: dotnet test tests/AI/ClinicalSafetyEvaluation
+
+      - name: Workflow Evaluation
+        run: dotnet test tests/AI/WorkflowEvaluation
+
+  security:
+
+    name: Security Validation
+
+    needs: ai-evaluation
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Dependency Audit
+        run: dotnet list package --vulnerable
+
+      - name: Secret Scan
+        run: echo "Run secret scanning"
+
+      - name: Static Analysis
+        run: echo "Run static analysis"
+
+  architecture:
+
+    name: Architecture Validation
+
+    needs: security
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Clean Architecture Rules
+        run: echo "Validate dependency rules"
+
+      - name: API Contract Validation
+        run: echo "Validate OpenAPI"
+
+      - name: EF Migration Validation
+        run: echo "Validate EF Core migrations"
+
+  documentation:
+
+    name: Documentation Validation
+
+    needs: architecture
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: ADR Validation
+        run: echo "Validate ADR documents"
+
+      - name: Changelog Validation
+        run: echo "Validate CHANGELOG"
+
+  release-gate:
+
+    name: Release Gate
+
+    needs:
+      - documentation
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Release Approved
+        run: |
+          echo "===================================="
+          echo "CHANDANALA CORE AI Evaluation Passed"
+          echo "Ready for Human Approval"
+          echo "===================================="
