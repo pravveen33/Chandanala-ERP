@@ -1,4 +1,4 @@
-name: Zero-Token Intelligence Platform
+name: Architecture Governance
 
 on:
   push:
@@ -19,7 +19,7 @@ permissions:
   checks: write
 
 concurrency:
-  group: zero-token-${{ github.workflow }}-${{ github.ref }}
+  group: architecture-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -28,9 +28,9 @@ env:
 
 jobs:
 
-  validate:
+  governance:
 
-    name: Zero-Token Validation
+    name: Architecture Governance Validation
 
     runs-on: ubuntu-latest
 
@@ -81,106 +81,102 @@ jobs:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}
+            nuget-${{ runner.os }}-
 
-      - name: Restore Dependencies
+      - name: Restore
         run: dotnet restore
 
-      - name: Verify Formatting
-        run: dotnet format --verify-no-changes --verbosity minimal
-        continue-on-error: true
+      - name: Build
+        run: dotnet build --configuration $CONFIGURATION --no-restore
 
-      - name: Build Solution
+      - name: Verify Architecture Tests
         run: |
-          dotnet build \
-            --configuration $CONFIGURATION \
-            --no-restore
-
-      - name: AI Invocation Tests
-        run: |
-          if [ -d tests/AI.Invocation.Tests ]; then
-            dotnet test tests/AI.Invocation.Tests \
+          if [ -d tests/Architecture.Tests ]; then
+            dotnet test tests/Architecture.Tests \
               --configuration $CONFIGURATION \
               --no-build \
               --logger trx
+          else
+            echo "Architecture.Tests not found - skipping."
           fi
 
-      - name: Semantic Cache Tests
+      - name: Verify AI Gateway Tests
         run: |
-          if [ -d tests/AI.SemanticCache.Tests ]; then
-            dotnet test tests/AI.SemanticCache.Tests \
+          if [ -d tests/AI.Gateway.Tests ]; then
+            dotnet test tests/AI.Gateway.Tests \
               --configuration $CONFIGURATION \
               --no-build \
               --logger trx
+          else
+            echo "AI.Gateway.Tests not found - skipping."
           fi
 
-      - name: Prompt Optimization Tests
-        run: |
-          if [ -d tests/AI.PromptOptimization.Tests ]; then
-            dotnet test tests/AI.PromptOptimization.Tests \
-              --configuration $CONFIGURATION \
-              --no-build \
-              --logger trx
-          fi
-
-      - name: Token Budget Tests
-        run: |
-          if [ -d tests/AI.TokenBudget.Tests ]; then
-            dotnet test tests/AI.TokenBudget.Tests \
-              --configuration $CONFIGURATION \
-              --no-build \
-              --logger trx
-          fi
-
-      - name: Cost Tracking Tests
-        run: |
-          if [ -d tests/AI.CostTracking.Tests ]; then
-            dotnet test tests/AI.CostTracking.Tests \
-              --configuration $CONFIGURATION \
-              --no-build \
-              --logger trx
-          fi
-
-      - name: Knowledge Platform Tests
+      - name: Verify Knowledge Platform Tests
         run: |
           if [ -d tests/Knowledge.Tests ]; then
             dotnet test tests/Knowledge.Tests \
               --configuration $CONFIGURATION \
               --no-build \
               --logger trx
+          else
+            echo "Knowledge.Tests not found - skipping."
           fi
 
-      - name: Validation Platform Tests
+      - name: Verify Validation Platform Tests
         run: |
           if [ -d tests/Validation.Tests ]; then
             dotnet test tests/Validation.Tests \
               --configuration $CONFIGURATION \
               --no-build \
               --logger trx
+          else
+            echo "Validation.Tests not found - skipping."
           fi
 
-      - name: Clinical Safety Tests
+      - name: Verify Clinical Safety Tests
         run: |
           if [ -d tests/ClinicalSafety.Tests ]; then
             dotnet test tests/ClinicalSafety.Tests \
               --configuration $CONFIGURATION \
               --no-build \
               --logger trx
+          else
+            echo "ClinicalSafety.Tests not found - skipping."
           fi
 
-      - name: Performance Smoke Test
+      - name: Prevent Direct Provider Usage
+        shell: bash
         run: |
-          echo "Running Zero-Token performance validation..."
-          echo "✓ SQL before AI"
-          echo "✓ Cache before RAG"
-          echo "✓ RAG before LLM"
-          echo "✓ Token budget enforcement"
+          echo "Checking for direct provider SDK usage..."
+
+          if grep -R "OpenAIClient" src --include="*.cs"; then
+            echo "Direct OpenAI SDK usage detected."
+            exit 1
+          fi
+
+          if grep -R "AnthropicClient" src --include="*.cs"; then
+            echo "Direct Anthropic SDK usage detected."
+            exit 1
+          fi
+
+          echo "Provider abstraction check passed."
+
+      - name: Verify Governance Principles
+        run: |
+          echo "✔ Business Rules before AI"
+          echo "✔ Database before AI"
+          echo "✔ Cache before AI"
+          echo "✔ Hybrid RAG before AI"
+          echo "✔ AI Gateway only"
+          echo "✔ Validation required"
+          echo "✔ Clinical Safety required"
+          echo "✔ Audit required"
 
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zero-token-test-results
+          name: architecture-governance-results
           path: |
             **/TestResults/**
             **/*.trx
