@@ -1,183 +1,193 @@
-name: Architecture Governance
+# ==========================================================
+# CHANDANALA CORE™
+# AI Provider Configuration
+# Architecture v31.1
+# ==========================================================
 
-on:
-  push:
-    branches:
-      - main
-      - develop
-      - "feature/**"
+ai:
 
-  pull_request:
-    branches:
-      - main
-      - develop
+  enabled: true
 
-  workflow_dispatch:
+  architecture:
+    mode: multi-provider
+    orchestrator: enabled
+    dynamic-routing: true
+    provider-adapter: true
+    capability-routing: true
+    failover: true
+    feature-flags: true
 
-permissions:
-  contents: read
-  checks: write
+  providers:
 
-concurrency:
-  group: architecture-${{ github.ref }}
-  cancel-in-progress: true
+    gpt:
+      enabled: true
+      status: production
+      priority: 100
+      multimodal: true
+      reasoning: excellent
+      safety-approved: true
 
-env:
-  DOTNET_VERSION: "10.0.x"
-  CONFIGURATION: Release
+    gemini:
+      enabled: true
+      status: production
+      priority: 90
+      multimodal: true
+      reasoning: excellent
+      safety-approved: true
 
-jobs:
+    monolith:
+      enabled: false
+      status: experimental
+      priority: 70
+      local-deployment: supported
+      benchmark-required: true
+      pharmacy-validation: required
+      safety-approved: false
+
+    ollama:
+      enabled: false
+      status: optional
+      priority: 60
+      local-ai: true
+
+  capability-routing:
+
+    inventory-intelligence:
+      preferred:
+        - monolith
+        - gpt
+      fallback:
+        - gemini
+
+    procurement-intelligence:
+      preferred:
+        - monolith
+      fallback:
+        - gpt
+
+    sales-analytics:
+      preferred:
+        - monolith
+      fallback:
+        - gpt
+
+    report-generation:
+      preferred:
+        - monolith
+      fallback:
+        - gpt
+
+    document-summarization:
+      preferred:
+        - monolith
+      fallback:
+        - gpt
+
+    employee-assistant:
+      preferred:
+        - monolith
+      fallback:
+        - gpt
+
+    pharmacy-chat:
+      preferred:
+        - gpt
+      fallback:
+        - gemini
+
+    prescription-ocr:
+      preferred:
+        - gemini
+      fallback:
+        - gpt
+
+    clinical-review:
+      preferred:
+        - gpt
+      fallback:
+        - gemini
 
   governance:
 
-    name: Architecture Governance Validation
+    ai-never-decides:
 
-    runs-on: ubuntu-latest
+      - prescription-approval
+      - clinical-diagnosis
+      - drug-interaction-final-decision
+      - schedule-h-validation
+      - schedule-h1-validation
+      - schedule-x-validation
+      - billing-approval
+      - gst-final-calculation
+      - inventory-writeoff
+      - financial-approval
+      - audit-approval
 
-    services:
+    human-approval-required: true
+    pharmacist-validation-required: true
+    business-rules-first: true
+    clinical-constraint-engine: true
+    audit-logging: mandatory
 
-      postgres:
-        image: pgvector/pgvector:pg17
+  benchmark:
 
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: chandanala
+    required: true
 
-        ports:
-          - 5432:5432
+    metrics:
+      accuracy: true
+      hallucination-rate: true
+      latency: true
+      throughput: true
+      token-usage: true
+      cpu-usage: true
+      memory-usage: true
+      cost: true
+      uptime: true
 
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+  monitoring:
 
-      redis:
-        image: redis:7-alpine
+    enabled: true
 
-        ports:
-          - 6379:6379
+    collect:
+      - provider
+      - model-version
+      - response-time
+      - success-rate
+      - error-rate
+      - confidence-score
+      - token-usage
+      - estimated-cost
+      - routing-decision
+      - safety-result
 
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+  failover:
 
-    steps:
+    enabled: true
 
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    retry:
+      attempts: 2
+      timeout-seconds: 20
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+    fallback-order:
+      - gpt
+      - gemini
+      - monolith
 
-      - name: Cache NuGet Packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            nuget-${{ runner.os }}-
+  deployment-policy:
 
-      - name: Restore
-        run: dotnet restore
+    experimental:
+      production-access: false
 
-      - name: Build
-        run: dotnet build --configuration $CONFIGURATION --no-restore
+    production:
+      benchmark-passed: true
+      governance-approved: true
+      safety-approved: true
+      audit-approved: true
 
-      - name: Verify Architecture Tests
-        run: |
-          if [ -d tests/Architecture.Tests ]; then
-            dotnet test tests/Architecture.Tests \
-              --configuration $CONFIGURATION \
-              --no-build \
-              --logger trx
-          else
-            echo "Architecture.Tests not found - skipping."
-          fi
-
-      - name: Verify AI Gateway Tests
-        run: |
-          if [ -d tests/AI.Gateway.Tests ]; then
-            dotnet test tests/AI.Gateway.Tests \
-              --configuration $CONFIGURATION \
-              --no-build \
-              --logger trx
-          else
-            echo "AI.Gateway.Tests not found - skipping."
-          fi
-
-      - name: Verify Knowledge Platform Tests
-        run: |
-          if [ -d tests/Knowledge.Tests ]; then
-            dotnet test tests/Knowledge.Tests \
-              --configuration $CONFIGURATION \
-              --no-build \
-              --logger trx
-          else
-            echo "Knowledge.Tests not found - skipping."
-          fi
-
-      - name: Verify Validation Platform Tests
-        run: |
-          if [ -d tests/Validation.Tests ]; then
-            dotnet test tests/Validation.Tests \
-              --configuration $CONFIGURATION \
-              --no-build \
-              --logger trx
-          else
-            echo "Validation.Tests not found - skipping."
-          fi
-
-      - name: Verify Clinical Safety Tests
-        run: |
-          if [ -d tests/ClinicalSafety.Tests ]; then
-            dotnet test tests/ClinicalSafety.Tests \
-              --configuration $CONFIGURATION \
-              --no-build \
-              --logger trx
-          else
-            echo "ClinicalSafety.Tests not found - skipping."
-          fi
-
-      - name: Prevent Direct Provider Usage
-        shell: bash
-        run: |
-          echo "Checking for direct provider SDK usage..."
-
-          if grep -R "OpenAIClient" src --include="*.cs"; then
-            echo "Direct OpenAI SDK usage detected."
-            exit 1
-          fi
-
-          if grep -R "AnthropicClient" src --include="*.cs"; then
-            echo "Direct Anthropic SDK usage detected."
-            exit 1
-          fi
-
-          echo "Provider abstraction check passed."
-
-      - name: Verify Governance Principles
-        run: |
-          echo "✔ Business Rules before AI"
-          echo "✔ Database before AI"
-          echo "✔ Cache before AI"
-          echo "✔ Hybrid RAG before AI"
-          echo "✔ AI Gateway only"
-          echo "✔ Validation required"
-          echo "✔ Clinical Safety required"
-          echo "✔ Audit required"
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: architecture-governance-results
-          path: |
-            **/TestResults/**
-            **/*.trx
-          if-no-files-found: ignore
+# ==========================================================
+# CHANDANALA CORE™ Principle
+#
+# Business Logic ≠ AI Model
+# AI Models are replaceable execution engines.
+# ERP modules communicate only with the AI Orchestrator.
+# ==========================================================
