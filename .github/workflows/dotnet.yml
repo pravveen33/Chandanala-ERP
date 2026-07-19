@@ -1,193 +1,294 @@
 # ==========================================================
 # CHANDANALA CORE™
-# AI Provider Configuration
-# Architecture v31.1
+# Content-as-Code & KnowledgeOps Configuration
+# Architecture v31.4
 # ==========================================================
 
-ai:
+content-as-code:
 
   enabled: true
 
-  architecture:
-    mode: multi-provider
-    orchestrator: enabled
-    dynamic-routing: true
-    provider-adapter: true
-    capability-routing: true
-    failover: true
-    feature-flags: true
-
-  providers:
-
-    gpt:
-      enabled: true
-      status: production
-      priority: 100
-      multimodal: true
-      reasoning: excellent
-      safety-approved: true
-
-    gemini:
-      enabled: true
-      status: production
-      priority: 90
-      multimodal: true
-      reasoning: excellent
-      safety-approved: true
-
-    monolith:
-      enabled: false
-      status: experimental
-      priority: 70
-      local-deployment: supported
-      benchmark-required: true
-      pharmacy-validation: required
-      safety-approved: false
-
-    ollama:
-      enabled: false
-      status: optional
-      priority: 60
-      local-ai: true
-
-  capability-routing:
-
-    inventory-intelligence:
-      preferred:
-        - monolith
-        - gpt
-      fallback:
-        - gemini
-
-    procurement-intelligence:
-      preferred:
-        - monolith
-      fallback:
-        - gpt
-
-    sales-analytics:
-      preferred:
-        - monolith
-      fallback:
-        - gpt
-
-    report-generation:
-      preferred:
-        - monolith
-      fallback:
-        - gpt
-
-    document-summarization:
-      preferred:
-        - monolith
-      fallback:
-        - gpt
-
-    employee-assistant:
-      preferred:
-        - monolith
-      fallback:
-        - gpt
-
-    pharmacy-chat:
-      preferred:
-        - gpt
-      fallback:
-        - gemini
-
-    prescription-ocr:
-      preferred:
-        - gemini
-      fallback:
-        - gpt
-
-    clinical-review:
-      preferred:
-        - gpt
-      fallback:
-        - gemini
-
   governance:
+    mandatory: true
+    version-control: git
+    pull-request-review: true
+    approval-required: true
+    audit-trail: true
+    rollback-supported: true
+    digital-signatures: true
 
-    ai-never-decides:
+  lifecycle:
 
-      - prescription-approval
-      - clinical-diagnosis
-      - drug-interaction-final-decision
-      - schedule-h-validation
-      - schedule-h1-validation
-      - schedule-x-validation
-      - billing-approval
-      - gst-final-calculation
-      - inventory-writeoff
-      - financial-approval
-      - audit-approval
+    stages:
+      - draft
+      - review
+      - validate
+      - approve
+      - version
+      - deploy
+      - monitor
+      - archive
 
-    human-approval-required: true
-    pharmacist-validation-required: true
-    business-rules-first: true
-    clinical-constraint-engine: true
-    audit-logging: mandatory
+  repository:
 
-  benchmark:
+    prompts: "/prompts"
+    workflows: "/workflows"
+    rules: "/rules"
+    policies: "/policies"
+    knowledge: "/knowledge"
+    templates: "/templates"
+    benchmark: "/benchmark"
+    schemas: "/schemas"
+    feature-flags: "/feature-flags"
+    configurations: "/configs"
+    governance: "/governance"
+    documentation: "/docs"
 
+content-registry:
+
+  prompt:
+    enabled: true
+    owner: ai-team
+
+  workflow:
+    enabled: true
+    owner: operations
+
+  business-rule:
+    enabled: true
+    owner: business-team
+
+  clinical-policy:
+    enabled: true
+    owner: pharmacist
+
+  configuration:
+    enabled: true
+    owner: system-admin
+
+  knowledge:
+    enabled: true
+    owner: knowledge-manager
+
+  template:
+    enabled: true
+
+  report:
+    enabled: true
+
+  dashboard:
+    enabled: true
+
+  ai-benchmark:
+    enabled: true
+
+  feature-flag:
+    enabled: true
+
+metadata:
+
+  required: true
+
+  fields:
+
+    id: required
+    name: required
+    category: required
+    version: required
+    owner: required
+    reviewer: required
+    approver: required
+    status: required
+    created-at: required
+    updated-at: required
+    effective-from: required
+    expires-on: optional
+    rollback-version: required
+    checksum: required
+    digital-signature: required
+    tags: optional
+
+approval-matrix:
+
+  prompt:
+    reviewer: ai-lead
+    approver: technical-lead
+
+  workflow:
+    reviewer: process-owner
+    approver: operations-manager
+
+  business-rule:
+    reviewer: operations
+    approver: business-owner
+
+  clinical-policy:
+    reviewer: senior-pharmacist
+    approver: compliance-officer
+
+  configuration:
+    reviewer: system-administrator
+    approver: erp-administrator
+
+  knowledge:
+    reviewer: subject-expert
+    approver: knowledge-manager
+
+knowledge-retrieval:
+
+  strategy:
+
+    - business-rules
+    - clinical-policies
+    - approved-sop
+    - knowledge-base
+    - configuration
+    - ai-reasoning
+
+  cache:
+    enabled: true
+
+  vector-search:
+    enabled: true
+
+  citations:
     required: true
 
-    metrics:
-      accuracy: true
-      hallucination-rate: true
-      latency: true
-      throughput: true
-      token-usage: true
-      cpu-usage: true
-      memory-usage: true
-      cost: true
-      uptime: true
+validation:
 
-  monitoring:
+  schema-validation: true
+  yaml-validation: true
+  duplicate-detection: true
+  broken-link-check: true
+  policy-validation: true
+  clinical-validation: true
+  security-scan: true
+  compliance-check: true
+  ai-benchmark-validation: true
 
-    enabled: true
+quality-gates:
 
-    collect:
-      - provider
-      - model-version
-      - response-time
-      - success-rate
-      - error-rate
-      - confidence-score
-      - token-usage
-      - estimated-cost
-      - routing-decision
-      - safety-result
+  required:
 
-  failover:
+    - schema-valid
+    - metadata-valid
+    - approval-complete
+    - benchmark-passed
+    - compliance-passed
+    - security-passed
 
-    enabled: true
+deployment:
 
-    retry:
-      attempts: 2
-      timeout-seconds: 20
+  environments:
 
-    fallback-order:
-      - gpt
-      - gemini
-      - monolith
+    development:
+      auto-deploy: true
 
-  deployment-policy:
-
-    experimental:
-      production-access: false
+    staging:
+      approval-required: true
 
     production:
-      benchmark-passed: true
-      governance-approved: true
-      safety-approved: true
-      audit-approved: true
+      approval-required: true
+      audit-required: true
+      rollback-ready: true
+
+git:
+
+  branching:
+
+    main: protected
+
+    develop: protected
+
+    feature:
+      prefix: feature/
+
+    hotfix:
+      prefix: hotfix/
+
+    release:
+      prefix: release/
+
+audit:
+
+  enabled: true
+
+  capture:
+
+    - author
+    - reviewer
+    - approver
+    - timestamp
+    - previous-version
+    - new-version
+    - change-summary
+    - rollback-reference
+    - deployment-id
+
+ai:
+
+  content-awareness:
+
+    prompts-as-code: true
+
+    workflows-as-code: true
+
+    policies-as-code: true
+
+    rules-as-code: true
+
+    knowledge-as-code: true
+
+    benchmark-as-code: true
+
+    configuration-as-code: true
+
+monitoring:
+
+  metrics:
+
+    deployments: true
+
+    approvals: true
+
+    rollback-count: true
+
+    validation-failures: true
+
+    benchmark-results: true
+
+    content-health-score: true
+
+architecture:
+
+  principles:
+
+    - "Business Logic != AI Logic"
+    - "Content is a First-Class Asset"
+    - "Knowledge Before Generation"
+    - "Policy Before Execution"
+    - "Configuration Before Customization"
+    - "Everything Versioned"
+    - "Everything Auditable"
+    - "Everything Rollbackable"
 
 # ==========================================================
-# CHANDANALA CORE™ Principle
+# CHANDANALA CORE™ Architecture Rule
 #
-# Business Logic ≠ AI Model
-# AI Models are replaceable execution engines.
-# ERP modules communicate only with the AI Orchestrator.
+# Source Code
+# AI Prompts
+# Business Rules
+# Clinical Policies
+# Workflows
+# Knowledge
+# Configuration
+# Templates
+# Benchmarks
+# Feature Flags
+#
+# All are treated as governed software assets and follow
+# the same lifecycle:
+#
+# Design → Review → Validate → Approve → Version →
+# Deploy → Monitor → Improve → Archive
 # ==========================================================
