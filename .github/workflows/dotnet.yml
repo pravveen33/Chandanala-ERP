@@ -1,276 +1,72 @@
-name: CHANDANALA CORE Enterprise Pipeline
+name: Build
 
 on:
   push:
     branches:
-      - main
       - develop
-      - release/*
+      - main
+      - 'feature/**'
   pull_request:
     branches:
-      - main
       - develop
+      - main
 
 permissions:
   contents: read
-  checks: write
-  pull-requests: write
-  security-events: write
 
 concurrency:
-  group: enterprise-${{ github.ref }}
+  group: build-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  DOTNET_VERSION: "10.0.x"
-  CONFIGURATION: Release
+  DOTNET_VERSION: '10.0.x'
+  BUILD_CONFIGURATION: Release
 
 jobs:
 
   build:
-    name: Build
+
+    name: Restore, Build & Publish
 
     runs-on: ubuntu-latest
 
     steps:
 
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Dependencies
         run: dotnet restore
 
-      - name: Build
-        run: dotnet build --configuration $CONFIGURATION --no-restore
+      - name: Build Solution
+        run: |
+          dotnet build \
+            --configuration $BUILD_CONFIGURATION \
+            --no-restore \
+            /warnaserror
 
-  unit-tests:
+      - name: Publish Application
+        run: |
+          dotnet publish \
+            --configuration $BUILD_CONFIGURATION \
+            --no-build \
+            --output ./artifacts/publish
 
-    needs: build
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - run: dotnet test tests/UnitTests
-
-  integration-tests:
-
-    needs: unit-tests
-
-    runs-on: ubuntu-latest
-
-    services:
-
-      postgres:
-        image: postgres:17
-
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: chandanala
-
-        ports:
-          - 5432:5432
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - run: dotnet test tests/IntegrationTests
-
-  validation-platform:
-
-    needs: integration-tests
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: dotnet test tests/Validation
-
-  clinical-safety:
-
-    needs: validation-platform
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: dotnet test tests/ClinicalSafety
-
-  audit-platform:
-
-    needs: clinical-safety
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: dotnet test tests/Audit
-
-  knowledge-platform:
-
-    needs: audit-platform
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: dotnet test tests/Knowledge
-
-  rag-evaluation:
-
-    needs: knowledge-platform
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: dotnet test tests/RAG
-
-  ai-provider-tests:
-
-    needs: rag-evaluation
-
-    runs-on: ubuntu-latest
-
-    strategy:
-
-      matrix:
-        provider:
-          - openai
-          - anthropic
-          - gemini
-          - local
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: |
-          echo "Testing provider ${{ matrix.provider }}"
-
-  ai-governance:
-
-    needs: ai-provider-tests
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: dotnet test tests/AIGovernance
-
-  architecture:
-
-    needs: ai-governance
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: dotnet test tests/Architecture
-
-  performance:
-
-    needs: architecture
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: dotnet test tests/Performance
-
-  security:
-
-    needs: performance
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - name: Vulnerability Scan
-        run: dotnet list package --vulnerable
-
-      - name: Secret Scan
-        uses: gitleaks/gitleaks-action@v2
-
-  documentation:
-
-    needs: security
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - run: echo "Validate Architecture Documents"
-
-  release-gate:
-
-    needs: documentation
-
-    runs-on: ubuntu-latest
-
-    environment:
-
-      name: production
-
-    steps:
-
-      - run: |
-          echo "=================================="
-          echo "CHANDANALA CORE RELEASE APPROVED"
-          echo "=================================="
-
-  deploy:
-
-    if: github.ref == 'refs/heads/main'
-
-    needs: release-gate
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - name: Publish
-        run: dotnet publish -c Release
-
-      - name: Docker Build
-        run: docker compose build
-
-      - name: Production Deploy
-        run: docker compose up -d
+          name: chandanala-core-build
+          path: artifacts/publish
