@@ -1,7 +1,97 @@
-- name: Build Solution
-  run: |
-    dotnet build \
-      --configuration $BUILD_CONFIGURATION \
-      --no-restore \
-      -warnaserror \
-      -p:WarningsNotAsErrors=CS0414
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  security-events: read
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  BUILD_CONFIGURATION: Release
+
+jobs:
+
+  verify:
+
+    name: Verify Release
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration $BUILD_CONFIGURATION --no-restore -warnaserror
+
+      - name: Unit Tests
+        run: dotnet test tests/UnitTests --configuration $BUILD_CONFIGURATION --no-build
+
+      - name: Integration Tests
+        run: dotnet test tests/IntegrationTests --configuration $BUILD_CONFIGURATION --no-build
+
+      - name: Validation Tests
+        run: dotnet test tests/Validation --configuration $BUILD_CONFIGURATION --no-build
+
+      - name: Clinical Safety Tests
+        run: dotnet test tests/ClinicalSafety --configuration $BUILD_CONFIGURATION --no-build
+
+      - name: Architecture Tests
+        run: dotnet test tests/Architecture --configuration $BUILD_CONFIGURATION --no-build
+
+      - name: Security Audit
+        run: dotnet list package --vulnerable
+
+      - name: Publish
+        run: |
+          dotnet publish \
+            --configuration $BUILD_CONFIGURATION \
+            --no-build \
+            --output artifacts/publish
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chandanala-core-release
+          path: artifacts/publish
+
+  deploy:
+
+    name: Production Deployment
+
+    needs: verify
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Release Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: chandanala-core-release
+          path: artifacts/publish
+
+      - name: Deploy
+        run: |
+          echo "Production deployment starts here."
+          # Replace with your deployment commands.
