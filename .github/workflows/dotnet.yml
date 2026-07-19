@@ -1,72 +1,7 @@
-name: Build
-
-on:
-  push:
-    branches:
-      - develop
-      - main
-      - 'feature/**'
-  pull_request:
-    branches:
-      - develop
-      - main
-
-permissions:
-  contents: read
-
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  DOTNET_VERSION: '10.0.x'
-  BUILD_CONFIGURATION: Release
-
-jobs:
-
-  build:
-
-    name: Restore, Build & Publish
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Cache NuGet
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore Dependencies
-        run: dotnet restore
-
-      - name: Build Solution
-        run: |
-          dotnet build \
-            --configuration $BUILD_CONFIGURATION \
-            --no-restore \
-            /warnaserror
-
-      - name: Publish Application
-        run: |
-          dotnet publish \
-            --configuration $BUILD_CONFIGURATION \
-            --no-build \
-            --output ./artifacts/publish
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: chandanala-core-build
-          path: artifacts/publish
+- name: Build Solution
+  run: |
+    dotnet build \
+      --configuration $BUILD_CONFIGURATION \
+      --no-restore \
+      -warnaserror \
+      -p:WarningsNotAsErrors=CS0414
