@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Chandanala.ERP.Web.Models.Models;
+using Chandanala.ERP.Web.Models;
 
 namespace Chandanala.ERP.Web.Data;
 
@@ -18,45 +18,45 @@ public class AppDbContext : DbContext
             .HaveColumnType("timestamp with time zone");
     }
     public DbSet<Bill> Bills => Set<Bill>();
+    
+    public DbSet<User> Users => Set<User>();
 
-public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
 
-public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
 
-public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
 
-public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
-public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<Medicine> Medicines => Set<Medicine>();
 
-public DbSet<Medicine> Medicines => Set<Medicine>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
 
-public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<SupplierHistory> SupplierHistories => Set<SupplierHistory>();
 
-public DbSet<SupplierHistory> SupplierHistories => Set<SupplierHistory>();
+    public DbSet<SupplierChangeRequest> SupplierChangeRequests => Set<SupplierChangeRequest>();
 
-public DbSet<SupplierChangeRequest> SupplierChangeRequests => Set<SupplierChangeRequest>();
+    public DbSet<Purchase> Purchases => Set<Purchase>();
 
-public DbSet<Purchase> Purchases => Set<Purchase>();
+    public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
 
-public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
-public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
 
-public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
+    public DbSet<Batch> Batches => Set<Batch>();
 
-public DbSet<Batch> Batches => Set<Batch>();
+    public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
 
-public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
+    public DbSet<Sale> Sales { get; set; } = default!;
 
-public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
 
-public DbSet<SaleItem> SaleItems => Set<SaleItem>();
 
-public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-{
-    // Existing implementation
-}
+   
+    
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         ApplySupplierTimestamps();
         ApplyPurchaseTimestamps();

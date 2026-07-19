@@ -1,0 +1,37 @@
+namespace Chandanala.ERP.Modules.Identity.Domain.Entities;
+
+public class User
+{
+    public Guid Id { get; private set; }
+
+    public string UserName { get; private set; } = string.Empty;
+
+    public string Email { get; private set; } = string.Empty;
+
+    public string PasswordHash { get; private set; } = string.Empty;
+
+    public UserStatus Status { get; private set; }
+
+    public DateTime CreatedAt { get; private set; }
+
+    private User() { }
+
+    public User(
+        Guid id,
+        string userName,
+        string email,
+        string passwordHash)
+    {
+        Id = id;
+        UserName = userName;
+        Email = email;
+        PasswordHash = passwordHash;
+        Status = UserStatus.Active;
+        CreatedAt = DateTime.UtcNow;
+    }
+
+    public void Disable()
+    {
+        Status = UserStatus.Disabled;
+    }
+}

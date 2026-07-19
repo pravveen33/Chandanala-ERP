@@ -1,7 +1,7 @@
 using Chandanala.ERP.Web.Data; // This tells the file where to find AppDbContext
-using Chandanala.ERP.Web.Models.Models; // This ensures it can see the Bill class
+using Chandanala.ERP.Web.Models; // This ensures it can see the Bill class
 
-namespace Chandanala.ERP.Web.Models.Models
+namespace Chandanala.ERP.Web.Models
 {
     public class BillService
     {
