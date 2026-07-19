@@ -1,325 +1,164 @@
 # ==========================================================
 # CHANDANALA CORE™
-# Enterprise Event Mesh Configuration
-# Architecture v31.6
+# Master Architecture Configuration
+# Version: 31.6
 # ==========================================================
+
+system:
+
+  name: CHANDANALA CORE™
+
+  version: 31.6
+
+  architecture: enterprise
+
+  deployment:
+    environment: production
+
+  pharmacy:
+    type: retail
+
+# ----------------------------------------------------------
+# Feature Flags
+# ----------------------------------------------------------
+
+features:
+
+  ai: true
+  event-mesh: true
+  knowledge-ops: true
+  content-as-code: true
+  workflow-engine: true
+  audit: true
+  monitoring: true
+  feature-flags: true
+  notifications: true
+  analytics: true
+
+# ----------------------------------------------------------
+# AI Platform
+# ----------------------------------------------------------
+
+ai:
+
+  orchestrator:
+    enabled: true
+
+  routing:
+    dynamic: true
+    failover: true
+
+  providers:
+
+    gpt:
+      enabled: true
+      status: production
+
+    gemini:
+      enabled: true
+      status: production
+
+    monolith:
+      enabled: false
+      status: experimental
+
+    soofi:
+      enabled: false
+      status: experimental
+
+    ollama:
+      enabled: false
+      status: optional
+
+# ----------------------------------------------------------
+# Event Mesh
+# ----------------------------------------------------------
 
 event-mesh:
 
   enabled: true
 
-  architecture: hybrid
-
-  broker:
-    type: kafka
-    cluster-mode: true
-    replication-factor: 3
-    partitions-default: 6
-    retention-days: 30
-    compression: zstd
-
-  communication:
-
-    synchronous:
-      protocol:
-        - REST
-        - gRPC
-
-    asynchronous:
-      protocol:
-        - Kafka
-
-# ----------------------------------------------------------
-# Command vs Event Policy
-# ----------------------------------------------------------
-
-commands:
-
-  synchronous:
-
-    - Login
-    - Authenticate
-    - CreateBill
-    - UpdateInventory
-    - ValidatePrescription
-    - CalculateGST
-    - ProcessPayment
-    - ApprovePurchase
-
-events:
-
-  asynchronous:
-
-    - BillCreated
-    - BillCancelled
-    - PaymentCompleted
-    - StockAdjusted
-    - StockTransferred
-    - StockReserved
-    - PurchaseApproved
-    - GoodsReceived
-    - PrescriptionUploaded
-    - OCRCompleted
-    - PharmacistReviewRequired
-    - MedicineDispensed
-    - CustomerRegistered
-    - LoyaltyUpdated
-    - DeliveryAssigned
-    - DeliveryCompleted
-    - AIRecommendationGenerated
-    - ForecastCompleted
-
-# ----------------------------------------------------------
-# Event Schema Registry
-# ----------------------------------------------------------
-
-schema-registry:
-
-  enabled: true
-
-  compatibility: backward
-
-  validation:
-    required: true
-
-  versioning:
-    semantic: true
-
-# ----------------------------------------------------------
-# Event Metadata
-# ----------------------------------------------------------
-
-metadata:
-
-  required:
-
-    event-id: uuidv7
-    event-version: true
-    correlation-id: true
-    causation-id: true
-    tenant-id: true
-    timestamp-utc: true
-    source-service: true
-    event-type: true
-    schema-version: true
-    payload-version: true
-
-# ----------------------------------------------------------
-# Domain Events
-# ----------------------------------------------------------
-
-domains:
-
-  billing:
-
-    events:
-      - BillCreated
-      - BillUpdated
-      - BillCancelled
-      - PaymentCompleted
-      - RefundProcessed
-
-  inventory:
-
-    events:
-      - StockReceived
-      - StockAdjusted
-      - StockReserved
-      - StockReleased
-      - StockTransferred
-      - BatchExpired
-      - ReorderTriggered
-
-  prescription:
-
-    events:
-      - PrescriptionUploaded
-      - OCRCompleted
-      - PharmacistReviewRequired
-      - PrescriptionValidated
-      - PrescriptionRejected
-      - MedicineDispensed
-
-  purchasing:
-
-    events:
-      - PurchaseOrderCreated
-      - PurchaseApproved
-      - GoodsReceived
-      - SupplierInvoiceProcessed
-
-  customer:
-
-    events:
-      - CustomerRegistered
-      - LoyaltyUpdated
-      - RefillReminderCreated
-
-  delivery:
-
-    events:
-      - DeliveryAssigned
-      - DeliveryStarted
-      - DeliveryCompleted
-
-  ai:
-
-    events:
-      - OCRCompleted
-      - AIRecommendationGenerated
-      - InventoryForecastCompleted
-      - ReportGenerated
-
-  governance:
-
-    events:
-      - PolicyUpdated
-      - RuleChanged
-      - PromptReleased
-      - ConfigurationChanged
-
-# ----------------------------------------------------------
-# Event Publishing
-# ----------------------------------------------------------
-
-publishing:
+  broker: kafka
 
   transactional-outbox: true
 
-  publish-after-commit: true
+  schema-registry: true
 
-  idempotent: true
+  replay: true
 
-  ordering: partition
-
-  retries:
-
-    enabled: true
-
-    max-attempts: 5
-
-    exponential-backoff: true
+  dead-letter-queue: true
 
 # ----------------------------------------------------------
-# Consumers
+# Governance
 # ----------------------------------------------------------
 
-consumers:
+governance:
 
-  notification-service:
+  business-rules:
     enabled: true
 
-  ai-orchestrator:
+  clinical-constraint-engine:
     enabled: true
 
-  analytics-service:
-    enabled: true
+  audit:
+    mandatory: true
 
-  audit-service:
-    enabled: true
-
-  reporting-service:
-    enabled: true
-
-  dashboard-service:
-    enabled: true
-
-  search-service:
-    enabled: true
-
-  inventory-service:
-    enabled: true
+  approvals:
+    mandatory: true
 
 # ----------------------------------------------------------
-# Reliability
+# Content as Code
 # ----------------------------------------------------------
 
-reliability:
+content:
 
-  dead-letter-queue:
+  prompts:
+    versioned: true
+
+  workflows:
+    versioned: true
+
+  policies:
+    versioned: true
+
+  rules:
+    versioned: true
+
+  knowledge:
+    versioned: true
+
+  configuration:
+    versioned: true
+
+# ----------------------------------------------------------
+# KnowledgeOps
+# ----------------------------------------------------------
+
+knowledge:
+
+  retrieval:
+
+    order:
+      - business-rules
+      - clinical-policies
+      - sop
+      - knowledge-base
+      - configuration
+      - ai
+
+  citations: required
+
+# ----------------------------------------------------------
+# Workflow Engine
+# ----------------------------------------------------------
+
+workflow:
+
+  engine:
+
     enabled: true
 
-  duplicate-detection:
-    enabled: true
-
-  poison-message-handling:
-    enabled: true
-
-  timeout-protection:
-    enabled: true
-
-  replay-support:
-    enabled: true
-
-# ----------------------------------------------------------
-# Event Replay
-# ----------------------------------------------------------
-
-replay:
-
-  enabled: true
-
-  allowed:
-
-    - analytics
-    - dashboards
-    - ai-training
-    - search-index
-    - reporting
-
-  prohibited:
-
-    - billing
-    - payment
-    - prescription-approval
-
-# ----------------------------------------------------------
-# AI Integration
-# ----------------------------------------------------------
-
-ai:
-
-  consume-events: true
-
-  publish-events: true
-
-  triggers:
-
-    StockAdjusted:
-      action: InventoryForecast
-
-    BillCreated:
-      action: SalesAnalytics
-
-    GoodsReceived:
-      action: SupplierAnalysis
-
-    PrescriptionUploaded:
-      action: OCRPipeline
-
-    OCRCompleted:
-      action: PharmacistReview
-
-# ----------------------------------------------------------
-# Security
-# ----------------------------------------------------------
-
-security:
-
-  authentication: required
-
-  authorization: required
-
-  encryption:
-    in-transit: true
-
-  tenant-isolation: true
-
-  pii-masking: true
-
-  payload-validation: true
-
-  audit-log: mandatory
+    declarative: true
 
 # ----------------------------------------------------------
 # Observability
@@ -327,18 +166,33 @@ security:
 
 observability:
 
+  metrics: true
+
   tracing:
+
     opentelemetry: true
 
-  metrics:
+  logging:
 
-    event-throughput: true
-    consumer-lag: true
-    processing-latency: true
-    retry-count: true
-    dlq-size: true
-    replay-count: true
-    event-failure-rate: true
+    structured: true
+
+# ----------------------------------------------------------
+# Security
+# ----------------------------------------------------------
+
+security:
+
+  authentication: oauth2
+
+  authorization: rbac
+
+  mfa: optional
+
+  encryption:
+
+    transit: true
+
+    rest: true
 
 # ----------------------------------------------------------
 # Architecture Principles
@@ -346,28 +200,13 @@ observability:
 
 principles:
 
-  - "Commands change state."
-  - "Events describe completed state changes."
-  - "Publish events only after successful transaction commit."
-  - "Events are immutable."
-  - "Every event is versioned."
-  - "Every event is auditable."
-  - "Every event is traceable."
-  - "Every consumer must be idempotent."
-  - "Business Rules Engine remains authoritative."
-  - "Clinical Constraint Engine remains authoritative."
-  - "AI consumes validated business events only."
-
-# ==========================================================
-# CHANDANALA CORE™ Event Mesh Standard
-#
-# REST/gRPC → Critical Transactions
-# Kafka      → Business Events
-#
-# Event Flow:
-# Command → Business Rules → Database Commit →
-# Transactional Outbox → Kafka →
-# AI / Analytics / Notifications / Audit / Reporting
-#
-# Business Rules are always the source of truth.
-# ==========================================================
+  - "Business Logic != AI Logic"
+  - "Content is Code"
+  - "Knowledge Before Generation"
+  - "Rules Before AI"
+  - "Policy Before Execution"
+  - "Events After Successful Commit"
+  - "Everything Versioned"
+  - "Everything Auditable"
+  - "Everything Observable"
+  - "Everything Replaceable"
