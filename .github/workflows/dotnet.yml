@@ -1,294 +1,373 @@
 # ==========================================================
 # CHANDANALA CORE™
-# Content-as-Code & KnowledgeOps Configuration
-# Architecture v31.4
+# Enterprise Event Mesh Configuration
+# Architecture v31.6
 # ==========================================================
 
-content-as-code:
+event-mesh:
 
   enabled: true
 
-  governance:
-    mandatory: true
-    version-control: git
-    pull-request-review: true
-    approval-required: true
-    audit-trail: true
-    rollback-supported: true
-    digital-signatures: true
+  architecture: hybrid
 
-  lifecycle:
+  broker:
+    type: kafka
+    cluster-mode: true
+    replication-factor: 3
+    partitions-default: 6
+    retention-days: 30
+    compression: zstd
 
-    stages:
-      - draft
-      - review
-      - validate
-      - approve
-      - version
-      - deploy
-      - monitor
-      - archive
+  communication:
 
-  repository:
+    synchronous:
+      protocol:
+        - REST
+        - gRPC
 
-    prompts: "/prompts"
-    workflows: "/workflows"
-    rules: "/rules"
-    policies: "/policies"
-    knowledge: "/knowledge"
-    templates: "/templates"
-    benchmark: "/benchmark"
-    schemas: "/schemas"
-    feature-flags: "/feature-flags"
-    configurations: "/configs"
-    governance: "/governance"
-    documentation: "/docs"
+    asynchronous:
+      protocol:
+        - Kafka
 
-content-registry:
+# ----------------------------------------------------------
+# Command vs Event Policy
+# ----------------------------------------------------------
 
-  prompt:
-    enabled: true
-    owner: ai-team
+commands:
 
-  workflow:
-    enabled: true
-    owner: operations
+  synchronous:
 
-  business-rule:
-    enabled: true
-    owner: business-team
+    - Login
+    - Authenticate
+    - CreateBill
+    - UpdateInventory
+    - ValidatePrescription
+    - CalculateGST
+    - ProcessPayment
+    - ApprovePurchase
 
-  clinical-policy:
-    enabled: true
-    owner: pharmacist
+events:
 
-  configuration:
-    enabled: true
-    owner: system-admin
+  asynchronous:
 
-  knowledge:
-    enabled: true
-    owner: knowledge-manager
+    - BillCreated
+    - BillCancelled
+    - PaymentCompleted
+    - StockAdjusted
+    - StockTransferred
+    - StockReserved
+    - PurchaseApproved
+    - GoodsReceived
+    - PrescriptionUploaded
+    - OCRCompleted
+    - PharmacistReviewRequired
+    - MedicineDispensed
+    - CustomerRegistered
+    - LoyaltyUpdated
+    - DeliveryAssigned
+    - DeliveryCompleted
+    - AIRecommendationGenerated
+    - ForecastCompleted
 
-  template:
-    enabled: true
+# ----------------------------------------------------------
+# Event Schema Registry
+# ----------------------------------------------------------
 
-  report:
-    enabled: true
+schema-registry:
 
-  dashboard:
-    enabled: true
+  enabled: true
 
-  ai-benchmark:
-    enabled: true
+  compatibility: backward
 
-  feature-flag:
-    enabled: true
+  validation:
+    required: true
+
+  versioning:
+    semantic: true
+
+# ----------------------------------------------------------
+# Event Metadata
+# ----------------------------------------------------------
 
 metadata:
 
-  required: true
-
-  fields:
-
-    id: required
-    name: required
-    category: required
-    version: required
-    owner: required
-    reviewer: required
-    approver: required
-    status: required
-    created-at: required
-    updated-at: required
-    effective-from: required
-    expires-on: optional
-    rollback-version: required
-    checksum: required
-    digital-signature: required
-    tags: optional
-
-approval-matrix:
-
-  prompt:
-    reviewer: ai-lead
-    approver: technical-lead
-
-  workflow:
-    reviewer: process-owner
-    approver: operations-manager
-
-  business-rule:
-    reviewer: operations
-    approver: business-owner
-
-  clinical-policy:
-    reviewer: senior-pharmacist
-    approver: compliance-officer
-
-  configuration:
-    reviewer: system-administrator
-    approver: erp-administrator
-
-  knowledge:
-    reviewer: subject-expert
-    approver: knowledge-manager
-
-knowledge-retrieval:
-
-  strategy:
-
-    - business-rules
-    - clinical-policies
-    - approved-sop
-    - knowledge-base
-    - configuration
-    - ai-reasoning
-
-  cache:
-    enabled: true
-
-  vector-search:
-    enabled: true
-
-  citations:
-    required: true
-
-validation:
-
-  schema-validation: true
-  yaml-validation: true
-  duplicate-detection: true
-  broken-link-check: true
-  policy-validation: true
-  clinical-validation: true
-  security-scan: true
-  compliance-check: true
-  ai-benchmark-validation: true
-
-quality-gates:
-
   required:
 
-    - schema-valid
-    - metadata-valid
-    - approval-complete
-    - benchmark-passed
-    - compliance-passed
-    - security-passed
+    event-id: uuidv7
+    event-version: true
+    correlation-id: true
+    causation-id: true
+    tenant-id: true
+    timestamp-utc: true
+    source-service: true
+    event-type: true
+    schema-version: true
+    payload-version: true
 
-deployment:
+# ----------------------------------------------------------
+# Domain Events
+# ----------------------------------------------------------
 
-  environments:
+domains:
 
-    development:
-      auto-deploy: true
+  billing:
 
-    staging:
-      approval-required: true
+    events:
+      - BillCreated
+      - BillUpdated
+      - BillCancelled
+      - PaymentCompleted
+      - RefundProcessed
 
-    production:
-      approval-required: true
-      audit-required: true
-      rollback-ready: true
+  inventory:
 
-git:
+    events:
+      - StockReceived
+      - StockAdjusted
+      - StockReserved
+      - StockReleased
+      - StockTransferred
+      - BatchExpired
+      - ReorderTriggered
 
-  branching:
+  prescription:
 
-    main: protected
+    events:
+      - PrescriptionUploaded
+      - OCRCompleted
+      - PharmacistReviewRequired
+      - PrescriptionValidated
+      - PrescriptionRejected
+      - MedicineDispensed
 
-    develop: protected
+  purchasing:
 
-    feature:
-      prefix: feature/
+    events:
+      - PurchaseOrderCreated
+      - PurchaseApproved
+      - GoodsReceived
+      - SupplierInvoiceProcessed
 
-    hotfix:
-      prefix: hotfix/
+  customer:
 
-    release:
-      prefix: release/
+    events:
+      - CustomerRegistered
+      - LoyaltyUpdated
+      - RefillReminderCreated
 
-audit:
+  delivery:
+
+    events:
+      - DeliveryAssigned
+      - DeliveryStarted
+      - DeliveryCompleted
+
+  ai:
+
+    events:
+      - OCRCompleted
+      - AIRecommendationGenerated
+      - InventoryForecastCompleted
+      - ReportGenerated
+
+  governance:
+
+    events:
+      - PolicyUpdated
+      - RuleChanged
+      - PromptReleased
+      - ConfigurationChanged
+
+# ----------------------------------------------------------
+# Event Publishing
+# ----------------------------------------------------------
+
+publishing:
+
+  transactional-outbox: true
+
+  publish-after-commit: true
+
+  idempotent: true
+
+  ordering: partition
+
+  retries:
+
+    enabled: true
+
+    max-attempts: 5
+
+    exponential-backoff: true
+
+# ----------------------------------------------------------
+# Consumers
+# ----------------------------------------------------------
+
+consumers:
+
+  notification-service:
+    enabled: true
+
+  ai-orchestrator:
+    enabled: true
+
+  analytics-service:
+    enabled: true
+
+  audit-service:
+    enabled: true
+
+  reporting-service:
+    enabled: true
+
+  dashboard-service:
+    enabled: true
+
+  search-service:
+    enabled: true
+
+  inventory-service:
+    enabled: true
+
+# ----------------------------------------------------------
+# Reliability
+# ----------------------------------------------------------
+
+reliability:
+
+  dead-letter-queue:
+    enabled: true
+
+  duplicate-detection:
+    enabled: true
+
+  poison-message-handling:
+    enabled: true
+
+  timeout-protection:
+    enabled: true
+
+  replay-support:
+    enabled: true
+
+# ----------------------------------------------------------
+# Event Replay
+# ----------------------------------------------------------
+
+replay:
 
   enabled: true
 
-  capture:
+  allowed:
 
-    - author
-    - reviewer
-    - approver
-    - timestamp
-    - previous-version
-    - new-version
-    - change-summary
-    - rollback-reference
-    - deployment-id
+    - analytics
+    - dashboards
+    - ai-training
+    - search-index
+    - reporting
+
+  prohibited:
+
+    - billing
+    - payment
+    - prescription-approval
+
+# ----------------------------------------------------------
+# AI Integration
+# ----------------------------------------------------------
 
 ai:
 
-  content-awareness:
+  consume-events: true
 
-    prompts-as-code: true
+  publish-events: true
 
-    workflows-as-code: true
+  triggers:
 
-    policies-as-code: true
+    StockAdjusted:
+      action: InventoryForecast
 
-    rules-as-code: true
+    BillCreated:
+      action: SalesAnalytics
 
-    knowledge-as-code: true
+    GoodsReceived:
+      action: SupplierAnalysis
 
-    benchmark-as-code: true
+    PrescriptionUploaded:
+      action: OCRPipeline
 
-    configuration-as-code: true
+    OCRCompleted:
+      action: PharmacistReview
 
-monitoring:
+# ----------------------------------------------------------
+# Security
+# ----------------------------------------------------------
+
+security:
+
+  authentication: required
+
+  authorization: required
+
+  encryption:
+    in-transit: true
+
+  tenant-isolation: true
+
+  pii-masking: true
+
+  payload-validation: true
+
+  audit-log: mandatory
+
+# ----------------------------------------------------------
+# Observability
+# ----------------------------------------------------------
+
+observability:
+
+  tracing:
+    opentelemetry: true
 
   metrics:
 
-    deployments: true
+    event-throughput: true
+    consumer-lag: true
+    processing-latency: true
+    retry-count: true
+    dlq-size: true
+    replay-count: true
+    event-failure-rate: true
 
-    approvals: true
+# ----------------------------------------------------------
+# Architecture Principles
+# ----------------------------------------------------------
 
-    rollback-count: true
+principles:
 
-    validation-failures: true
-
-    benchmark-results: true
-
-    content-health-score: true
-
-architecture:
-
-  principles:
-
-    - "Business Logic != AI Logic"
-    - "Content is a First-Class Asset"
-    - "Knowledge Before Generation"
-    - "Policy Before Execution"
-    - "Configuration Before Customization"
-    - "Everything Versioned"
-    - "Everything Auditable"
-    - "Everything Rollbackable"
+  - "Commands change state."
+  - "Events describe completed state changes."
+  - "Publish events only after successful transaction commit."
+  - "Events are immutable."
+  - "Every event is versioned."
+  - "Every event is auditable."
+  - "Every event is traceable."
+  - "Every consumer must be idempotent."
+  - "Business Rules Engine remains authoritative."
+  - "Clinical Constraint Engine remains authoritative."
+  - "AI consumes validated business events only."
 
 # ==========================================================
-# CHANDANALA CORE™ Architecture Rule
+# CHANDANALA CORE™ Event Mesh Standard
 #
-# Source Code
-# AI Prompts
-# Business Rules
-# Clinical Policies
-# Workflows
-# Knowledge
-# Configuration
-# Templates
-# Benchmarks
-# Feature Flags
+# REST/gRPC → Critical Transactions
+# Kafka      → Business Events
 #
-# All are treated as governed software assets and follow
-# the same lifecycle:
+# Event Flow:
+# Command → Business Rules → Database Commit →
+# Transactional Outbox → Kafka →
+# AI / Analytics / Notifications / Audit / Reporting
 #
-# Design → Review → Validate → Approve → Version →
-# Deploy → Monitor → Improve → Archive
+# Business Rules are always the source of truth.
 # ==========================================================
