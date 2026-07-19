@@ -1,12 +1,13 @@
-name: AI Provider Compatibility
+name: Analytics Platform
 
 on:
-  pull_request:
+  push:
     branches:
       - develop
       - main
+      - 'feature/**'
 
-  push:
+  pull_request:
     branches:
       - develop
       - main
@@ -16,25 +17,41 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: analytics-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DOTNET_VERSION: "10.0.x"
   BUILD_CONFIGURATION: Release
 
 jobs:
 
-  provider-tests:
+  analytics:
+
+    name: Analytics Validation
 
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
+    services:
 
-      matrix:
-        provider:
-          - openai
-          - gemma
-          - claude
-          - ocr
+      postgres:
+
+        image: pgvector/pgvector:pg17
+
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: chandanala
+
+        ports:
+          - 5432:5432
+
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
 
@@ -55,48 +72,44 @@ jobs:
             --configuration $BUILD_CONFIGURATION \
             --no-restore
 
-      - name: Provider Health Check
+      - name: Run Analytics Unit Tests
         run: |
-          echo "Checking ${{ matrix.provider }}"
+          dotnet test tests/Analytics.UnitTests \
+            --configuration $BUILD_CONFIGURATION \
+            --no-build
 
-      - name: Capability Tests
+      - name: Run Forecast Tests
         run: |
-          echo "Capability validation"
+          dotnet test tests/Analytics.ForecastingTests \
+            --configuration $BUILD_CONFIGURATION \
+            --no-build
 
-      - name: Routing Tests
+      - name: Run Feature Engineering Tests
         run: |
-          echo "Provider routing"
+          dotnet test tests/Analytics.FeatureEngineeringTests \
+            --configuration $BUILD_CONFIGURATION \
+            --no-build
 
-      - name: Embedding Tests
+      - name: Run Prediction Provider Tests
         run: |
-          echo "Embedding validation"
+          dotnet test tests/Analytics.ProviderTests \
+            --configuration $BUILD_CONFIGURATION \
+            --no-build
 
-      - name: Retrieval Tests
+      - name: Run Validation Integration Tests
         run: |
-          echo "Hybrid RAG retrieval"
+          dotnet test tests/Analytics.ValidationTests \
+            --configuration $BUILD_CONFIGURATION \
+            --no-build
 
-      - name: Citation Tests
+      - name: Run Performance Tests
         run: |
-          echo "Citation enforcement"
+          dotnet test tests/Analytics.PerformanceTests \
+            --configuration $BUILD_CONFIGURATION \
+            --no-build
 
-      - name: Validation Platform Tests
-        run: |
-          echo "Validation Platform"
-
-      - name: Clinical Safety Tests
-        run: |
-          echo "Clinical Safety"
-
-      - name: Audit Tests
-        run: |
-          echo "Audit Platform"
-
-      - name: Performance Tests
-        run: |
-          echo "Latency benchmark"
-
-      - name: Upload Report
+      - name: Upload Analytics Results
         uses: actions/upload-artifact@v4
         with:
-          name: provider-${{ matrix.provider }}
+          name: analytics-results
           path: TestResults/
