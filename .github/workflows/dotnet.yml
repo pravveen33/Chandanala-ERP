@@ -1,212 +1,131 @@
-# ==========================================================
-# CHANDANALA CORE™
-# Master Architecture Configuration
-# Version: 31.6
-# ==========================================================
+name: CHANDANALA CORE CI
 
-system:
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+      - "release/**"
+  pull_request:
+    branches:
+      - main
+      - develop
 
-  name: CHANDANALA CORE™
+permissions:
+  contents: read
+  security-events: write
 
-  version: 31.6
+env:
+  DOTNET_VERSION: "9.0.x"
+  CONFIGURATION: Release
 
-  architecture: enterprise
+jobs:
+  build-test:
 
-  deployment:
-    environment: production
+    runs-on: ubuntu-latest
 
-  pharmacy:
-    type: retail
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-# ----------------------------------------------------------
-# Feature Flags
-# ----------------------------------------------------------
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-features:
+      - name: Restore
+        run: dotnet restore
 
-  ai: true
-  event-mesh: true
-  knowledge-ops: true
-  content-as-code: true
-  workflow-engine: true
-  audit: true
-  monitoring: true
-  feature-flags: true
-  notifications: true
-  analytics: true
+      - name: Format Check
+        run: dotnet format --verify-no-changes
 
-# ----------------------------------------------------------
-# AI Platform
-# ----------------------------------------------------------
+      - name: Build
+        run: dotnet build --configuration $CONFIGURATION --no-restore
 
-ai:
+      - name: Unit Tests
+        run: dotnet test --configuration $CONFIGURATION --no-build --collect:"XPlat Code Coverage"
 
-  orchestrator:
-    enabled: true
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Unit Tests
+          path: "**/TestResults/*.trx"
+          reporter: dotnet-trx
 
-  routing:
-    dynamic: true
-    failover: true
+      - name: Publish Code Coverage
+        uses: codecov/codecov-action@v5
+        if: always()
 
-  providers:
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: "**/TestResults"
 
-    gpt:
-      enabled: true
-      status: production
+  security:
 
-    gemini:
-      enabled: true
-      status: production
+    runs-on: ubuntu-latest
+    needs: build-test
 
-    monolith:
-      enabled: false
-      status: experimental
+    steps:
+      - uses: actions/checkout@v4
 
-    soofi:
-      enabled: false
-      status: experimental
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
 
-    ollama:
-      enabled: false
-      status: optional
+      - uses: github/codeql-action/autobuild@v3
 
-# ----------------------------------------------------------
-# Event Mesh
-# ----------------------------------------------------------
+      - uses: github/codeql-action/analyze@v3
 
-event-mesh:
+  dependency-scan:
 
-  enabled: true
+    runs-on: ubuntu-latest
+    needs: build-test
 
-  broker: kafka
+    steps:
+      - uses: actions/checkout@v4
 
-  transactional-outbox: true
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-  schema-registry: true
+      - name: Restore
+        run: dotnet restore
 
-  replay: true
+      - name: Vulnerability Audit
+        run: dotnet list package --vulnerable --include-transitive
 
-  dead-letter-queue: true
+  migration-validation:
 
-# ----------------------------------------------------------
-# Governance
-# ----------------------------------------------------------
+    runs-on: ubuntu-latest
+    needs: build-test
 
-governance:
+    steps:
+      - uses: actions/checkout@v4
 
-  business-rules:
-    enabled: true
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-  clinical-constraint-engine:
-    enabled: true
+      - name: Install EF Tool
+        run: dotnet tool install --global dotnet-ef
 
-  audit:
-    mandatory: true
+      - name: Validate EF Migrations
+        run: dotnet ef migrations script --no-build
 
-  approvals:
-    mandatory: true
+  quality-gate:
 
-# ----------------------------------------------------------
-# Content as Code
-# ----------------------------------------------------------
+    runs-on: ubuntu-latest
+    needs:
+      - build-test
+      - security
+      - dependency-scan
+      - migration-validation
 
-content:
-
-  prompts:
-    versioned: true
-
-  workflows:
-    versioned: true
-
-  policies:
-    versioned: true
-
-  rules:
-    versioned: true
-
-  knowledge:
-    versioned: true
-
-  configuration:
-    versioned: true
-
-# ----------------------------------------------------------
-# KnowledgeOps
-# ----------------------------------------------------------
-
-knowledge:
-
-  retrieval:
-
-    order:
-      - business-rules
-      - clinical-policies
-      - sop
-      - knowledge-base
-      - configuration
-      - ai
-
-  citations: required
-
-# ----------------------------------------------------------
-# Workflow Engine
-# ----------------------------------------------------------
-
-workflow:
-
-  engine:
-
-    enabled: true
-
-    declarative: true
-
-# ----------------------------------------------------------
-# Observability
-# ----------------------------------------------------------
-
-observability:
-
-  metrics: true
-
-  tracing:
-
-    opentelemetry: true
-
-  logging:
-
-    structured: true
-
-# ----------------------------------------------------------
-# Security
-# ----------------------------------------------------------
-
-security:
-
-  authentication: oauth2
-
-  authorization: rbac
-
-  mfa: optional
-
-  encryption:
-
-    transit: true
-
-    rest: true
-
-# ----------------------------------------------------------
-# Architecture Principles
-# ----------------------------------------------------------
-
-principles:
-
-  - "Business Logic != AI Logic"
-  - "Content is Code"
-  - "Knowledge Before Generation"
-  - "Rules Before AI"
-  - "Policy Before Execution"
-  - "Events After Successful Commit"
-  - "Everything Versioned"
-  - "Everything Auditable"
-  - "Everything Observable"
-  - "Everything Replaceable"
+    steps:
+      - name: Quality Gate
+        run: echo "✅ All quality gates passed."
