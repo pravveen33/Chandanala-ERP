@@ -1,58 +1,36 @@
-name: CHANDANALA CORE - Fleet Engineering CI
+name: Release
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-      - feature/**
-  pull_request:
-    branches:
-      - main
-      - develop
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 permissions:
-  contents: read
-  checks: write
-  pull-requests: write
-
-env:
-  DOTNET_VERSION: "9.0.x"
-  BUILD_CONFIGURATION: Release
+  contents: write
 
 jobs:
-  build:
-
+  release:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
 
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: 9.0.x
 
-      - name: Restore
-        run: dotnet restore
+      - run: dotnet restore
 
-      - name: Build
-        run: dotnet build --configuration $BUILD_CONFIGURATION --no-restore
+      - run: dotnet build -c Release --no-restore
 
-      - name: Test
-        run: dotnet test --configuration $BUILD_CONFIGURATION --no-build --verbosity normal
+      - run: dotnet test -c Release --no-build
 
-      - name: Publish
-        run: |
-          dotnet publish src/Chandanala.ERP.Web \
-            --configuration $BUILD_CONFIGURATION \
-            --output publish
+      - run: dotnet publish src/Chandanala.ERP.Web \
+          -c Release \
+          -o publish
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: chandanala-core
+          name: release
           path: publish
