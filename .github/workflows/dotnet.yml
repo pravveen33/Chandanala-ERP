@@ -1,36 +1,23 @@
-name: Release
+name: Docker
 
 on:
-  workflow_dispatch:
   push:
-    tags:
-      - "v*"
-
-permissions:
-  contents: write
+    branches:
+      - main
 
 jobs:
-  release:
+
+  docker:
+
     runs-on: ubuntu-latest
 
     steps:
+
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
         with:
-          dotnet-version: 9.0.x
-
-      - run: dotnet restore
-
-      - run: dotnet build -c Release --no-restore
-
-      - run: dotnet test -c Release --no-build
-
-      - run: dotnet publish src/Chandanala.ERP.Web \
-          -c Release \
-          -o publish
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: release
-          path: publish
+          push: false
+          tags: chandanala/core:latest
