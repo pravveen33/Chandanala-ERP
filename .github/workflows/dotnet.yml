@@ -1,6 +1,13 @@
-- uses: actions/cache@v4
-  with:
-    path: ~/.nuget/packages
-    key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-    restore-keys: |
-      ${{ runner.os }}-nuget-
+version: 2
+
+updates:
+
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
