@@ -1,42 +1,31 @@
-name: Docker Build
+name: Publish Docker Image
 
 on:
   push:
     branches:
       - main
-      - develop
-      - 'feature/**'
-
-  pull_request:
-    branches:
-      - main
-      - develop
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
-  docker-build:
-    name: Build Docker Image
+  publish:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Verify Dockerfile
-        run: |
-          if [ ! -f Dockerfile ]; then
-            echo "Dockerfile not found."
-            exit 1
-          fi
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker Image
-        uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v6
         with:
           context: .
-          push: false
-          tags: chandanala-core:latest
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/chandanala-core:latest
