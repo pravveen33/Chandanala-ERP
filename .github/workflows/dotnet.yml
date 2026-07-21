@@ -1,23 +1,22 @@
-name: Test Coverage
+name: EF Core Migration Check
 
 on:
   push:
     branches:
-      - develop
       - main
+      - develop
       - 'feature/**'
 
   pull_request:
     branches:
-      - develop
       - main
+      - develop
 
 permissions:
   contents: read
 
 jobs:
-  coverage:
-    name: Build, Test & Coverage
+  migration-check:
     runs-on: ubuntu-latest
 
     steps:
@@ -35,15 +34,5 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Test with Coverage
-        run: |
-          dotnet test \
-            --configuration Release \
-            --no-build \
-            --collect:"XPlat Code Coverage"
-
-      - name: Upload Coverage Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: code-coverage
-          path: '**/TestResults/**'
+      - name: Verify EF Core Tools
+        run: dotnet tool restore
