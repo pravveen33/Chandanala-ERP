@@ -1,0 +1,33 @@
+name: "Secret Scanning (Gitleaks)"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  gitleaks:
+    name: Scan for API keys, passwords, tokens, connection strings
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so gitleaks can catch secrets in past commits, not just HEAD
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # If you have a paid Gitleaks license for the enhanced UI/reporting, set it as a repo secret
+          # and uncomment the next line:
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+        with:
+          config-path: .gitleaks.toml
