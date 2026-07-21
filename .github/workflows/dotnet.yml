@@ -1,58 +1,22 @@
-name: "CodeQL"
+name: Dependency Review
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-      - 'feature/**'
   pull_request:
     branches:
       - main
       - develop
-  schedule:
-    - cron: '0 3 * * 1'
 
 permissions:
-  actions: read
   contents: read
-  security-events: write
+  pull-requests: write
 
 jobs:
-  analyze:
-    name: Analyze C#
+  dependency-review:
     runs-on: ubuntu-latest
-
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language:
-          - csharp
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
