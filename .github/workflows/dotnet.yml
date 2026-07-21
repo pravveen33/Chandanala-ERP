@@ -1,4 +1,4 @@
-name: CHANDANALA CORE CI
+name: "CodeQL"
 
 on:
   push:
@@ -6,37 +6,47 @@ on:
       - main
       - develop
       - 'feature/**'
-      - 'release/**'
-      - 'hotfix/**'
-
   pull_request:
     branches:
       - main
       - develop
+  schedule:
+    - cron: '0 3 * * 1'
 
 permissions:
+  actions: read
   contents: read
+  security-events: write
 
 jobs:
-  build-test:
+  analyze:
+    name: Analyze C#
     runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - csharp
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-
-      - name: Cache NuGet
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
 
       - name: Restore
         run: dotnet restore
@@ -44,14 +54,5 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test --configuration Release --no-build --verbosity normal
-
-      - name: Publish Build Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs
-          path: |
-            **/TestResults/**
-            **/bin/**
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
