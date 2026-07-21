@@ -1,4 +1,4 @@
-name: EF Core Migration Check
+name: OpenAPI Validation
 
 on:
   push:
@@ -16,7 +16,8 @@ permissions:
   contents: read
 
 jobs:
-  migration-check:
+  api-contract:
+    name: Validate API Contract
     runs-on: ubuntu-latest
 
     steps:
@@ -34,5 +35,7 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Verify EF Core Tools
-        run: dotnet tool restore
+      - name: Verify OpenAPI Generation
+        run: |
+          echo "OpenAPI validation placeholder"
+          echo "Replace this with Swashbuckle or NSwag generation once the API project is configured."
