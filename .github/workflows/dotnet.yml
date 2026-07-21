@@ -1,23 +1,18 @@
-name: OpenAPI Validation
+name: Release
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - 'feature/**'
+    tags:
+      - 'v*'
 
-  pull_request:
-    branches:
-      - main
-      - develop
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  api-contract:
-    name: Validate API Contract
+  release:
+    name: Build Release
     runs-on: ubuntu-latest
 
     steps:
@@ -35,7 +30,18 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Verify OpenAPI Generation
+      - name: Test
+        run: dotnet test --configuration Release --no-build
+
+      - name: Publish
         run: |
-          echo "OpenAPI validation placeholder"
-          echo "Replace this with Swashbuckle or NSwag generation once the API project is configured."
+          mkdir -p artifacts
+          dotnet publish \
+            --configuration Release \
+            --output artifacts
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chandanala-core-release
+          path: artifacts
