@@ -1,14 +1,20 @@
-ai:
+capability: PurchaseSuggestion
 
-  provider_strategy: runtime
+enabled: true
 
-  approved_providers:
+risk: high
 
+approval:
+  required: true
+
+permissions:
+  purchase.read: true
+  purchase.write: false
+
+provider:
+  allowed:
     - chatgpt
-    - nemotron
+    - local
 
-  routing: optional
-
-  human_review: required
-
-  deterministic_boundary: enforced
+audit:
+  mandatory: true
