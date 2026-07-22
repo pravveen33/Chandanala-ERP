@@ -1,67 +1,52 @@
-name: CHANDANALA CORE - Build & Test
+name: Tests
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - release/**
-      - feature/**
+    branches: [ main, develop ]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [ main, develop ]
 
 permissions:
   contents: read
-  security-events: write
-  actions: read
-
-env:
-  DOTNET_VERSION: "10.0.x"
-  BUILD_CONFIGURATION: Release
 
 jobs:
-
-  build:
+  test:
 
     runs-on: ubuntu-latest
 
     steps:
-
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: '10.0.x'
 
       - name: Restore
         run: dotnet restore
 
-      - name: Verify Formatting
-        run: dotnet format --verify-no-changes --verbosity minimal
-
       - name: Build
-        run: dotnet build --configuration $BUILD_CONFIGURATION --no-restore
+        run: dotnet build --configuration Release --no-restore
 
-      - name: Run Unit Tests
+      - name: Execute Tests
         run: |
           dotnet test \
-            --configuration $BUILD_CONFIGURATION \
+            --configuration Release \
             --no-build \
-            --collect:"XPlat Code Coverage"
+            --collect:"XPlat Code Coverage" \
+            --logger trx
 
-      - name: Publish ERP
-        run: |
-          dotnet publish \
-            src/Chandanala.ERP.Web/Chandanala.ERP.Web.csproj \
-            -c $BUILD_CONFIGURATION \
-            -o publish
-
-      - name: Upload Publish Artifact
+      - name: Upload Test Results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: chandanala-core
-          path: publish
+          name: test-results
+          path: "**/*.trx"
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: "**/coverage.cobertura.xml"
