@@ -1,10 +1,17 @@
-name: "Secret Scanning (Gitleaks)"
+name: Secret Scanning (Gitleaks)
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+      - develop
+
   workflow_dispatch:
 
 permissions:
@@ -13,21 +20,25 @@ permissions:
 
 jobs:
   gitleaks:
-    name: Scan for API keys, passwords, tokens, connection strings
+    name: Scan Repository for Secrets
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # full history so gitleaks can catch secrets in past commits, not just HEAD
+          fetch-depth: 0
 
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # If you have a paid Gitleaks license for the enhanced UI/reporting, set it as a repo secret
-          # and uncomment the next line:
-          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
           GITLEAKS_CONFIG: .gitleaks.toml
+
+      - name: Upload SARIF Results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          config-path: .gitleaks.toml
+          sarif_file: results.sarif
+          category: gitleaks
