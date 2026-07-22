@@ -1,16 +1,18 @@
-chunk:
-  id: SOP-INV-001-023
-  source_document: inventory_sop.pdf
+provider:
+  id: provider-openai
+  capabilities:
+    - code_generation
+    - documentation
+    - reasoning
 
-strategy:
-  name: semantic
-  version: 1.0
+routing:
+  priority: high
+  fallback: provider-google
 
-embedding:
-  model: text-embedding-v3
-  version: 3
+limits:
+  rpm: 1000
+  tpm: 500000
 
-metadata:
-  section: stock_reconciliation
-  created: 2026-07
-  policy: pharmacy_sop
+policies:
+  pii_allowed: false
+  internet_access: disabled
