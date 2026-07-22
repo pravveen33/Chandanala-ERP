@@ -1,11 +1,15 @@
-customer:
-  communication:
-    sms: true
-    whatsapp: true
-    email: false
+communication:
+  sms: true
+  whatsapp: true
+  email: false
 
-  preferences:
-    operational: true
-    refill_reminders: true
-    health_campaigns: true
-    promotions: false
+preferences:
+  operational: true
+  refill_reminders: true
+  delivery_updates: true
+  health_awareness: true
+  promotions: false
+
+quiet_hours:
+  start: "21:00"
+  end: "08:00"
