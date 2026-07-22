@@ -1,20 +1,11 @@
-capability: PurchaseSuggestion
+customer:
+  communication:
+    sms: true
+    whatsapp: true
+    email: false
 
-enabled: true
-
-risk: high
-
-approval:
-  required: true
-
-permissions:
-  purchase.read: true
-  purchase.write: false
-
-provider:
-  allowed:
-    - chatgpt
-    - local
-
-audit:
-  mandatory: true
+  preferences:
+    operational: true
+    refill_reminders: true
+    health_campaigns: true
+    promotions: false
