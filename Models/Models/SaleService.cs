@@ -1,6 +1,6 @@
 using Chandanala.ERP.Web.Data;
 using Microsoft.EntityFrameworkCore;
-
+using Chandanala.ERP.Web.Models;
 namespace Chandanala.ERP.Web.Services;
 
 public class SaleService

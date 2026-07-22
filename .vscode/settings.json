@@ -19,5 +19,8 @@
     "Pincode",
     "rendermode"
   ],
-  "snyk.advanced.autoSelectOrganization": true
+  "snyk.advanced.autoSelectOrganization": true,
+  "geminicodeassist.agentDebugMode": true,
+  "geminicodeassist.agentYoloMode": true,
+  "geminicodeassist.verboseLogging": true
 }
