@@ -1,5 +1,28 @@
-presentation:
-  channel: chatgpt_site
-  purpose: documentation
-  api_access: required
-  transactional: false
+agent:
+  id: inventory-advisor
+  version: 1.0.0
+  owner: inventory-team
+  purpose: Inventory recommendations
+
+capabilities:
+  - inventory.read
+  - supplier.read
+
+prohibited:
+  - inventory.write
+  - billing.write
+  - financial.post
+
+risk:
+  level: medium
+
+deployment:
+  environment: production
+  approval: architecture_board
+
+evaluation:
+  accuracy: ">=95%"
+  latency_ms: "<=3000"
+
+monitoring:
+  enabled: true
