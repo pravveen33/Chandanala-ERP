@@ -1,10 +1,67 @@
-document:
-  lifecycle:
-    template: architecture-standard-v1
-    classification: technical
-    ai_assistance: optional
-    validation: required
-    approval: architecture_board
-    versioning: enabled
-    audit: enabled
-    retention_policy: standard
+name: CHANDANALA CORE - Build & Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - release/**
+      - feature/**
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  BUILD_CONFIGURATION: Release
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Verify Formatting
+        run: dotnet format --verify-no-changes --verbosity minimal
+
+      - name: Build
+        run: dotnet build --configuration $BUILD_CONFIGURATION --no-restore
+
+      - name: Run Unit Tests
+        run: |
+          dotnet test \
+            --configuration $BUILD_CONFIGURATION \
+            --no-build \
+            --collect:"XPlat Code Coverage"
+
+      - name: Publish ERP
+        run: |
+          dotnet publish \
+            src/Chandanala.ERP.Web/Chandanala.ERP.Web.csproj \
+            -c $BUILD_CONFIGURATION \
+            -o publish
+
+      - name: Upload Publish Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chandanala-core
+          path: publish
