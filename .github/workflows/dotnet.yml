@@ -1,41 +1,21 @@
-name: Software Bill of Materials
+benchmark:
+  id: inventory-search-v1
+  version: 1.0.0
 
-on:
-  push:
-    branches:
-      - main
+dataset:
+  version: 2026.07
 
-permissions:
-  contents: read
+metrics:
+  accuracy: 98
+  latency_ms: 250
+  success_rate: 99.8
 
-jobs:
+quality_gate:
+  minimum_accuracy: 95
+  maximum_latency_ms: 500
+  minimum_success_rate: 99
 
-  sbom:
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore
-        run: dotnet restore
-
-      - name: Install CycloneDX Tool
-        run: |
-          dotnet tool install --global CycloneDX
-
-      - name: Generate SBOM
-        run: |
-          dotnet-CycloneDX . \
-            -o sbom
-
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom
+approval:
+  architecture: required
+  security: required
+  governance: required
