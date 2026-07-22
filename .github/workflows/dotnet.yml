@@ -1,9 +1,9 @@
 ai:
-  enabled: true
 
   provider_strategy: runtime
 
   approved_providers:
+
     - chatgpt
     - nemotron
 
