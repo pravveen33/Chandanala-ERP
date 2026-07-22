@@ -1,15 +1,14 @@
-routing:
-  default: chatgpt
+ai:
+  enabled: true
 
-  fallback:
+  provider_strategy: runtime
+
+  approved_providers:
+    - chatgpt
     - nemotron
-    - gemini
 
-  developer:
-    strategy: cheapest
+  routing: optional
 
-  production:
-    strategy: highest_quality
+  human_review: required
 
-  emergency:
-    strategy: local
+  deterministic_boundary: enforced
