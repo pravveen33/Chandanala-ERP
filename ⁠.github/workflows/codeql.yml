@@ -1,60 +1,61 @@
-name: "CodeQL Security Analysis"
+name: CodeQL Security Analysis
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+      - develop
+
   schedule:
-    # Weekly scan, Monday 03:00 UTC — catches new advisories against unchanged code
+    # Weekly scan every Monday at 03:00 UTC
     - cron: '0 3 * * 1'
+
   workflow_dispatch:
 
 permissions:
-  contents: read
-  security-events: write   # required to upload results to the Security tab
   actions: read
+  contents: read
+  security-events: write
 
 jobs:
   analyze:
-    name: Analyze C#
+    name: Analyze C# Code
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'csharp' ]
+        language:
+          - csharp
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # .NET 10 is still preview — setup-dotnet needs include-prerelease
-      # to resolve a 10.0.x SDK matching the project's TargetFramework.
-      - name: Setup .NET
+      - name: Setup .NET 10 Preview
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
           include-prerelease: true
 
-      # Initialize CodeQL with the security-and-quality query pack.
-      # This pack includes the queries for SQLi, XSS, insecure deserialization,
-      # broken auth, and hard-coded credentials.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           queries: security-and-quality
-          # Uncomment and point at a config file if you need custom query filters:
-          # config-file: ./.github/codeql/codeql-config.yml
 
-      # CodeQL needs a real build for compiled languages like C#.
-      - name: Restore dependencies
+      - name: Restore Dependencies
         run: dotnet restore
 
-      - name: Build solution
-        run: dotnet build --no-restore --configuration Release
+      - name: Build Solution
+        run: dotnet build --configuration Release --no-restore
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
