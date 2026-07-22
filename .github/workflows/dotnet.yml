@@ -1,15 +1,12 @@
-communication:
-  sms: true
-  whatsapp: true
-  email: false
-
-preferences:
-  operational: true
-  refill_reminders: true
-  delivery_updates: true
-  health_awareness: true
-  promotions: false
-
-quiet_hours:
-  start: "21:00"
-  end: "08:00"
+tool:
+  id: inventory.search
+  capability: inventory
+  permissions:
+    - inventory.read
+  risk: low
+  execution: synchronous
+  requires_approval: false
+  tags:
+    - stock
+    - search
+    - medicine
