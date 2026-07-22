@@ -1,6 +1,6 @@
 using System;
 
-namespace Chandanala.ERP.Web.Models.Models;
+namespace Chandanala.ERP.Web.Models;
 
 public class Bill
 {
