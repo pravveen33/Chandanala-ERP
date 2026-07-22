@@ -56,8 +56,7 @@ base.OnModelCreating(modelBuilder);
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        ApplySupplierTimestamps();
-        ApplyPurchaseTimestamps();
+        ApplyAuditFields();
         return base.SaveChangesAsync(cancellationToken);
     }
 
