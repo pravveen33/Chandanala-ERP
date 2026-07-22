@@ -1,18 +1,15 @@
-provider:
-  id: provider-openai
-  capabilities:
-    - code_generation
-    - documentation
-    - reasoning
+capability:
+  id: inventory-intelligence
+  version: 1.0.0
 
-routing:
-  priority: high
-  fallback: provider-google
+evaluation:
+  benchmark_version: 2026.08
+  status: certified
 
-limits:
-  rpm: 1000
-  tpm: 500000
+quality:
+  accuracy: 98.4
+  latency_ms: 320
 
-policies:
-  pii_allowed: false
-  internet_access: disabled
+governance:
+  reviewer: architecture-board
+  renewal: 2027-02
