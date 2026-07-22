@@ -1,21 +1,16 @@
-benchmark:
-  id: inventory-search-v1
-  version: 1.0.0
+chunk:
+  id: SOP-INV-001-023
+  source_document: inventory_sop.pdf
 
-dataset:
-  version: 2026.07
+strategy:
+  name: semantic
+  version: 1.0
 
-metrics:
-  accuracy: 98
-  latency_ms: 250
-  success_rate: 99.8
+embedding:
+  model: text-embedding-v3
+  version: 3
 
-quality_gate:
-  minimum_accuracy: 95
-  maximum_latency_ms: 500
-  minimum_success_rate: 99
-
-approval:
-  architecture: required
-  security: required
-  governance: required
+metadata:
+  section: stock_reconciliation
+  created: 2026-07
+  policy: pharmacy_sop
