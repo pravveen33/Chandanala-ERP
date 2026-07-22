@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
 
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+base.OnModelCreating(modelBuilder);
     {
         configurationBuilder.Properties<DateTime>()
             .HaveColumnType("timestamp with time zone");
