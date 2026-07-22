@@ -1,12 +1,5 @@
-tool:
-  id: inventory.search
-  capability: inventory
-  permissions:
-    - inventory.read
-  risk: low
-  execution: synchronous
-  requires_approval: false
-  tags:
-    - stock
-    - search
-    - medicine
+presentation:
+  channel: chatgpt_site
+  purpose: documentation
+  api_access: required
+  transactional: false
