@@ -1,45 +1,15 @@
-name: .NET Build
+routing:
+  default: chatgpt
 
-on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+  fallback:
+    - nemotron
+    - gemini
 
-permissions:
-  contents: read
+  developer:
+    strategy: cheapest
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+  production:
+    strategy: highest_quality
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
-
-      - name: Publish
-        run: dotnet publish Chandanala.ERP.Web.csproj --configuration Release --output ./publish
-
-      - name: Upload Publish Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: chandanala-erp-publish
-          path: publish
+  emergency:
+    strategy: local
