@@ -1,46 +1,30 @@
 version: "1.0"
 
-server:
-  id: openapi
-  name: OpenAPI MCP
-  enabled: true
+capabilities:
 
-gateway:
-  type: CapabilityGateway
+  github:
+    - repository.read
+    - repository.search
+    - pullrequest.read
+    - issue.read
+    - workflow.read
 
-authentication:
-  required: true
+  filesystem:
+    - file.read
+    - directory.list
+    - specification.read
+    - documentation.read
 
-services:
+  postgres:
+    - sql.select
+    - inventory.search
+    - medicine.search
+    - customer.search
+    - supplier.search
 
-  inventory:
-    enabled: true
-
-  medicine:
-    enabled: true
-
-  billing:
-    enabled: true
-
-  purchase:
-    enabled: true
-
-  supplier:
-    enabled: true
-
-  customer:
-    enabled: true
-
-  reporting:
-    enabled: true
-
-permissions:
-  read: true
-  write: false
-
-governance:
-  approval_required_for_write: true
-  audit_logging: true
-
-security:
-  https_only: true
+  openapi:
+    - api.get
+    - inventory.get
+    - customer.get
+    - supplier.get
+    - report.get
