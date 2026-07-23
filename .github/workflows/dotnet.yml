@@ -1,21 +1,21 @@
-security:
+architecture:
 
-  secrets:
-    hardcoded: deny
+  dependency_injection: required
 
-  filesystem:
-    write_outside_workspace: deny
+  capability_gateway: required
 
-  network:
-    default: deny
+  structured_logging: required
 
-    allow:
-      - api.openai.com
-      - generativelanguage.googleapis.com
-      - github.com
+  telemetry: required
 
-  sandbox:
-    required: true
+  repository_pattern: required
 
-  approval:
-    production: mandatory
+  clean_architecture: required
+
+forbidden:
+
+  - direct_database_access
+
+  - hardcoded_connection_strings
+
+  - static_service_locator
