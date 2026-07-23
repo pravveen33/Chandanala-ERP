@@ -1,30 +1,115 @@
 version: "1.0"
 
+metadata:
+  name: MCP Capability Registry
+  application: CHANDANALA CORE™
+  environment: development
+  owner: Platform Team
+
 capabilities:
 
   github:
-    - repository.read
-    - repository.search
-    - pullrequest.read
-    - issue.read
-    - workflow.read
+
+    enabled: true
+
+    description: GitHub repository integration
+
+    permissions:
+
+      - repository.read
+      - repository.search
+      - commit.read
+      - branch.read
+      - tag.read
+      - issue.read
+      - issue.search
+      - pullrequest.read
+      - workflow.read
+      - release.read
+
+    write_operations: false
 
   filesystem:
-    - file.read
-    - directory.list
-    - specification.read
-    - documentation.read
+
+    enabled: true
+
+    description: Local documentation and knowledge access
+
+    permissions:
+
+      - file.read
+      - directory.list
+      - specification.read
+      - documentation.read
+      - architecture.read
+      - adr.read
+
+    write_operations: false
 
   postgres:
-    - sql.select
-    - inventory.search
-    - medicine.search
-    - customer.search
-    - supplier.search
+
+    enabled: true
+
+    description: Read-only ERP database
+
+    permissions:
+
+      - sql.select
+      - inventory.search
+      - inventory.read
+      - medicine.search
+      - medicine.read
+      - supplier.search
+      - supplier.read
+      - customer.search
+      - customer.read
+      - report.read
+
+    write_operations: false
 
   openapi:
-    - api.get
-    - inventory.get
-    - customer.get
-    - supplier.get
-    - report.get
+
+    enabled: true
+
+    description: ERP Capability Gateway
+
+    permissions:
+
+      - api.get
+      - inventory.get
+      - medicine.get
+      - supplier.get
+      - customer.get
+      - report.get
+
+    write_operations: false
+
+governance:
+
+  default_policy: least_privilege
+
+  human_approval:
+    required_for_write: true
+
+  audit:
+    enabled: true
+
+security:
+
+  deny_by_default: true
+
+  allow_direct_database_write: false
+
+  allow_direct_file_write: false
+
+  allow_secret_access: false
+
+telemetry:
+
+  enabled: true
+
+  log_requests: true
+
+  log_duration: true
+
+  log_failures: true
