@@ -1,35 +1,37 @@
 version: "1.0"
 
 server:
-  id: filesystem
-  name: Filesystem MCP
+  id: postgres
+  name: PostgreSQL MCP
   enabled: true
 
-mode:
-  readonly: true
+connection:
+  database: ChandanalaERP
 
-roots:
-  - ./docs
-  - ./knowledge
-  - ./architecture
-  - ./specifications
-  - ./prompts
+access:
+  mode: readonly
 
-blocked:
-  - .git
-  - .github/secrets
-  - bin
-  - obj
-  - node_modules
+allowed_tables:
+  - Medicines
+  - Inventory
+  - Suppliers
+  - Customers
+  - Categories
 
-permissions:
-  read: true
-  write: false
-  delete: false
+blocked_operations:
+  - INSERT
+  - UPDATE
+  - DELETE
+  - DROP
+  - ALTER
+  - TRUNCATE
+
+query_limits:
+  max_rows: 1000
+  timeout_seconds: 30
 
 governance:
   audit_logging: true
 
 security:
-  follow_symlinks: false
-  allow_hidden_files: false
+  parameterized_queries_only: true
