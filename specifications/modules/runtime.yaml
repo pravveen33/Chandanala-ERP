@@ -20,7 +20,14 @@ runtime:
       - health.yaml
       - runtime-services.yaml
 
-modules: 
+modules:
 
   load:
+    - ../modules/medicine.yaml
+    - ../modules/customer.yaml
+    - ../modules/supplier.yaml
+    - ../modules/inventory.yaml
+    - ../modules/purchase.yaml
+    - ../modules/sales.yaml
     - ../modules/finance.yaml
+    - ../modules/reporting.yaml
