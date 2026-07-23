@@ -1,0 +1,31 @@
+version: "1.0"
+
+models:
+
+  reasoning:
+    provider: openai
+    class: reasoning
+
+  coding:
+    provider: openai
+    class: coding
+
+  analysis:
+    provider: openai
+    class: analysis
+
+  fast_generation:
+    provider: google
+    class: fast
+
+routing:
+
+  default: reasoning
+
+fallback:
+
+  reasoning:
+    - analysis
+
+  fast_generation:
+    - reasoning
