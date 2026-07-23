@@ -2,68 +2,20 @@ version: "1.0"
 
 runtime:
 
-  interface:
+  startup:
 
-    ai_runtime:
-      interface: IAiRuntime
-      implementation: AiRuntime
-
-services:
-
-  configuration:
-
-    loader:
-      class: ConfigurationLoader
-
-  registry:
-
-    server:
-      class: ServerRegistry
-
-    capability:
-      class: CapabilityRegistry
-
-    provider:
-      class: ProviderRegistry
-
-  engines:
-
-    routing:
-      class: RoutingEngine
-
-    approval:
-      class: ApprovalEngine
-
-    context:
-      class: ContextEngine
-
-  monitoring:
-
-    audit:
-      class: AuditService
-
-    health:
-      class: HealthService
-
-startup:
-
-  initialize:
-
-    - ConfigurationLoader
-    - ServerRegistry
-    - CapabilityRegistry
-    - ProviderRegistry
-    - RoutingEngine
-    - ApprovalEngine
-    - ContextEngine
-    - AuditService
-    - HealthService
-    - AiRuntime
-
-validation:
-
-  require_all_services: true
-
-telemetry:
-
-  enabled: true
+    load:
+      - github.yaml
+      - filesystem.yaml
+      - postgres.yaml
+      - openapi.yaml
+      - capabilities.yaml
+      - routing.yaml
+      - approval-policy.yaml
+      - audit.yaml
+      - context.yaml
+      - servers.yaml
+      - providers.yaml
+      - models.yaml
+      - health.yaml
+      - runtime-services.yaml
