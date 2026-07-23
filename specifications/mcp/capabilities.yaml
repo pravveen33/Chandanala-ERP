@@ -1,0 +1,19 @@
+version: "1.0"
+
+capabilities:
+
+  github:
+    - repository.read
+    - pullrequest.read
+    - issue.read
+    - workflow.read
+
+  filesystem:
+    - file.read
+    - directory.list
+
+  postgres:
+    - sql.select
+
+  openapi:
+    - api.get
