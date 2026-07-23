@@ -1,0 +1,28 @@
+version: "1.0"
+
+runtime:
+
+  startup:
+
+    load:
+
+      - servers.yaml
+      - capabilities.yaml
+      - approval-policy.yaml
+      - routing.yaml
+      - audit.yaml
+      - context.yaml
+
+  validation:
+
+    schema: true
+
+    fail_on_error: true
+
+  cache:
+
+    enabled: true
+
+  logging:
+
+    level: Information
