@@ -1,0 +1,21 @@
+version: "1.0"
+
+server:
+  name: postgres
+
+database:
+  mode: readonly
+
+allowed:
+  - medicines
+  - inventory
+  - suppliers
+  - customers
+
+blocked:
+  - insert
+  - update
+  - delete
+
+audit:
+  enabled: true
