@@ -1,0 +1,157 @@
+schema:
+  name: chandanala.module
+  version: "1.0"
+
+module:
+  id: purchase
+  name: Purchase Management
+  description: Enterprise procurement and purchasing module
+
+enabled: true
+
+dependencies:
+  - supplier
+  - medicine
+  - inventory
+  - finance
+  - audit
+  - identity
+
+masters:
+
+  purchase_type:
+    enabled: true
+
+  payment_term:
+    enabled: true
+
+  purchase_category:
+    enabled: true
+
+workflow:
+
+  purchase_requisition:
+    enabled: true
+
+  purchase_order:
+    enabled: true
+
+  quotation_management:
+    enabled: true
+
+  supplier_comparison:
+    enabled: true
+
+  purchase_approval:
+    enabled: true
+
+  goods_receipt_note:
+    enabled: true
+
+  purchase_invoice:
+    enabled: true
+
+  purchase_return:
+    enabled: true
+
+receiving:
+
+  batch_creation:
+    enabled: true
+
+  expiry_capture:
+    enabled: true
+
+  barcode_generation:
+    enabled: true
+
+  quality_verification:
+    enabled: true
+
+financial:
+
+  supplier_ledger:
+    enabled: true
+
+  accounts_payable:
+    enabled: true
+
+  gst_input:
+    enabled: true
+
+  automatic_posting:
+    enabled: true
+
+inventory:
+
+  stock_update:
+    enabled: true
+
+  batch_update:
+    enabled: true
+
+  valuation_update:
+    enabled: true
+
+analytics:
+
+  supplier_performance:
+    enabled: true
+
+  purchase_trends:
+    enabled: true
+
+  price_history:
+    enabled: true
+
+  purchase_cost_analysis:
+    enabled: true
+
+  pending_purchase_orders:
+    enabled: true
+
+governance:
+
+  approval_required: true
+
+  allow_delete_after_receipt: false
+
+  require_supplier: true
+
+  require_batch: true
+
+  require_expiry: true
+
+  require_invoice_number: true
+
+  require_audit: true
+
+roles:
+
+  - Administrator
+  - Purchase Manager
+  - Store Manager
+  - Accountant
+  - Auditor
+
+events:
+
+  purchase_order_created:
+    enabled: true
+
+  goods_received:
+    enabled: true
+
+  purchase_posted:
+    enabled: true
+
+  purchase_returned:
+    enabled: true
+
+audit:
+
+  enabled: true
+
+health:
+
+  enabled: true
