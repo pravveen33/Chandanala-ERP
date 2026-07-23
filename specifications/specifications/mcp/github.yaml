@@ -1,0 +1,15 @@
+version: "1.0"
+
+server:
+  name: github
+
+permissions:
+  repositories: read
+  pull_requests: read
+  issues: read
+  actions: read
+
+write_access: false
+
+audit:
+  enabled: true
