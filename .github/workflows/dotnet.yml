@@ -1,37 +1,46 @@
 version: "1.0"
 
 server:
-  id: postgres
-  name: PostgreSQL MCP
+  id: openapi
+  name: OpenAPI MCP
   enabled: true
 
-connection:
-  database: ChandanalaERP
+gateway:
+  type: CapabilityGateway
 
-access:
-  mode: readonly
+authentication:
+  required: true
 
-allowed_tables:
-  - Medicines
-  - Inventory
-  - Suppliers
-  - Customers
-  - Categories
+services:
 
-blocked_operations:
-  - INSERT
-  - UPDATE
-  - DELETE
-  - DROP
-  - ALTER
-  - TRUNCATE
+  inventory:
+    enabled: true
 
-query_limits:
-  max_rows: 1000
-  timeout_seconds: 30
+  medicine:
+    enabled: true
+
+  billing:
+    enabled: true
+
+  purchase:
+    enabled: true
+
+  supplier:
+    enabled: true
+
+  customer:
+    enabled: true
+
+  reporting:
+    enabled: true
+
+permissions:
+  read: true
+  write: false
 
 governance:
+  approval_required_for_write: true
   audit_logging: true
 
 security:
-  parameterized_queries_only: true
+  https_only: true
