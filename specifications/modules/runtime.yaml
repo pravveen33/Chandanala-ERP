@@ -20,7 +20,7 @@ runtime:
       - health.yaml
       - runtime-services.yaml
 
-modules:
+modules: 
 
   load:
     - ../modules/finance.yaml
