@@ -1,0 +1,210 @@
+schema:
+  name: chandanala.module
+  version: "1.0"
+
+module:
+  id: reporting
+  name: Reporting & Analytics
+  description: Enterprise reporting, dashboards and analytics
+
+enabled: true
+
+dependencies:
+  - sales
+  - purchase
+  - inventory
+  - finance
+  - customer
+  - supplier
+  - audit
+  - identity
+
+dashboards:
+
+  executive:
+    enabled: true
+
+  pharmacy:
+    enabled: true
+
+  finance:
+    enabled: true
+
+  inventory:
+    enabled: true
+
+  sales:
+    enabled: true
+
+reports:
+
+  sales:
+
+    daily:
+      enabled: true
+
+    monthly:
+      enabled: true
+
+    yearly:
+      enabled: true
+
+    gst:
+      enabled: true
+
+    product_performance:
+      enabled: true
+
+    customer_sales:
+      enabled: true
+
+  purchase:
+
+    daily:
+      enabled: true
+
+    supplier_performance:
+      enabled: true
+
+    purchase_analysis:
+      enabled: true
+
+  inventory:
+
+    stock_position:
+      enabled: true
+
+    batch_report:
+      enabled: true
+
+    expiry_report:
+      enabled: true
+
+    near_expiry:
+      enabled: true
+
+    dead_stock:
+      enabled: true
+
+    stock_valuation:
+      enabled: true
+
+  finance:
+
+    trial_balance:
+      enabled: true
+
+    profit_loss:
+      enabled: true
+
+    balance_sheet:
+      enabled: true
+
+    cash_flow:
+      enabled: true
+
+    customer_ledger:
+      enabled: true
+
+    supplier_ledger:
+      enabled: true
+
+    cash_book:
+      enabled: true
+
+    bank_book:
+      enabled: true
+
+    outstanding_receivables:
+      enabled: true
+
+    outstanding_payables:
+      enabled: true
+
+  compliance:
+
+    gst_returns:
+      enabled: true
+
+    audit_log:
+      enabled: true
+
+    schedule_h:
+      enabled: true
+
+    schedule_h1:
+      enabled: true
+
+    schedule_x:
+      enabled: true
+
+analytics:
+
+  sales_trends:
+    enabled: true
+
+  customer_insights:
+    enabled: true
+
+  supplier_insights:
+    enabled: true
+
+  inventory_health:
+    enabled: true
+
+  financial_kpis:
+    enabled: true
+
+  ai_insights:
+    enabled: true
+
+exports:
+
+  pdf:
+    enabled: true
+
+  excel:
+    enabled: true
+
+  csv:
+    enabled: true
+
+  json:
+    enabled: true
+
+scheduling:
+
+  scheduled_reports:
+    enabled: true
+
+  email_delivery:
+    enabled: true
+
+  whatsapp_delivery:
+    enabled: true
+
+governance:
+
+  require_role_authorization: true
+
+  audit_report_access: true
+
+  export_logging: true
+
+roles:
+
+  - Administrator
+  - Owner
+  - Finance Manager
+  - Purchase Manager
+  - Inventory Manager
+  - Pharmacist
+  - Auditor
+
+audit:
+
+  enabled: true
+
+health:
+
+  enabled: true
