@@ -1,0 +1,157 @@
+version: "1.0"
+
+module:
+  id: inventory
+  name: Inventory Management
+  description: Enterprise inventory management for CHANDANALA CORE™
+
+enabled: true
+
+dependencies:
+  - medicine
+  - supplier
+  - purchase
+  - sales
+  - finance
+  - audit
+
+masters:
+
+  warehouse:
+    enabled: true
+
+  location:
+    enabled: true
+
+  rack:
+    enabled: true
+
+  shelf:
+    enabled: true
+
+inventory:
+
+  stock_management:
+    enabled: true
+
+  batch_management:
+    enabled: true
+
+  expiry_management:
+    enabled: true
+
+  stock_adjustment:
+    enabled: true
+
+  stock_transfer:
+    enabled: true
+
+  opening_stock:
+    enabled: true
+
+  stock_reservation:
+    enabled: true
+
+tracking:
+
+  batch_tracking:
+    enabled: true
+
+  expiry_tracking:
+    enabled: true
+
+  barcode_tracking:
+    enabled: true
+
+  qr_code_tracking:
+    enabled: true
+
+alerts:
+
+  low_stock:
+    enabled: true
+
+  reorder_level:
+    enabled: true
+
+  near_expiry:
+    enabled: true
+
+  expired_stock:
+    enabled: true
+
+  negative_stock:
+    enabled: false
+
+analytics:
+
+  inventory_health_score:
+    enabled: true
+
+  fast_moving:
+    enabled: true
+
+  slow_moving:
+    enabled: true
+
+  dead_stock:
+    enabled: true
+
+  abc_analysis:
+    enabled: true
+
+  fsn_analysis:
+    enabled: true
+
+forecasting:
+
+  demand_prediction:
+    enabled: true
+
+  reorder_recommendation:
+    enabled: true
+
+  seasonal_forecast:
+    enabled: true
+
+integration:
+
+  purchase:
+    enabled: true
+
+  sales:
+    enabled: true
+
+  finance:
+    enabled: true
+
+  reporting:
+    enabled: true
+
+governance:
+
+  allow_negative_stock: false
+
+  allow_delete_transactions: false
+
+  require_batch_number: true
+
+  require_expiry_date: true
+
+  require_audit: true
+
+roles:
+
+  - Administrator
+  - Inventory Manager
+  - Pharmacist
+  - Purchase Manager
+  - Auditor
+
+audit:
+
+  enabled: true
+
+health:
+
+  enabled: true
