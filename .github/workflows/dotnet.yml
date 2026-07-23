@@ -1,21 +1,45 @@
-architecture:
+name: CHANDANALA CORE CI
 
-  dependency_injection: required
+on:
+  push:
+    branches:
+      - main
+      - develop
 
-  capability_gateway: required
+  pull_request:
+    branches:
+      - main
+      - develop
 
-  structured_logging: required
+permissions:
+  contents: read
 
-  telemetry: required
+jobs:
 
-  repository_pattern: required
+  build:
 
-  clean_architecture: required
+    runs-on: ubuntu-latest
 
-forbidden:
+    steps:
 
-  - direct_database_access
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-  - hardcoded_connection_strings
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
-  - static_service_locator
+      - name: Restore Packages
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run Unit Tests
+        run: dotnet test --configuration Release --no-build
+
+      - name: Publish
+        run: dotnet publish src/Chandanala.ERP.Web/Chandanala.ERP.Web.csproj \
+          --configuration Release \
+          --output publish
