@@ -1,0 +1,188 @@
+warning: in the working copy of 'Data/AppDbContext.cs', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'Data/Configurations/BatchConfiguration.cs', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'Data/Configurations/SupplierConfiguration.cs', CRLF will be replaced by LF the next time Git touches it
+[1mdiff --git a/Data/AppDbContext.cs b/Data/AppDbContext.cs[m
+[1mindex 2bd5746..eed57fc 100644[m
+[1m--- a/Data/AppDbContext.cs[m
+[1m+++ b/Data/AppDbContext.cs[m
+[36m@@ -1,16 +1,80 @@[m
+[32m+[m[32m﻿using Chandanala.ERP.Web.Models;[m
+ using Microsoft.EntityFrameworkCore;[m
+[31m-using Chandanala.ERP.Web.Models;[m
+[32m+[m[32musing Microsoft.EntityFrameworkCore.Metadata.Builders;[m
+ [m
+[31m-namespace Chandanala.ERP.Web.Data;[m
+[31m-[m
+[31m-public class AppDbContext : DbContext[m
+[32m+[m[32mnamespace Chandanala.ERP.Web.Data.Configurations;[m
+ [m
+[32m+[m[32mpublic class SupplierConfiguration : IEntityTypeConfiguration<Supplier>[m
+ {[m
+[31m-    public AppDbContext(DbContextOptions<AppDbContext> options)[m
+[31m-        : base(options)[m
+[32m+[m[32m    public void Configure(EntityTypeBuilder<Supplier> entity)[m
+     {[m
+[31m-    }[m
+[32m+[m[32m        entity.Property(s => s.SupplierCode)[m
+[32m+[m[32m            .IsRequired()[m
+[32m+[m[32m            .HasMaxLength(30);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.SupplierName)[m
+[32m+[m[32m            .IsRequired()[m
+[32m+[m[32m            .HasMaxLength(200);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.GSTIN)[m
+[32m+[m[32m            .HasMaxLength(15);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.DrugLicenseNumber)[m
+[32m+[m[32m            .HasMaxLength(100);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.ContactPerson)[m
+[32m+[m[32m            .HasMaxLength(200);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.MobileNumber)[m
+[32m+[m[32m            .HasMaxLength(20);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.Email)[m
+[32m+[m[32m            .HasMaxLength(100);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.Address)[m
+[32m+[m[32m            .HasMaxLength(500);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.City)[m
+[32m+[m[32m            .HasMaxLength(100);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.State)[m
+[32m+[m[32m            .HasMaxLength(100);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.Pincode)[m
+[32m+[m[32m            .HasMaxLength(10);[m
+ [m
+[32m+[m[32m        entity.Property(s => s.CreditLimit)[m
+[32m+[m[32m            .HasPrecision(18, 2);[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.CreatedAt)[m
+[32m+[m[32m            .HasColumnType("timestamp with time zone");[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.UpdatedAt)[m
+[32m+[m[32m            .HasColumnType("timestamp with time zone");[m
+[32m+[m
+[32m+[m[32m        entity.Property(s => s.RowVersion)[m
+[32m+[m[32m            .HasColumnName("xmin")[m
+[32m+[m[32m            .HasColumnType("xid")[m
+[32m+[m[32m            .ValueGeneratedOnAddOrUpdate()[m
+[32m+[m[32m            .IsConcurrencyToken();[m
+[32m+[m
+[32m+[m[32m        entity.HasIndex(s => s.SupplierCode)[m
+[32m+[m[32m            .IsUnique()[m
+[32m+[m[32m            .HasFilter("\"IsDeleted\" = false")[m
+[32m+[m[32m            .HasDatabaseName("IX_Suppliers_SupplierCode");[m
+[32m+[m
+[32m+[m[32m        entity.HasIndex(s => s.SupplierName)[m
+[32m+[m[32m            .HasDatabaseName("IX_Suppliers_SupplierName");[m
+[32m+[m
+[32m+[m[32m        entity.HasIndex(s => s.MobileNumber)[m
+[32m+[m[32m            .HasDatabaseName("IX_Suppliers_MobileNumber");[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[32m+[m[32m}[m[41m [m
+[32m+[m[32m     modelBuilder.Entity<Supplier>(entity =>[m
+[32m+[m[32m{[m
+[32m+[m[32m    ...[m
+[32m+[m[32m});[m
+ [m
+     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)[m
+     {[m
+[36m@@ -56,56 +120,63 @@[m [mpublic class AppDbContext : DbContext[m
+ [m
+    [m
+     [m
+[31m-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)[m
+[31m-    {[m
+[31m-        ApplySupplierTimestamps();[m
+[31m-        ApplyPurchaseTimestamps();[m
+[31m-        return base.SaveChangesAsync(cancellationToken);[m
+[31m-    }[m
+[32m+[m[32m    public override int SaveChanges()[m
+[32m+[m[32m{[m
+[32m+[m[32m    ApplyAuditFields();[m
+[32m+[m[32m    return base.SaveChanges();[m
+[32m+[m[32m}[m
+ [m
+[31m-    private void ApplySupplierTimestamps()[m
+[31m-    {[m
+[31m-        var now = DateTime.UtcNow;[m
+[32m+[m[32mpublic override Task<int> SaveChangesAsync([m
+[32m+[m[32m    CancellationToken cancellationToken = default)[m
+[32m+[m[32m{[m
+[32m+[m[32m    ApplyAuditFields();[m
+[32m+[m[32m    return base.SaveChangesAsync(cancellationToken);[m
+[32m+[m[32m}[m
+ [m
+[31m-        foreach (var entry in ChangeTracker.Entries<Supplier>())[m
+[32m+[m[32mprivate void ApplyAuditFields()[m
+[32m+[m[32m{[m
+[32m+[m[32m    var now = DateTime.UtcNow;[m
+[32m+[m
+[32m+[m[32m    foreach (var entry in ChangeTracker.Entries<IAuditable>())[m
+[32m+[m[32m    {[m
+[32m+[m[32m        switch (entry.State)[m
+         {[m
+[31m-            if (entry.State == EntityState.Added)[m
+[31m-            {[m
+[32m+[m[32m            case EntityState.Added:[m
+                 entry.Entity.CreatedAt = now;[m
+                 entry.Entity.UpdatedAt = null;[m
+[31m-            }[m
+[31m-            else if (entry.State == EntityState.Modified)[m
+[31m-            {[m
+[32m+[m[32m                break;[m
+[32m+[m
+[32m+[m[32m            case EntityState.Modified:[m
+                 entry.Entity.UpdatedAt = now;[m
+[31m-                entry.Property(s => s.CreatedAt).IsModified = false;[m
+[31m-            }[m
+[32m+[m[32m                entry.Property(e => e.CreatedAt).IsModified = false;[m
+[32m+[m[32m                break;[m
+         }[m
+     }[m
+[32m+[m[32m}[m
+[32m+[m[32m    private void ApplyAuditFields()[m
+[32m+[m[32m{[m
+[32m+[m[32m    var now = DateTime.UtcNow;[m
+ [m
+[31m-    private void ApplyPurchaseTimestamps()[m
+[32m+[m[32m    foreach (var entry in ChangeTracker.Entries<IAuditable>())[m
+     {[m
+[31m-        var now = DateTime.UtcNow;[m
+[31m-[m
+[31m-        foreach (var entry in ChangeTracker.Entries<Purchase>())[m
+[32m+[m[32m        if (entry.State == EntityState.Added)[m
+         {[m
+[31m-            if (entry.State == EntityState.Added)[m
+[31m-            {[m
+[31m-                entry.Entity.CreatedAt = now;[m
+[31m-                entry.Entity.UpdatedAt = null;[m
+[31m-            }[m
+[31m-            else if (entry.State == EntityState.Modified)[m
+[31m-            {[m
+[31m-                entry.Entity.UpdatedAt = now;[m
+[31m-                entry.Property(p => p.CreatedAt).IsModified = false;[m
+[31m-            }[m
+[32m+[m[32m            entry.Entity.CreatedAt = now;[m
+[32m+[m[32m            entry.Entity.UpdatedAt = null;[m
+[32m+[m[32m        }[m
+[32m+[m[32m        else if (entry.State == EntityState.Modified)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            entry.Entity.UpdatedAt = now;[m
+[32m+[m[32m            entry.Property(e => e.CreatedAt).IsModified = false;[m
+         }[m
+     }[m
+[32m+[m[32m}[m
+     /// <summary>[m
+     /// Every relationship and index in this schema is configured here, via Fluent API,[m
+     /// rather than via navigation properties on the model classes. This is a deliberate[m
+     /// choice, not an oversight: the models currently have no ICollection/reference[m
+     /// navigation properties at all (by design, to keep this change minimal), so every[m
+[31m-    /// FK below is a "shape-only" relationship — HasOne/WithMany with an explicit FK[m
+[32m+[m[32m    /// FK below is a "shape-only" relati
