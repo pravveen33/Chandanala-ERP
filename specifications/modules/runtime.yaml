@@ -1,0 +1,4 @@
+startup:
+
+  load:
+    - modules/finance.yaml
