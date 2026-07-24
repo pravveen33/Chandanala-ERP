@@ -2,7 +2,7 @@ using Chandanala.ERP.Web.Components;
 using Chandanala.ERP.Web.Data;
 using Chandanala.ERP.Web.Services;
 using Microsoft.EntityFrameworkCore;
-
+using Chandanala.ERP.Web.Services;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
