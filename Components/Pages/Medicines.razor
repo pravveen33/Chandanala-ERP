@@ -39,7 +39,9 @@
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Medicine Code</label>
                     <input class="form-control"
-                           @bind="medicine.MedicineCode" />
+                           @bind="medicine.MedicineCode"
+                           placeholder="Auto generated on save"
+                           readonly />
                 </div>
 
                 <div class="col-md-4 mb-3">
@@ -52,18 +54,6 @@
                     <label class="form-label">Brand Name *</label>
                     <InputText class="form-control" @bind-Value="medicine.BrandName" />
                     <ValidationMessage For="@(() => medicine.BrandName)" />
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Generic Name *</label>
-                    <InputText class="form-control" @bind-Value="medicine.GenericName" />
-                    <ValidationMessage For="@(() => medicine.GenericName)" />
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Strength *</label>
-                    <InputText class="form-control" @bind-Value="medicine.Strength" />
-                    <ValidationMessage For="@(() => medicine.Strength)" />
                 </div>
 
                 <div class="col-md-4 mb-3">
@@ -94,14 +84,16 @@
 
                     <select class="form-select" @bind="medicine.Category">
                         <option value="">Select</option>
-                        <option>Tablet</option>
-                        <option>Capsule</option>
-                        <option>Syrup</option>
-                        <option>Injection</option>
-                        <option>Surgical</option>
-                        <option>Cosmetic</option>
+                        <option>OTC</option>
+                        <option>Pharma</option>
+                        <option>Generic</option>
+                        <option>General</option>
                         <option>Ayurvedic</option>
-                        <option>Other</option>
+                        <option>Unani</option>
+                        <option>Homeo</option>
+                        <option>Surgical</option>
+                        <option>Nutrition</option>
+                        <option>FMCG</option>
                     </select>
                 </div>
 
@@ -279,7 +271,7 @@
 
         <div style="min-width: 280px;">
             <input class="form-control"
-                   placeholder="Search Brand / Generic / Barcode / Manufacturer..."
+                   placeholder="Search Brand / Barcode / Manufacturer..."
                    value="@searchText"
                    @oninput="OnSearchChanged" />
         </div>
@@ -319,10 +311,6 @@
                             <th role="button" @onclick='() => SortBy("BrandName")'>
                                 Brand Name @(sortColumn == "BrandName" ? (sortAscending ? "▲" : "▼") : "")
                             </th>
-                            <th role="button" @onclick='() => SortBy("GenericName")'>
-                                Generic Name @(sortColumn == "GenericName" ? (sortAscending ? "▲" : "▼") : "")
-                            </th>
-                            <th>Strength</th>
                             <th>Form</th>
                             <th role="button" @onclick='() => SortBy("MRP")'>
                                 MRP @(sortColumn == "MRP" ? (sortAscending ? "▲" : "▼") : "")
@@ -339,8 +327,6 @@
                                 <td>@m.MedicineCode</td>
                                 <td>@m.Barcode</td>
                                 <td>@m.BrandName</td>
-                                <td>@m.GenericName</td>
-                                <td>@m.Strength</td>
                                 <td>@m.DosageForm</td>
                                 <td>@m.MRP.ToString("N2")</td>
                                 <td>@m.MinimumStock / @m.MaximumStock</td>
@@ -447,12 +433,10 @@
         medicines.Where(x =>
             string.IsNullOrWhiteSpace(searchText) ||
             (x.BrandName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-            (x.GenericName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
             (x.Barcode?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
             (x.MedicineCode?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
             (x.ManufacturerName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-            (x.Category?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-            (x.Strength?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
+            (x.Category?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
 
     private IEnumerable<Medicine> SortedMedicines
     {
@@ -462,7 +446,6 @@
             {
                 "MedicineCode" => FilteredMedicines.OrderBy(m => m.MedicineCode),
                 "BrandName" => FilteredMedicines.OrderBy(m => m.BrandName),
-                "GenericName" => FilteredMedicines.OrderBy(m => m.GenericName),
                 "MRP" => FilteredMedicines.OrderBy(m => m.MRP),
                 "CreatedDate" => FilteredMedicines.OrderBy(m => m.CreatedDate),
                 _ => FilteredMedicines.OrderBy(m => m.BrandName)
@@ -518,6 +501,13 @@
 
         try
         {
+            bool isNew = editingId is null;
+
+            if (isNew && string.IsNullOrWhiteSpace(medicine.MedicineCode))
+            {
+                medicine.MedicineCode = await GenerateMedicineCodeAsync();
+            }
+
             if (!string.IsNullOrWhiteSpace(medicine.MedicineCode))
             {
                 var duplicateCode = await Db.Medicines
@@ -549,16 +539,13 @@
                 .AnyAsync(m => !m.IsDeleted
                     && m.Id != medicine.Id
                     && m.BrandName == medicine.BrandName
-                    && m.Strength == medicine.Strength
                     && m.ManufacturerName == medicine.ManufacturerName);
 
             if (duplicateCombo)
             {
-                message = "A medicine with the same Brand Name, Strength, and Manufacturer already exists.";
+                message = "A medicine with the same Brand Name and Manufacturer already exists.";
                 return;
             }
-
-            bool isNew = editingId is null;
 
             if (isNew)
             {
@@ -579,7 +566,7 @@
                 EntityName = nameof(Medicine),
                 EntityId = medicine.Id,
                 Action = isNew ? AuditActions.Create : AuditActions.Update,
-                Details = $"{medicine.BrandName} ({medicine.Strength}) — {medicine.GenericName}"
+                Details = $"{medicine.BrandName} — {medicine.GenericName}"
             });
             await Db.SaveChangesAsync();
 
@@ -601,6 +588,16 @@
         }
     }
 
+    private async Task<string> GenerateMedicineCodeAsync()
+    {
+        var lastId = await Db.Medicines
+            .AsNoTracking()
+            .OrderByDescending(m => m.Id)
+            .Select(m => m.Id)
+            .FirstOrDefaultAsync();
+
+        return $"MED{lastId + 1:000000}";
+    }
     private void EditMedicine(Medicine selected)
     {
         medicine = new Medicine
@@ -609,8 +606,6 @@
             MedicineCode = selected.MedicineCode,
             Barcode = selected.Barcode,
             BrandName = selected.BrandName,
-            GenericName = selected.GenericName,
-            Strength = selected.Strength,
             DosageForm = selected.DosageForm,
             Category = selected.Category,
             PackType = selected.PackType,
@@ -645,7 +640,7 @@
     {
         var confirmed = await JS.InvokeAsync<bool>(
             "confirm",
-            $"Are you sure you want to delete \"{selected.BrandName} ({selected.Strength})\"? This can be reversed later from the database if needed.");
+            $"Are you sure you want to delete \"{selected.BrandName}\"? This can be reversed later from the database if needed.");
 
         if (!confirmed) return;
 
@@ -666,7 +661,7 @@
                     EntityName = nameof(Medicine),
                     EntityId = entity.Id,
                     Action = AuditActions.Delete,
-                    Details = $"{entity.BrandName} ({entity.Strength}) — {entity.GenericName}"
+                    Details = $"{entity.BrandName} — {entity.GenericName}"
                 });
                 await Db.SaveChangesAsync();
 
@@ -692,3 +687,9 @@
         editingId = null;
     }
 }
+
+
+
+
+
+

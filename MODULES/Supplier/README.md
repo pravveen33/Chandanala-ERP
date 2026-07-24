@@ -1,0 +1,4 @@
+# Supplier Module
+
+Generated automatically.
+

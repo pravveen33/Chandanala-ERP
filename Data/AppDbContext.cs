@@ -1,64 +1,42 @@
+using Chandanala.ERP.Web.Models;
 using Microsoft.EntityFrameworkCore;
-using Chandanala.ERP.Web.Models.Models;
 
 namespace Chandanala.ERP.Web.Data;
 
 public class AppDbContext : DbContext
-
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {
     }
 
-
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-base.OnModelCreating(modelBuilder);
     {
         configurationBuilder.Properties<DateTime>()
             .HaveColumnType("timestamp with time zone");
     }
+
     public DbSet<Bill> Bills => Set<Bill>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<Medicine> Medicines => Set<Medicine>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<SupplierHistory> SupplierHistories => Set<SupplierHistory>();
+    public DbSet<SupplierChangeRequest> SupplierChangeRequests => Set<SupplierChangeRequest>();
+    public DbSet<Purchase> Purchases => Set<Purchase>();
+    public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
+    public DbSet<Batch> Batches => Set<Batch>();
+    public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
+    public DbSet<Sale> Sales { get; set; } = default!;
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
 
-public DbSet<User> Users => Set<User>();
-
-public DbSet<Role> Roles => Set<Role>();
-
-public DbSet<Permission> Permissions => Set<Permission>();
-
-public DbSet<UserRole> UserRoles => Set<UserRole>();
-
-public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
-
-public DbSet<Medicine> Medicines => Set<Medicine>();
-
-public DbSet<Supplier> Suppliers => Set<Supplier>();
-
-public DbSet<SupplierHistory> SupplierHistories => Set<SupplierHistory>();
-
-public DbSet<SupplierChangeRequest> SupplierChangeRequests => Set<SupplierChangeRequest>();
-
-public DbSet<Purchase> Purchases => Set<Purchase>();
-
-public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
-
-public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
-
-public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
-
-public DbSet<Batch> Batches => Set<Batch>();
-
-public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
-
-public DbSet<Sale> Sales => Set<Sale>();
-
-public DbSet<SaleItem> SaleItems => Set<SaleItem>();
-
-public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-{
-    // Existing implementation
-}
+    public override Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default)
     {
         ApplyAuditFields();
         return base.SaveChangesAsync(cancellationToken);
@@ -83,11 +61,11 @@ public override Task<int> SaveChangesAsync(CancellationToken cancellationToken =
         }
     }
 
-    private void ApplyPurchaseTimestamps()
+    private void ApplyAuditFields()
     {
         var now = DateTime.UtcNow;
 
-        foreach (var entry in ChangeTracker.Entries<Purchase>())
+        foreach (var entry in ChangeTracker.Entries<IAuditable>())
         {
             if (entry.State == EntityState.Added)
             {
@@ -97,31 +75,19 @@ public override Task<int> SaveChangesAsync(CancellationToken cancellationToken =
             else if (entry.State == EntityState.Modified)
             {
                 entry.Entity.UpdatedAt = now;
-                entry.Property(p => p.CreatedAt).IsModified = false;
+                entry.Property(e => e.CreatedAt).IsModified = false;
             }
         }
     }
+
     /// <summary>
-    /// Every relationship and index in this schema is configured here, via Fluent API,
-    /// rather than via navigation properties on the model classes. This is a deliberate
-    /// choice, not an oversight: the models currently have no ICollection/reference
-    /// navigation properties at all (by design, to keep this change minimal), so every
-    /// FK below is a "shape-only" relationship — HasOne/WithMany with an explicit FK
-    /// property and no corresponding navigation property on either side. EF Core fully
-    /// supports this; it just means you'll query with explicit .Where(x => x.FooId == y)
-    /// rather than x.Foo.Bar. If navigation properties are added to the models later,
-    /// this configuration can be updated to use WithMany(x => x.Children) etc. without
-    /// changing the underlying database schema.
-    ///
-    /// Delete behavior: master/reference data referenced by transactional history
-    /// (Medicine, Supplier, Batch) uses Restrict, so a hard delete is blocked rather
-    /// than silently cascading through purchase/stock history. Pure assignment/join
-    /// tables (UserRole, RolePermission) use Cascade, since a role assignment has no
-    /// independent meaning once its User or Role is gone.
+    /// Every relationship and index in this schema is configured here, via Fluent API.
     /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         // ----- Supplier -----
         modelBuilder.Entity<Supplier>(entity =>
@@ -430,10 +396,10 @@ public override Task<int> SaveChangesAsync(CancellationToken cancellationToken =
         // or a computed lowercase shadow property with its own unique index —
         // deliberately not done here to keep this change minimal and reversible.
         modelBuilder.Entity<Medicine>()
-            .HasIndex(m => new { m.BrandName, m.Strength })
+            .HasIndex(m => new { m.BrandName, m.ManufacturerName })
             .IsUnique()
             .HasFilter("\"IsDeleted\" = false")
-            .HasDatabaseName("IX_Medicines_BrandName_Strength_Unique");
+            .HasDatabaseName("IX_Medicines_BrandName_ManufacturerName_Unique");
 
         modelBuilder.Entity<Manufacturer>()
             .HasIndex(m => m.Name)
@@ -517,9 +483,11 @@ public override Task<int> SaveChangesAsync(CancellationToken cancellationToken =
             .HasIndex(si => si.BatchId)
             .HasDatabaseName("IX_SaleItems_BatchId");
     }
+
+
+
+
 }
-
-
 
 
 

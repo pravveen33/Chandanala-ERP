@@ -302,7 +302,7 @@
     private enum MessageKind { Success, Error, Info }
     
     private string MessageAlertClass = "";
-    private MessageKind messageKind = MessageKind.Success;
+    
     private bool isLoading = true;
     private bool isSaving;
     private bool isReviewing;
@@ -659,21 +659,18 @@
     {
         message = text;
         
-        messageKind = MessageKind.Success; 
     }
 
     private void ShowInfo(string text)
     {
         message = text;
        
-        messageKind = MessageKind.Info; 
     }
 
     private void ShowError(string text)
     {
         message = text;
         
-        messageKind = MessageKind.Error; 
     }
 
     private void ClearMessage()

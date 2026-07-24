@@ -17,12 +17,8 @@ namespace Chandanala.ERP.Web.Models
         [Required(ErrorMessage = "Brand Name is required")]
         [StringLength(200)]
         public string BrandName { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Generic Name is required")]
         [StringLength(200)]
         public string GenericName { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Strength is required")]
         [StringLength(50)]
         public string Strength { get; set; } = string.Empty;
 
@@ -133,3 +129,5 @@ namespace Chandanala.ERP.Web.Models
     }
     
 }
+
+
