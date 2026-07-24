@@ -1,7 +1,6 @@
 using Chandanala.ERP.Web.Components;
 using Chandanala.ERP.Web.Data;
 using Chandanala.ERP.Web.Services;
-using Chandanala.ERP.Web.Modules.Procurement.SupplierMaster.Services;
 using Microsoft.EntityFrameworkCore;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -22,15 +21,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Core ERP Services
 // ======================================================
 
-builder.Services.AddScoped<SupplierService>();
+builder.Services.AddScoped<Chandanala.ERP.Web.Services.SupplierService>();
 builder.Services.AddScoped<PurchaseService>();
 builder.Services.AddScoped<VerificationService>();
 
 // ======================================================
 // Procurement Module Services
 // ======================================================
-
-builder.Services.AddScoped<SupplierMasterService>();
+// Procurement services will be registered here when implemented.
 
 // ======================================================
 // Razor Components
@@ -47,8 +45,11 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
     app.UseHsts();
+}
+else
+{
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseAntiforgery();
