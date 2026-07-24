@@ -1,0 +1,25 @@
+routing:
+
+  ui:
+    model_class: fast
+
+  documentation:
+    model_class: fast
+
+  tests:
+    model_class: fast
+
+  correction:
+    model_class: fast
+
+  architecture:
+    model_class: reasoning
+
+  security:
+    model_class: audit
+
+fallback:
+
+  retries: 2
+
+  failover: true

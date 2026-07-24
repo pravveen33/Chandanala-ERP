@@ -1,0 +1,21 @@
+version: "1.0"
+
+runtime:
+
+  startup:
+
+    load:
+      - github.yaml
+      - filesystem.yaml
+      - postgres.yaml
+      - openapi.yaml
+      - capabilities.yaml
+      - routing.yaml
+      - approval-policy.yaml
+      - audit.yaml
+      - context.yaml
+      - servers.yaml
+      - providers.yaml
+      - models.yaml
+      - health.yaml
+      - runtime-services.yaml

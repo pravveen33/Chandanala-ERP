@@ -1,0 +1,146 @@
+version: "1.0"
+
+module:
+  id: medicine
+  name: Medicine Master
+  description: Master data management for medicines
+
+enabled: true
+
+dependencies:
+  - audit
+  - identity
+
+masters:
+
+  medicine:
+    enabled: true
+
+  manufacturer:
+    enabled: true
+
+  category:
+    enabled: true
+
+  composition:
+    enabled: true
+
+  dosage_form:
+    enabled: true
+
+  strength:
+    enabled: true
+
+  pack_size:
+    enabled: true
+
+  unit:
+    enabled: true
+
+  schedule:
+    enabled: true
+
+  gst:
+    enabled: true
+
+  hsn:
+    enabled: true
+
+features:
+
+  barcode:
+    enabled: true
+
+  qr_code:
+    enabled: true
+
+  batch_tracking:
+    enabled: true
+
+  expiry_tracking:
+    enabled: true
+
+  serial_tracking:
+    enabled: false
+
+  substitute_medicine:
+    enabled: true
+
+  generic_mapping:
+    enabled: true
+
+  storage_conditions:
+    enabled: true
+
+  temperature_control:
+    enabled: true
+
+pricing:
+
+  mrp:
+    required: true
+
+  purchase_price:
+    required: true
+
+  selling_price:
+    required: true
+
+  minimum_selling_price:
+    enabled: true
+
+inventory:
+
+  reorder_level:
+    enabled: true
+
+  reorder_quantity:
+    enabled: true
+
+  minimum_stock:
+    enabled: true
+
+  maximum_stock:
+    enabled: true
+
+compliance:
+
+  prescription_required:
+    enabled: true
+
+  schedule_h:
+    enabled: true
+
+  schedule_h1:
+    enabled: true
+
+  schedule_x:
+    enabled: true
+
+  narcotic:
+    enabled: true
+
+  cold_chain:
+    enabled: true
+
+governance:
+
+  allow_delete: false
+  require_audit: true
+  require_unique_code: true
+  require_batch_tracking: true
+
+roles:
+
+  - Administrator
+  - Pharmacist
+  - Inventory Manager
+  - Auditor
+
+audit:
+
+  enabled: true
+
+health:
+
+  enabled: true

@@ -26,8 +26,17 @@ builder.Services.AddScoped<PurchaseService>();
 builder.Services.AddScoped<VerificationService>();
 
 // ======================================================
+// Engineering Services
+// ======================================================
+
+// Register EngineeringDashboardService here when the class exists.
+// Example:
+// builder.Services.AddScoped<EngineeringDashboardService>();
+
+// ======================================================
 // Procurement Module Services
 // ======================================================
+
 // Procurement services will be registered here when implemented.
 
 // ======================================================

@@ -1,0 +1,48 @@
+name: Architecture Validation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  architecture:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore Chandanala.ERP.sln
+
+      - name: Build
+        run: dotnet build Chandanala.ERP.sln --configuration Release --no-restore
+
+      - name: Verify Solution Builds
+        run: echo "Build validation completed."
+
+      - name: Detect TODOs
+        run: |
+          if grep -R "TODO" .; then
+            echo "TODOs detected."
+          fi
+
+      - name: Detect Merge Conflicts
+        run: |
+          if grep -R "<<<<<<<" .; then
+            echo "Merge conflict markers found."
+            exit 1
+          fi
+
+      - name: Verify Formatting
+        run: dotnet format Chandanala.ERP.sln --verify-no-changes

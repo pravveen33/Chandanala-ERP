@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-07-24T00:00:00Z",
+  "version": "60.1",
+  "environment": "Development",
+
+  "build": {
+    "status": "Success",
+    "duration": "179.2s",
+    "lastBuild": "2026-07-24T00:00:00Z"
+  },
+
+  "tests": {
+    "status": "Pending",
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "coverage": 0
+  },
+
+  "security": {
+    "codeql": "Pending",
+    "trivy": "Pending",
+    "gitleaks": "Pending",
+    "sbom": "Pending"
+  },
+
+  "architecture": {
+    "status": "Pending",
+    "violations": 0
+  },
+
+  "quality": {
+    "documentation": "Pending",
+    "technicalDebt": "Unknown"
+  },
+
+  "release": {
+    "ready": false,
+    "approvalRequired": true
+  }
+}

@@ -1,0 +1,16 @@
+version: "1.0"
+
+audit:
+
+  enabled: true
+
+  log:
+
+    timestamp: true
+    user: true
+    capability: true
+    server: true
+    duration: true
+    result: true
+
+  retention_days: 365

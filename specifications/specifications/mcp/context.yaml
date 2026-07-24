@@ -1,0 +1,103 @@
+version: "1.0"
+
+context:
+
+  enabled: true
+
+  loading:
+
+    strategy: selective
+
+    max_tokens: 12000
+
+    cache: true
+
+    sanitize: true
+
+    deduplicate: true
+
+sources:
+
+  architecture:
+    enabled: true
+    priority: high
+
+  specifications:
+    enabled: true
+    priority: high
+
+  knowledge:
+    enabled: true
+    priority: high
+
+  coding_standards:
+    enabled: true
+    priority: high
+
+  design_system:
+    enabled: true
+    priority: high
+
+  security:
+    enabled: true
+    priority: high
+
+  testing:
+    enabled: true
+    priority: medium
+
+  documentation:
+    enabled: true
+    priority: medium
+
+  api_contracts:
+    enabled: true
+    priority: high
+
+limits:
+
+  max_documents: 20
+
+  max_file_size_kb: 1024
+
+  max_total_size_mb: 25
+
+filters:
+
+  include_extensions:
+
+    - .md
+    - .yaml
+    - .yml
+    - .json
+
+  exclude:
+
+    - bin
+    - obj
+    - node_modules
+    - .git
+
+security:
+
+  remove_secrets: true
+
+  remove_connection_strings: true
+
+  remove_private_keys: true
+
+  remove_passwords: true
+
+validation:
+
+  fail_on_missing_context: false
+
+  fail_on_invalid_yaml: true
+
+telemetry:
+
+  enabled: true
+
+  log_loaded_documents: true
+
+  log_context_size: true

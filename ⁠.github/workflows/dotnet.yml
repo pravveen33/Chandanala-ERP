@@ -1,30 +1,22 @@
-name: .NET Core ERP Build
+version: "2.0"
+pipeline:
+  name: "ai-code-generation-worker"
+  environment:
+    NODE_ENV: "production"
+    MAX_RETRIES: 3
 
-on:
-  push:
-    branches: [ "main" ]
+  stages:
+    - name: "generate"
+      agent: "gemini-3.6-flash"
+      prompt_template: "./prompts/ui-generator.hbs"
+      output_dir: "./temp/generated"
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Restore dependencies
-      run: dotnet restore
-
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-
-    - name: Install EF Tools
-      run: dotnet tool install --global dotnet-ef
-
-    - name: Run Migrations
-      run: dotnet ef database update --configuration Release
-      env:
-        ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_URL }}
+    - name: "validate"
+      actions:
+        - run: "npm run lint:custom-ast"
+        - run: "npx tsc --noEmit"
+        
+    - name: "sandbox_test"
+      environment_type: "docker-microvm"
+      network_access: false
+      command: "npm test"

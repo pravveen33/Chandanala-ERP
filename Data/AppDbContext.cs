@@ -23,42 +23,31 @@ public class AppDbContext : DbContext
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<Medicine> Medicines => Set<Medicine>();
+
+    // Procurement
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<SupplierHistory> SupplierHistories => Set<SupplierHistory>();
     public DbSet<SupplierChangeRequest> SupplierChangeRequests => Set<SupplierChangeRequest>();
     public DbSet<Purchase> Purchases => Set<Purchase>();
     public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
-    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    // Inventory
     public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
     public DbSet<Batch> Batches => Set<Batch>();
     public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
-    public DbSet<Sale> Sales { get; set; } = default!;
+
+    // Sales
+    public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+
+    // Audit
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     public override Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)
     {
         ApplyAuditFields();
         return base.SaveChangesAsync(cancellationToken);
-    }
-
-    private void ApplySupplierTimestamps()
-    {
-        var now = DateTime.UtcNow;
-
-        foreach (var entry in ChangeTracker.Entries<Supplier>())
-        {
-            if (entry.State == EntityState.Added)
-            {
-                entry.Entity.CreatedAt = now;
-                entry.Entity.UpdatedAt = null;
-            }
-            else if (entry.State == EntityState.Modified)
-            {
-                entry.Entity.UpdatedAt = now;
-                entry.Property(s => s.CreatedAt).IsModified = false;
-            }
-        }
     }
 
     private void ApplyAuditFields()
@@ -80,9 +69,6 @@ public class AppDbContext : DbContext
         }
     }
 
-    /// <summary>
-    /// Every relationship and index in this schema is configured here, via Fluent API.
-    /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -90,9 +76,9 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         // ----- Supplier -----
-        modelBuilder.Entity<Supplier>(entity =>
-        {
-            entity.Property(s => s.SupplierCode)
+         modelBuilder.Entity<Supplier>(entity =>
+{
+    entity.Property(s => s.SupplierCode)
                 .IsRequired()
                 .HasMaxLength(30);
 

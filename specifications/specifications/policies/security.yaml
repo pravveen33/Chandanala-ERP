@@ -1,0 +1,21 @@
+security:
+
+  secrets:
+    hardcoded: deny
+
+  filesystem:
+    write_outside_workspace: deny
+
+  network:
+    default: deny
+
+    allow:
+      - api.openai.com
+      - generativelanguage.googleapis.com
+      - github.com
+
+  sandbox:
+    required: true
+
+  approval:
+    production: mandatory
