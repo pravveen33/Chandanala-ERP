@@ -16,7 +16,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Core services for your ERP operations
 builder.Services.AddScoped<SupplierService>();
 builder.Services.AddScoped<PurchaseService>();
-builder.Services.AddScoped<VerificationService>(); 
+builder.Services.AddScoped<builder.Services.AddScoped<EngineeringDashboardService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
