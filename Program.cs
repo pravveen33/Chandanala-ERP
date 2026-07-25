@@ -1,6 +1,8 @@
 using Chandanala.ERP.Web.Components;
 using Chandanala.ERP.Web.Data;
 using Chandanala.ERP.Web.Services;
+using Chandanala.ERP.Web.Modules.Procurement.SupplierMaster.Repositories;
+using Chandanala.ERP.Web.Modules.Procurement.SupplierMaster.Services;
 using Microsoft.EntityFrameworkCore;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -21,23 +23,24 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Core ERP Services
 // ======================================================
 
-builder.Services.AddScoped<Chandanala.ERP.Web.Services.SupplierService>();
+builder.Services.AddScoped<SupplierService>();
 builder.Services.AddScoped<PurchaseService>();
 builder.Services.AddScoped<VerificationService>();
-
-// ======================================================
-// Engineering Services
-// ======================================================
-
-// Register EngineeringDashboardService here when the class exists.
-// Example:
-// builder.Services.AddScoped<EngineeringDashboardService>();
 
 // ======================================================
 // Procurement Module Services
 // ======================================================
 
-// Procurement services will be registered here when implemented.
+builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
+builder.Services.AddScoped<ISupplierMasterService, SupplierMasterService>();
+
+// ======================================================
+// Engineering Services
+// ======================================================
+
+// Register EngineeringDashboardService here when implemented.
+// Example:
+// builder.Services.AddScoped<EngineeringDashboardService>();
 
 // ======================================================
 // Razor Components
@@ -60,6 +63,8 @@ else
 {
     app.UseDeveloperExceptionPage();
 }
+
+app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 

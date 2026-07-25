@@ -1,6 +1,6 @@
 using Chandanala.ERP.Web.Models;
 using Microsoft.EntityFrameworkCore;
-
+using Chandanala.ERP.Web.Modules.MasterData.DosageForms.Models;
 namespace Chandanala.ERP.Web.Data;
 
 public class AppDbContext : DbContext
@@ -15,7 +15,7 @@ public class AppDbContext : DbContext
         configurationBuilder.Properties<DateTime>()
             .HaveColumnType("timestamp with time zone");
     }
-
+    public DbSet<DosageForm> DosageForms => Set<DosageForm>();
     public DbSet<Bill> Bills => Set<Bill>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
