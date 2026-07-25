@@ -1,1 +1,19 @@
-feat(mcp): add runtime-services configuration
+/.github/governance/verification/
+
+├── customer-verification.yml
+├── supplier-verification.yml
+├── medicine-verification.yml
+├── inventory-verification.yml
+├── purchase-verification.yml
+├── sales-verification.yml
+├── finance-verification.yml
+├── hr-verification.yml
+├── reporting-verification.yml
+├── ai-verification.yml
+├── security-verification.yml
+├── integration-verification.yml
+├── workflow-verification.yml
+├── notification-verification.yml
+├── audit-verification.yml
+├── identity-verification.yml
+└── architecture-verification.yml
