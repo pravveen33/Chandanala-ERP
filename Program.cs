@@ -1,3 +1,5 @@
+using Chandanala.ERP.Domain.MedicineKnowledge.Interfaces;
+using Chandanala.ERP.Infrastructure.Persistence.Repositories;
 using Chandanala.ERP.Web.Components;
 using Chandanala.ERP.Web.Data;
 using Chandanala.ERP.Web.Services;
@@ -33,6 +35,12 @@ builder.Services.AddScoped<VerificationService>();
 
 builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
 builder.Services.AddScoped<ISupplierMasterService, SupplierMasterService>();
+
+// ======================================================
+// Medicine Knowledge Module Services
+// ======================================================
+
+builder.Services.AddScoped<IMedicineKnowledgeRepository, MedicineKnowledgeRepository>();
 
 // ======================================================
 // Engineering Services
