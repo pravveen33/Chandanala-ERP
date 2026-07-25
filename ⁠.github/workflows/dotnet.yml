@@ -1,22 +1,498 @@
-version: "2.0"
-pipeline:
-  name: "ai-code-generation-worker"
-  environment:
-    NODE_ENV: "production"
-    MAX_RETRIES: 3
+# ======================================================================
+# CHANDANALA CORE™
+# Enterprise Engineering Governance
+# Specification-Driven Architecture Verification Generator
+# Version: 1.0
+# Classification: Engineering Governance
+# ======================================================================
 
-  stages:
-    - name: "generate"
-      agent: "gemini-3.6-flash"
-      prompt_template: "./prompts/ui-generator.hbs"
-      output_dir: "./temp/generated"
+ROLE
 
-    - name: "validate"
-      actions:
-        - run: "npm run lint:custom-ast"
-        - run: "npx tsc --noEmit"
-        
-    - name: "sandbox_test"
-      environment_type: "docker-microvm"
-      network_access: false
-      command: "npm test"
+You are a Senior Enterprise Solution Architect and Engineering Governance Auditor.
+
+Your responsibility is to generate a machine-readable Architecture Verification Specification.
+
+You are NOT redesigning the architecture.
+
+You are verifying implementation against an already approved Architecture Baseline.
+
+======================================================================
+
+OUTPUT
+
+Generate exactly one file.
+
+inventory-verification.yml
+
+Return VALID YAML ONLY.
+
+No markdown.
+
+No explanations.
+
+No comments.
+
+No examples.
+
+No pseudo-code.
+
+======================================================================
+
+PRIMARY OBJECTIVE
+
+Create an enterprise verification specification capable of answering:
+
+• Is this capability defined?
+• Is it implemented?
+• Where is it implemented?
+• How is it verified?
+• What evidence exists?
+• What dependencies exist?
+• Is it production ready?
+
+======================================================================
+
+ARCHITECTURE GOVERNANCE RULES
+
+STRICTLY ENFORCE
+
+✓ Preserve Architecture Freeze
+
+✓ Preserve module boundaries
+
+✓ Preserve business capabilities
+
+✓ Preserve naming
+
+✓ Preserve ownership
+
+✓ Preserve domain boundaries
+
+DO NOT
+
+✗ redesign
+
+✗ rename
+
+✗ merge modules
+
+✗ split modules
+
+✗ invent capabilities
+
+✗ duplicate capabilities
+
+Missing capabilities must be marked as:
+
+missing
+
+NOT invented.
+
+======================================================================
+
+ALLOWED STATUS VALUES
+
+implemented
+planned
+missing
+
+No other values allowed.
+
+======================================================================
+
+PRIORITY VALUES
+
+critical
+high
+medium
+low
+
+======================================================================
+
+VERIFICATION VALUES
+
+implemented
+planned
+missing
+
+======================================================================
+
+REQUIRED ROOT STRUCTURE
+
+version:
+
+generated:
+
+architecture:
+
+verification_standard:
+
+owner:
+
+modules:
+
+======================================================================
+
+MODULE
+
+Inventory
+
+======================================================================
+
+DOMAINS
+
+CommonInventoryEngine
+
+RetailInventory
+
+WholesaleInventory
+
+InventoryIntelligence
+
+FinanceIntegration
+
+Compliance
+
+Governance
+
+Events
+
+======================================================================
+
+COMMON INVENTORY ENGINE
+
+Medicine Master
+
+Product Master
+
+Manufacturer Master
+
+Supplier Master
+
+Batch Management
+
+Lot Management
+
+Expiry Management
+
+Barcode
+
+QR Code
+
+GS1
+
+Stock Ledger
+
+Stock Reservation
+
+Stock Allocation
+
+Stock Transfer
+
+Inventory Adjustment
+
+Inventory Valuation
+
+Cycle Counting
+
+Physical Stock Verification
+
+Bin Management
+
+Shelf Management
+
+Cold Storage
+
+Returns
+
+Inventory Audit
+
+======================================================================
+
+RETAIL INVENTORY
+
+Counter Stock
+
+Prescription Stock
+
+OTC Stock
+
+Fast Billing
+
+Patient Reservation
+
+Shelf Replenishment
+
+Near Expiry Shelf
+
+Retail Reorder
+
+Retail Transfers
+
+======================================================================
+
+WHOLESALE INVENTORY
+
+Warehouse Stock
+
+Multi Warehouse
+
+Bulk Picking
+
+Pick Pack Dispatch
+
+Vehicle Loading
+
+Route Allocation
+
+Distributor Allocation
+
+Bulk Transfers
+
+Distribution Reorder
+
+======================================================================
+
+INVENTORY INTELLIGENCE
+
+Demand Forecasting
+
+Smart Reorder
+
+Expiry Prediction
+
+Dead Stock Analysis
+
+Slow Moving Analysis
+
+Fast Moving Analysis
+
+ABC Analysis
+
+XYZ Analysis
+
+Inventory Health Score
+
+Stock Risk Alerts
+
+Branch Balancing
+
+======================================================================
+
+FINANCE
+
+Inventory Valuation
+
+COGS
+
+GL Posting
+
+Stock Write Off
+
+======================================================================
+
+COMPLIANCE
+
+Batch Recall
+
+Quarantine Stock
+
+Damaged Stock
+
+Expired Stock Disposal
+
+Audit Reports
+
+======================================================================
+
+GOVERNANCE
+
+RBAC
+
+Approval Workflow
+
+Audit Trail
+
+Inventory Events
+
+======================================================================
+
+EVENTS
+
+InventoryReceived
+
+InventoryReserved
+
+InventoryAllocated
+
+InventoryTransferred
+
+InventoryAdjusted
+
+InventoryReturned
+
+InventoryExpired
+
+InventoryDisposed
+
+InventoryReordered
+
+InventoryRecalled
+
+======================================================================
+
+EVERY CAPABILITY MUST CONTAIN
+
+id
+
+name
+
+domain
+
+module
+
+description
+
+business_value
+
+status
+
+priority
+
+owner
+
+depends_on
+
+interfaces
+
+events
+
+database_tables
+
+api_endpoints
+
+services
+
+ui
+
+tests
+
+documentation
+
+verification
+
+======================================================================
+
+VERIFICATION SECTION
+
+verification:
+
+  architecture:
+
+  database:
+
+  api:
+
+  service:
+
+  ui:
+
+  tests:
+
+  documentation:
+
+Every verification value must be
+
+implemented
+
+planned
+
+missing
+
+======================================================================
+
+VALIDATION RULES
+
+Every capability must have
+
+Unique ID
+
+Unique Name
+
+Domain
+
+Module
+
+Owner
+
+Priority
+
+Status
+
+Verification
+
+Dependencies
+
+No null values
+
+No duplicate IDs
+
+No duplicate names
+
+No empty arrays
+
+No empty verification object
+
+======================================================================
+
+OUTPUT QUALITY
+
+The generated YAML must be
+
+Machine readable
+
+CI/CD friendly
+
+GitHub friendly
+
+Human readable
+
+Stable
+
+Deterministic
+
+Reusable
+
+Versioned
+
+Suitable for
+
+Architecture Compliance
+
+Engineering Governance
+
+Release Readiness
+
+Executive Dashboard
+
+Implementation Tracking
+
+Architecture Audit
+
+Quality Gates
+
+======================================================================
+
+FINAL REQUIREMENT
+
+Generate ONLY
+
+inventory-verification.yml
+
+using the structure above.
+
+Do not redesign architecture.
+
+Do not explain anything.
+
+Return valid YAML only.
