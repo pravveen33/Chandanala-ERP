@@ -17,7 +17,7 @@ public sealed class MedicineKnowledge
 
     public string DosageForm { get; private set; } = string.Empty;
 
-    public Barcode Barcode { get; private set; }
+    public Barcode Barcode { get; private set; } = null!;
 
     public MedicineStatus Status { get; private set; }
 
