@@ -1,5 +1,6 @@
 ﻿using MedicineKnowledgeEntity = Chandanala.ERP.Domain.MedicineKnowledge.Entities.MedicineKnowledge;
 using Chandanala.ERP.Domain.MedicineKnowledge.Interfaces;
+using Chandanala.ERP.Web.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chandanala.ERP.Infrastructure.Persistence.Repositories;
@@ -7,9 +8,9 @@ namespace Chandanala.ERP.Infrastructure.Persistence.Repositories;
 public sealed class MedicineKnowledgeRepository
     : IMedicineKnowledgeRepository
 {
-    private readonly ApplicationDbContext _context;
+    private readonly CoreDbContext _context;
 
-    public MedicineKnowledgeRepository(ApplicationDbContext context)
+    public MedicineKnowledgeRepository(CoreDbContext context)
     {
         _context = context;
     }
