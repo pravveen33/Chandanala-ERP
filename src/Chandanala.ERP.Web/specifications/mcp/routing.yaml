@@ -1,0 +1,21 @@
+version: "1.0"
+
+routing:
+
+  github:
+    priority: high
+
+  filesystem:
+    priority: high
+
+  postgres:
+    priority: medium
+
+  openapi:
+    priority: high
+
+fallback:
+
+  retries: 2
+
+  timeout_seconds: 30

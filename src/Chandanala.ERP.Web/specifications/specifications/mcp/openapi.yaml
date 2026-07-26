@@ -1,0 +1,16 @@
+version: "1.0"
+
+server:
+  name: openapi
+
+gateway:
+  mode: capability
+
+services:
+  - inventory
+  - billing
+  - purchase
+  - reports
+
+authentication:
+  required: true

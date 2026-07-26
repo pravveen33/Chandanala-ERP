@@ -1,0 +1,35 @@
+using Microsoft.EntityFrameworkCore.Migrations;
+
+public partial class AddGovernanceTables : Migration
+{
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.CreateTable(
+            name: "AuditLogs",
+            columns: table => new {
+                Id = table.Column<int>(nullable: false).Annotation("Sqlite:Autoincrement", true),
+                Timestamp = table.Column<DateTime>(nullable: false),
+                Status = table.Column<string>(nullable: false),
+                Reasons = table.Column<string>(nullable: false),
+                ConfidenceScore = table.Column<double>(nullable: false)
+            },
+            constraints: table => table.PrimaryKey("PK_AuditLogs", x => x.Id));
+
+        migrationBuilder.CreateTable(
+            name: "PurchaseDraftApprovals",
+            columns: table => new {
+                Id = table.Column<int>(nullable: false).Annotation("Sqlite:Autoincrement", true),
+                ProcurementDecisionId = table.Column<int>(nullable: false),
+                Status = table.Column<string>(nullable: false),
+                ApprovedBy = table.Column<string>(nullable: true),
+                ApprovalTimestamp = table.Column<DateTime>(nullable: true)
+            },
+            constraints: table => table.PrimaryKey("PK_PurchaseDraftApprovals", x => x.Id));
+    }
+
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable(name: "AuditLogs");
+        migrationBuilder.DropTable(name: "PurchaseDraftApprovals");
+    }
+}

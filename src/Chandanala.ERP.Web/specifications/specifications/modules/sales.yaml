@@ -1,0 +1,181 @@
+schema:
+  name: chandanala.module
+  version: "1.0"
+
+module:
+  id: sales
+  name: Sales Management
+  description: Enterprise sales and billing module
+
+enabled: true
+
+dependencies:
+  - customer
+  - medicine
+  - inventory
+  - finance
+  - audit
+  - identity
+
+masters:
+
+  sales_type:
+    enabled: true
+
+  payment_method:
+    enabled: true
+
+  discount_policy:
+    enabled: true
+
+workflow:
+
+  quotation:
+    enabled: true
+
+  sales_order:
+    enabled: true
+
+  sales_invoice:
+    enabled: true
+
+  prescription_sales:
+    enabled: true
+
+  otc_sales:
+    enabled: true
+
+  home_delivery:
+    enabled: true
+
+  sales_return:
+    enabled: true
+
+billing:
+
+  barcode_scanning:
+    enabled: true
+
+  qr_code_scanning:
+    enabled: true
+
+  multiple_payment_modes:
+    enabled: true
+
+  split_payment:
+    enabled: true
+
+  credit_sales:
+    enabled: true
+
+  bill_reprint:
+    enabled: true
+
+  invoice_cancellation:
+    enabled: false
+
+customer:
+
+  customer_history:
+    enabled: true
+
+  prescription_history:
+    enabled: true
+
+  loyalty_points:
+    enabled: true
+
+  wallet:
+    enabled: true
+
+  outstanding_balance:
+    enabled: true
+
+inventory:
+
+  stock_deduction:
+    enabled: true
+
+  batch_selection:
+    enabled: true
+
+  expiry_validation:
+    enabled: true
+
+  fifo_issue:
+    enabled: true
+
+finance:
+
+  accounts_receivable:
+    enabled: true
+
+  gst_output:
+    enabled: true
+
+  automatic_posting:
+    enabled: true
+
+analytics:
+
+  daily_sales:
+    enabled: true
+
+  hourly_sales:
+    enabled: true
+
+  medicine_sales:
+    enabled: true
+
+  pharmacist_performance:
+    enabled: true
+
+  customer_purchase_analysis:
+    enabled: true
+
+governance:
+
+  require_customer_for_credit_sale: true
+
+  require_prescription_for_schedule_drugs: true
+
+  allow_negative_stock: false
+
+  allow_delete_after_posting: false
+
+  require_batch_validation: true
+
+  require_expiry_validation: true
+
+  require_audit: true
+
+roles:
+
+  - Administrator
+  - Cashier
+  - Pharmacist
+  - Store Manager
+  - Accountant
+  - Auditor
+
+events:
+
+  sales_invoice_created:
+    enabled: true
+
+  payment_received:
+    enabled: true
+
+  sales_return_processed:
+    enabled: true
+
+  stock_updated:
+    enabled: true
+
+audit:
+
+  enabled: true
+
+health:
+
+  enabled: true

@@ -1,0 +1,41 @@
+ version: "1.0"
+
+servers:
+
+  github:
+    enabled: true
+    configuration: github.yaml
+    capabilities: capabilities.yaml
+
+  filesystem:
+    enabled: true
+    configuration: filesystem.yaml
+    capabilities: capabilities.yaml
+
+  postgres:
+    enabled: true
+    configuration: postgres.yaml
+    capabilities: capabilities.yaml
+
+  openapi:
+    enabled: true
+    configuration: openapi.yaml
+    capabilities: capabilities.yaml
+
+defaults:
+
+  audit: true
+
+  readonly: true
+
+  approval_required: false
+
+security:
+
+  deny_unknown_servers: true
+
+  deny_unknown_capabilities: true
+
+telemetry:
+
+  enabled: true

@@ -1,0 +1,33 @@
+agent:
+
+  id: ui-generation
+
+  type: generation
+
+provider:
+
+  preferred: fast
+
+knowledge:
+
+  design_system: true
+
+  accessibility: true
+
+  coding_standards: true
+
+rules:
+
+  use_only_design_system: true
+
+  forbid_inline_styles: true
+
+  forbid_raw_html: true
+
+verification:
+
+  required: true
+
+retry:
+
+  max_attempts: 3

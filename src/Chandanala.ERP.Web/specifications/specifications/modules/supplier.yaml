@@ -1,0 +1,136 @@
+version: "1.0"
+
+module:
+  id: supplier
+  name: Supplier Management
+  description: Supplier master and procurement management
+
+enabled: true
+
+dependencies:
+  - identity
+  - audit
+  - purchase
+  - finance
+
+masters:
+
+  supplier:
+    enabled: true
+
+  supplier_category:
+    enabled: true
+
+  manufacturer:
+    enabled: true
+
+  distributor:
+    enabled: true
+
+features:
+
+  supplier_registration:
+    enabled: true
+
+  supplier_search:
+    enabled: true
+
+  supplier_rating:
+    enabled: true
+
+  supplier_performance:
+    enabled: true
+
+  quotation_management:
+    enabled: true
+
+  contract_management:
+    enabled: true
+
+  document_management:
+    enabled: true
+
+financial:
+
+  supplier_ledger:
+    enabled: true
+
+  payment_terms:
+    enabled: true
+
+  credit_days:
+    enabled: true
+
+  credit_limit:
+    enabled: true
+
+  outstanding_balance:
+    enabled: true
+
+  ageing_analysis:
+    enabled: true
+
+  payment_history:
+    enabled: true
+
+  supplier_statement:
+    enabled: true
+
+procurement:
+
+  purchase_orders:
+    enabled: true
+
+  goods_receipts:
+    enabled: true
+
+  purchase_returns:
+    enabled: true
+
+  invoice_matching:
+    enabled: true
+
+  approval_workflow:
+    enabled: true
+
+compliance:
+
+  gst_registration:
+    enabled: true
+
+  drug_license:
+    enabled: true
+
+  pan:
+    enabled: true
+
+  bank_details:
+    enabled: true
+
+  agreement_documents:
+    enabled: true
+
+governance:
+
+  allow_delete: false
+
+  require_unique_supplier_code: true
+
+  require_audit: true
+
+  approval_required_for_changes: true
+
+roles:
+
+  - Administrator
+  - Purchase Manager
+  - Accountant
+  - Auditor
+
+audit:
+
+  enabled: true
+
+health:
+
+  enabled: true

@@ -1,0 +1,22 @@
+version: "2.0"
+pipeline:
+  name: "ai-code-generation-worker"
+  environment:
+    NODE_ENV: "production"
+    MAX_RETRIES: 3
+
+  stages:
+    - name: "generate"
+      agent: "gemini-3.6-flash"
+      prompt_template: "./prompts/ui-generator.hbs"
+      output_dir: "./temp/generated"
+
+    - name: "validate"
+      actions:
+        - run: "npm run lint:custom-ast"
+        - run: "npx tsc --noEmit"
+        
+    - name: "sandbox_test"
+      environment_type: "docker-microvm"
+      network_access: false
+      command: "npm test"

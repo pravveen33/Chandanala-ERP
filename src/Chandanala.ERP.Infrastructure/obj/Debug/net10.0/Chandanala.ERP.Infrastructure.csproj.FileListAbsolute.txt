@@ -1,0 +1,17 @@
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\bin\Debug\net10.0\Chandanala.ERP.Infrastructure.deps.json
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\bin\Debug\net10.0\Chandanala.ERP.Infrastructure.dll
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\bin\Debug\net10.0\Chandanala.ERP.Infrastructure.pdb
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\bin\Debug\net10.0\Chandanala.ERP.Application.dll
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\bin\Debug\net10.0\Chandanala.ERP.Domain.dll
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\bin\Debug\net10.0\Chandanala.ERP.Domain.pdb
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\bin\Debug\net10.0\Chandanala.ERP.Application.pdb
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.csproj.AssemblyReference.cache
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.AssemblyInfoInputs.cache
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.AssemblyInfo.cs
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.csproj.CoreCompileInputs.cache
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandana.D6758A92.Up2Date
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.dll
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\refint\Chandanala.ERP.Infrastructure.dll
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.pdb
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\ref\Chandanala.ERP.Infrastructure.dll

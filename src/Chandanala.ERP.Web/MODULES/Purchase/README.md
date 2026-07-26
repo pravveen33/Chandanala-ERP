@@ -1,0 +1,4 @@
+# Purchase Module
+
+Generated automatically.
+

@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Chandanala.ERP.Application/Chandanala.ERP.Application.csproj" />
+    <Project Path="src/Chandanala.ERP.Domain/Chandanala.ERP.Domain.csproj" />
+    <Project Path="src/Chandanala.ERP.Infrastructure/Chandanala.ERP.Infrastructure.csproj" />
+    <Project Path="src/Chandanala.ERP.Web/Chandanala.ERP.Web.csproj" />
+  </Folder>
+</Solution>

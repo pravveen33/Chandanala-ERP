@@ -1,0 +1,373 @@
+@page "/users"
+@rendermode InteractiveServer
+
+@using Microsoft.EntityFrameworkCore
+@using Chandanala.ERP.Web.Models
+@using Chandanala.ERP.Web.Data
+@using Chandanala.ERP.Web.Services
+
+@inject AppDbContext Db
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+<h3 class="mb-4">User Management</h3>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div class="alert @(message.Contains("Successfully") ? "alert-success" : "alert-danger") alert-dismissible fade show">
+        @message
+        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <strong>@(editingId is null ? "Add" : "Update") User</strong>
+    </div>
+
+    <div class="card-body">
+        <EditForm Model="@form" OnValidSubmit="SaveUser">
+
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Username *</label>
+                    <input class="form-control" @bind="form.Username" disabled="@(editingId is not null)" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">@(editingId is null ? "Password *" : "New Password (leave blank to keep current)")</label>
+                    <input type="password" class="form-control" @bind="form.Password" />
+                </div>
+
+                <div class="col-md-4 mb-3 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="isActive" @bind="form.IsActive" />
+                        <label class="form-check-label" for="isActive">Active</label>
+                    </div>
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label d-block">Roles</label>
+                    @if (!allRoles.Any())
+                    {
+                        <span class="text-muted">No roles defined yet.</span>
+                    }
+                    else
+                    {
+                        @foreach (var role in allRoles)
+                        {
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="@("role_" + role.Id)"
+                                       checked="@selectedRoleIds.Contains(role.Id)"
+                                       @onchange="e => ToggleRole(role.Id, e.Value is bool b && b)" />
+                                <label class="form-check-label" for="@("role_" + role.Id)">@role.Name</label>
+                            </div>
+                        }
+                    }
+                </div>
+
+            </div>
+
+            <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                @(isSaving ? "Saving..." : (editingId is null ? "Save User" : "Update User"))
+            </button>
+
+            @if (editingId is not null)
+            {
+                <button type="button" class="btn btn-secondary ms-2" @onclick="ClearForm">
+                    Cancel
+                </button>
+            }
+
+        </EditForm>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <strong>User List (@users.Count total)</strong>
+    </div>
+
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+            </div>
+        }
+        else if (!users.Any())
+        {
+            <p class="text-muted mb-0">No users found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Roles</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in users)
+                        {
+                            <tr>
+                                <td>@u.Username</td>
+                                <td>@(userRoleNames.TryGetValue(u.Id, out var names) ? string.Join(", ", names) : "")</td>
+                                <td>
+                                    @if (u.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-nowrap">
+                                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditUser(u)">
+                                        Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeactivateUser(u)" disabled="@(!u.IsActive)">
+                                        Deactivate
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private class UserForm
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+    }
+
+    private List<User> users = new();
+    private List<Role> allRoles = new();
+    private Dictionary<long, List<string>> userRoleNames = new();
+    private HashSet<long> selectedRoleIds = new();
+
+    private UserForm form = new();
+    private long? editingId = null;
+
+    private string message = string.Empty;
+    private bool isSaving = false;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        isLoading = true;
+        try
+        {
+            users = await Db.Users.AsNoTracking().OrderBy(u => u.Username).ToListAsync();
+            allRoles = await Db.Roles.AsNoTracking().Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+
+            var roleAssignments = await Db.UserRoles.AsNoTracking().Where(ur => ur.IsActive).ToListAsync();
+            var roleNamesById = allRoles.ToDictionary(r => r.Id, r => r.Name);
+
+            userRoleNames = roleAssignments
+                .GroupBy(ur => ur.UserId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(ur => roleNamesById.TryGetValue(ur.RoleId, out var n) ? n : "?").ToList());
+        }
+        catch (Exception ex)
+        {
+            message = $"Failed to load users: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ToggleRole(long roleId, bool isChecked)
+    {
+        if (isChecked)
+        {
+            selectedRoleIds.Add(roleId);
+        }
+        else
+        {
+            selectedRoleIds.Remove(roleId);
+        }
+    }
+
+    private async Task SaveUser()
+    {
+        isSaving = true;
+        message = string.Empty;
+
+        try
+        {
+            var username = form.Username.Trim();
+
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                message = "Username is required.";
+                return;
+            }
+
+            if (editingId is null && string.IsNullOrWhiteSpace(form.Password))
+            {
+                message = "Password is required for a new user.";
+                return;
+            }
+
+            var duplicateUsername = await Db.Users.AsNoTracking()
+                .AnyAsync(u => u.Id != (editingId ?? 0) && u.Username.ToLower() == username.ToLower());
+
+            if (duplicateUsername)
+            {
+                message = "A user with this Username already exists.";
+                return;
+            }
+
+            bool isNew = editingId is null;
+            User entity;
+
+            if (isNew)
+            {
+                entity = new User
+                {
+                    Username = username,
+                    PasswordHash = PasswordHasher.HashPassword(form.Password),
+                    IsActive = form.IsActive
+                };
+                Db.Users.Add(entity);
+                await Db.SaveChangesAsync();
+            }
+            else
+            {
+                entity = await Db.Users.FirstAsync(u => u.Id == editingId!.Value);
+                entity.IsActive = form.IsActive;
+                if (!string.IsNullOrWhiteSpace(form.Password))
+                {
+                    entity.PasswordHash = PasswordHasher.HashPassword(form.Password);
+                }
+                await Db.SaveChangesAsync();
+            }
+
+            await SyncRolesAsync(entity.Id);
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                Module = "User Management",
+                EntityName = nameof(User),
+                EntityId = (int)entity.Id,
+                Action = isNew ? AuditActions.Create : AuditActions.Update,
+                Details = entity.Username
+            });
+            await Db.SaveChangesAsync();
+
+            message = isNew ? "User Saved Successfully." : "User Updated Successfully.";
+            await LoadUsers();
+            ClearForm();
+        }
+        catch (Exception ex)
+        {
+            message = $"Error saving user: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task SyncRolesAsync(long userId)
+    {
+        var existing = await Db.UserRoles.Where(ur => ur.UserId == userId).ToListAsync();
+
+        foreach (var ur in existing)
+        {
+            ur.IsActive = selectedRoleIds.Contains(ur.RoleId);
+        }
+
+        var alreadyLinkedRoleIds = existing.Select(ur => ur.RoleId).ToHashSet();
+        foreach (var roleId in selectedRoleIds.Except(alreadyLinkedRoleIds))
+        {
+            Db.UserRoles.Add(new UserRole { UserId = userId, RoleId = roleId, IsActive = true });
+        }
+
+        await Db.SaveChangesAsync();
+    }
+
+    private async Task EditUser(User selected)
+    {
+        form = new UserForm
+        {
+            Username = selected.Username,
+            Password = string.Empty,
+            IsActive = selected.IsActive
+        };
+
+        editingId = selected.Id;
+        selectedRoleIds = (await Db.UserRoles.AsNoTracking()
+            .Where(ur => ur.UserId == selected.Id && ur.IsActive)
+            .Select(ur => ur.RoleId)
+            .ToListAsync()).ToHashSet();
+
+        message = string.Empty;
+    }
+
+    private async Task DeactivateUser(User selected)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Deactivate user \"{selected.Username}\"? They will no longer be able to log in.");
+
+        if (!confirmed) return;
+
+        try
+        {
+            var entity = await Db.Users.FindAsync(selected.Id);
+            if (entity is not null)
+            {
+                entity.IsActive = false;
+                await Db.SaveChangesAsync();
+
+                Db.AuditLogs.Add(new AuditLog
+                {
+                    Module = "User Management",
+                    EntityName = nameof(User),
+                    EntityId = (int)entity.Id,
+                    Action = AuditActions.Update,
+                    Details = $"Deactivated {entity.Username}"
+                });
+                await Db.SaveChangesAsync();
+
+                message = "User Deactivated Successfully.";
+                await LoadUsers();
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error deactivating user: {ex.Message}";
+        }
+    }
+
+    private void ClearForm()
+    {
+        form = new UserForm();
+        editingId = null;
+        selectedRoleIds = new();
+    }
+}

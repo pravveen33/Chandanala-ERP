@@ -1,0 +1,21 @@
+architecture:
+
+  dependency_injection: required
+
+  capability_gateway: required
+
+  structured_logging: required
+
+  telemetry: required
+
+  repository_pattern: required
+
+  clean_architecture: required
+
+forbidden:
+
+  - direct_database_access
+
+  - hardcoded_connection_strings
+
+  - static_service_locator

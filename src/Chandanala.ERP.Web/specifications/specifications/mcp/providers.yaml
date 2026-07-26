@@ -1,0 +1,52 @@
+version: "1.0"
+
+providers:
+
+  openai:
+    enabled: true
+    priority: 1
+
+    capabilities:
+      - reasoning
+      - coding
+      - analysis
+
+    timeout_seconds: 30
+    retries: 2
+
+  google:
+    enabled: true
+    priority: 2
+
+    capabilities:
+      - fast_generation
+      - multimodal
+
+    timeout_seconds: 30
+    retries: 2
+
+  local:
+    enabled: false
+    priority: 99
+
+    capabilities:
+      - offline
+
+    timeout_seconds: 60
+    retries: 1
+
+selection:
+
+  strategy: capability_first
+
+fallback:
+
+  enabled: true
+
+security:
+
+  require_registered_provider: true
+
+telemetry:
+
+  enabled: true

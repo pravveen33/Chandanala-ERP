@@ -1,0 +1,84 @@
+version: "1.0"
+
+approval:
+
+  defaults:
+    required: true
+
+  exempt:
+
+    - repository.read
+    - repository.search
+    - commit.read
+    - issue.read
+    - pullrequest.read
+    - workflow.read
+
+    - file.read
+    - directory.list
+    - specification.read
+    - documentation.read
+    - architecture.read
+    - adr.read
+
+    - sql.select
+    - inventory.read
+    - inventory.search
+    - medicine.read
+    - medicine.search
+    - supplier.read
+    - supplier.search
+    - customer.read
+    - customer.search
+    - report.read
+
+    - api.get
+    - inventory.get
+    - medicine.get
+    - customer.get
+    - supplier.get
+    - report.get
+
+  always_require:
+
+    - repository.write
+    - repository.delete
+
+    - file.write
+    - file.delete
+
+    - sql.insert
+    - sql.update
+    - sql.delete
+    - sql.execute
+
+    - api.post
+    - api.put
+    - api.patch
+    - api.delete
+
+roles:
+
+  developer:
+    auto_approve_readonly: true
+
+  pharmacist:
+    auto_approve_readonly: true
+
+  manager:
+    approve_business_operations: true
+
+  administrator:
+    approve_system_operations: true
+
+audit:
+
+  enabled: true
+
+  record:
+    - timestamp
+    - user
+    - role
+    - capability
+    - approval
+    - result

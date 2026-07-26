@@ -1,0 +1,152 @@
+version: "1.0"
+
+module:
+  id: finance
+  name: Finance & Accounting
+  description: Enterprise finance and accounting services for CHANDANALA CORE™
+
+enabled: true
+
+dependencies:
+  - identity
+  - customer
+  - supplier
+  - inventory
+  - sales
+  - purchase
+  - audit
+
+submodules:
+
+  chart_of_accounts:
+    enabled: true
+    code: COA
+    description: Manage chart of accounts
+
+  general_ledger:
+    enabled: true
+    code: GL
+    description: General ledger and journal postings
+
+  customer_ledger:
+    enabled: true
+    code: CL
+    description: Customer receivables
+
+  supplier_ledger:
+    enabled: true
+    code: SL
+    description: Supplier payables
+
+  cash_book:
+    enabled: true
+    code: CASH
+    description: Cash transactions
+
+  bank_book:
+    enabled: true
+    code: BANK
+    description: Bank and UPI transactions
+
+  journal_voucher:
+    enabled: true
+    code: JV
+    description: Manual journal entries
+
+  receipt_voucher:
+    enabled: true
+    code: RV
+    description: Customer receipts
+
+  payment_voucher:
+    enabled: true
+    code: PV
+    description: Supplier and expense payments
+
+  contra_voucher:
+    enabled: true
+    code: CV
+    description: Cash and bank transfers
+
+  credit_note:
+    enabled: true
+    code: CN
+    description: Customer and supplier credit notes
+
+  debit_note:
+    enabled: true
+    code: DN
+    description: Customer and supplier debit notes
+
+  financial_posting_engine:
+    enabled: true
+    code: FPE
+    description: Automatic accounting posting engine
+
+posting_rules:
+
+  sales_invoice:
+    enabled: true
+    source: sales
+    action: auto_post
+
+  sales_return:
+    enabled: true
+    source: sales_return
+    action: auto_post
+
+  purchase_invoice:
+    enabled: true
+    source: purchase
+    action: auto_post
+
+  purchase_return:
+    enabled: true
+    source: purchase_return
+    action: auto_post
+
+  customer_receipt:
+    enabled: true
+    source: receipt
+    action: auto_post
+
+  supplier_payment:
+    enabled: true
+    source: payment
+    action: auto_post
+
+  expense:
+    enabled: true
+    source: expense
+    action: auto_post
+
+governance:
+
+  allow_manual_posting: false
+  allow_delete_after_posting: false
+  require_audit_trail: true
+  require_source_document: true
+  require_financial_period: true
+  require_user_identity: true
+  lock_closed_periods: true
+
+security:
+
+  approval_required:
+    journal_voucher: true
+    debit_note: true
+    credit_note: true
+
+roles:
+  - Administrator
+  - Accountant
+  - Finance Manager
+  - Auditor
+
+audit:
+
+  enabled: true
+
+health:
+
+  enabled: true

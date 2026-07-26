@@ -1,0 +1,79 @@
+version: "1.0"
+
+health:
+
+  enabled: true
+
+  startup:
+
+    validate_all_servers: true
+
+    fail_fast: true
+
+  schedule:
+
+    interval_seconds: 300
+
+  timeout_seconds: 10
+
+checks:
+
+  github:
+
+    enabled: true
+
+    required: true
+
+    retries: 2
+
+  filesystem:
+
+    enabled: true
+
+    required: true
+
+    retries: 2
+
+  postgres:
+
+    enabled: true
+
+    required: true
+
+    retries: 2
+
+  openapi:
+
+    enabled: true
+
+    required: true
+
+    retries: 2
+
+failure:
+
+  unhealthy_threshold: 3
+
+  action: mark_unhealthy
+
+recovery:
+
+  automatic: true
+
+  max_attempts: 5
+
+logging:
+
+  enabled: true
+
+telemetry:
+
+  enabled: true
+
+status:
+
+  report:
+    - server
+    - state
+    - latency_ms
+    - timestamp

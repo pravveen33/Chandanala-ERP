@@ -1,0 +1,85 @@
+@page "/login"
+@rendermode InteractiveServer
+
+@using Microsoft.EntityFrameworkCore
+@using Chandanala.ERP.Web.Data
+@using Chandanala.ERP.Web.Services
+
+@inject AppDbContext Db
+@inject NavigationManager Nav
+
+<h3>Login</h3>
+
+<div class="card p-4" style="max-width:400px">
+
+    <div class="mb-3">
+        <label>Username</label>
+        <input class="form-control" @bind="Username" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <input type="password"
+               class="form-control"
+               @bind="Password" />
+    </div>
+
+    <button class="btn btn-primary" disabled="@isChecking" @onclick="DoLogin">
+        @(isChecking ? "Checking..." : "Login")
+    </button>
+
+    <br />
+    <br />
+
+    <span style="color:red">@Message</span>
+
+</div>
+
+@code
+{
+    private string Username = "";
+
+    private string Password = "";
+
+    private string Message = "";
+
+    private bool isChecking = false;
+
+    // NOTE: this checks the submitted credentials against the Users table with a
+    // proper PBKDF2 password hash (see Services/PasswordHasher.cs), instead of the
+    // previous hardcoded "admin"/"admin" check. It does NOT yet establish a
+    // persistent authenticated session (no cookie/auth middleware is configured in
+    // Program.cs, and no [Authorize] attributes gate any page) — that is a larger
+    // change than a login-form fix, since it involves wiring up
+    // AddAuthentication/AddAuthorization and an AuthenticationStateProvider.
+    // Right now a successful login just redirects to the home page.
+    private async Task DoLogin()
+    {
+        isChecking = true;
+        Message = string.Empty;
+
+        try
+        {
+            var username = Username.Trim();
+
+            var user = await Db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Username == username);
+
+            if (user is null || !user.IsActive || !PasswordHasher.VerifyPassword(Password, user.PasswordHash))
+            {
+                Message = "Invalid Username or Password";
+                return;
+            }
+
+            Nav.NavigateTo("/", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Message = $"Login failed: {ex.Message}";
+        }
+        finally
+        {
+            isChecking = false;
+        }
+    }
+}
