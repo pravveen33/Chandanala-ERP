@@ -40,7 +40,7 @@ jobs:
       - name: Generate SBOM
         run: |
           export PATH="$PATH:$HOME/.dotnet/tools"
-          dotnet-CycloneDX "CHANDANALA CORE.slnx" --output sbom.xml
+          dotnet-CycloneDX "CHANDANALA CORE.slnx" --out sbom.xml
 
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
