@@ -1,4 +1,5 @@
-﻿using Chandanala.ERP.Infrastructure;
+using Chandanala.ERP.Application.Medicines.Services;
+using Chandanala.ERP.Infrastructure;
 using Chandanala.ERP.Application.Abstractions.Persistence;
 using Chandanala.ERP.Infrastructure.Persistence;
 using Chandanala.ERP.Infrastructure.Persistence.Seed;
@@ -31,14 +32,12 @@ builder.Services.AddDbContext<CoreDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddDbContext<CatalogDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<ICatalogDbContext>(
     sp => sp.GetRequiredService<CatalogDbContext>());
 
 builder.Services.AddInfrastructure();
+builder.Services.AddScoped<IMedicineService, MedicineService>();
 
 // ======================================================
 // Core ERP Services
@@ -83,6 +82,10 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+    // Apply EF Core migrations
+    await dbContext.Database.MigrateAsync();
+
+    // Seed master data
     await MasterDataSeeder.SeedAsync(dbContext);
 }
 
@@ -109,6 +112,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
 
 
 

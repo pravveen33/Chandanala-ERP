@@ -1,0 +1,159 @@
+warning: in the working copy of 'src/Chandanala.ERP.Web/Migrations/AppDbContextModelSnapshot.cs', CRLF will be replaced by LF the next time Git touches it
+[1mdiff --git a/src/Chandanala.ERP.Web/Migrations/AppDbContextModelSnapshot.cs b/src/Chandanala.ERP.Web/Migrations/AppDbContextModelSnapshot.cs[m
+[1mindex e3e17ec..345409f 100644[m
+[1m--- a/src/Chandanala.ERP.Web/Migrations/AppDbContextModelSnapshot.cs[m
+[1m+++ b/src/Chandanala.ERP.Web/Migrations/AppDbContextModelSnapshot.cs[m
+[36m@@ -30,8 +30,7 @@[m [mnamespace Chandanala.ERP.Web.Migrations[m
+ [m
+                     b.Property<string>("Code")[m
+                         .IsRequired()[m
+[31m-                        .HasMaxLength(20)[m
+[31m-                        .HasColumnType("character varying(20)");[m
+[32m+[m[32m                        .HasColumnType("text");[m
+ [m
+                     b.Property<int>("DisplayOrder")[m
+                         .HasColumnType("integer");[m
+[36m@@ -41,15 +40,11 @@[m [mnamespace Chandanala.ERP.Web.Migrations[m
+ [m
+                     b.Property<string>("Name")[m
+                         .IsRequired()[m
+[31m-                        .HasMaxLength(100)[m
+[31m-                        .HasColumnType("character varying(100)");[m
+[32m+[m[32m                        .HasColumnType("text");[m
+ [m
+                     b.HasKey("Id");[m
+ [m
+[31m-                    b.HasIndex("Code")[m
+[31m-                        .IsUnique();[m
+[31m-[m
+[31m-                    b.ToTable("PackTypes", (string)null);[m
+[32m+[m[32m                    b.ToTable("PackTypes");[m
+                 });[m
+ [m
+             modelBuilder.Entity("Chandanala.ERP.Domain.Masters.Entities.UnitOfMeasure", b =>[m
+[36m@@ -60,8 +55,7 @@[m [mnamespace Chandanala.ERP.Web.Migrations[m
+ [m
+                     b.Property<string>("Code")[m
+                         .IsRequired()[m
+[31m-                        .HasMaxLength(20)[m
+[31m-                        .HasColumnType("character varying(20)");[m
+[32m+[m[32m                        .HasColumnType("text");[m
+ [m
+                     b.Property<int>("DisplayOrder")[m
+                         .HasColumnType("integer");[m
+[36m@@ -70,81 +64,16 @@[m [mnamespace Chandanala.ERP.Web.Migrations[m
+                         .HasColumnType("boolean");[m
+ [m
+                     b.Property<string>("Name")[m
+[31m-                        .IsRequired()[m
+[31m-                        .HasMaxLength(100)[m
+[31m-                        .HasColumnType("character varying(100)");[m
+[31m-[m
+[31m-                    b.Property<string>("Symbol")[m
+[31m-                        .IsRequired()[m
+[31m-                        .HasMaxLength(20)[m
+[31m-                        .HasColumnType("character varying(20)");[m
+[31m-[m
+[31m-                    b.HasKey("Id");[m
+[31m-[m
+[31m-                    b.HasIndex("Code")[m
+[31m-                        .IsUnique();[m
+[31m-[m
+[31m-                    b.ToTable("UnitOfMeasures", (string)null);[m
+[31m-                });[m
+[31m-[m
+[31m-            modelBuilder.Entity("Chandanala.ERP.Domain.MedicineKnowledge.Entities.MedicineKnowledge", b =>[m
+[31m-                {[m
+[31m-                    b.Property<Guid>("Id")[m
+[31m-                        .ValueGeneratedOnAdd()[m
+[31m-                        .HasColumnType("uuid");[m
+[31m-[m
+[31m-                    b.Property<string>("BrandName")[m
+[31m-                        .IsRequired()[m
+[31m-                        .HasMaxLength(200)[m
+[31m-                        .HasColumnType("character varying(200)");[m
+[31m-[m
+[31m-                    b.Property<string>("Code")[m
+[31m-                        .IsRequired()[m
+[31m-                        .HasMaxLength(50)[m
+[31m-                        .HasColumnType("character varying(50)");[m
+[31m-[m
+[31m-                    b.Property<DateTime>("CreatedOnUtc")[m
+[31m-                        .HasColumnType("timestamp with time zone");[m
+[31m-[m
+[31m-                    b.Property<string>("DosageForm")[m
+[31m-                        .IsRequired()[m
+[31m-                        .HasMaxLength(100)[m
+[31m-                        .HasColumnType("character varying(100)");[m
+[31m-[m
+[31m-                    b.Property<string>("DrugSchedule")[m
+[31m-                        .IsRequired()[m
+[31m-                        .HasColumnType("text");[m
+[31m-[m
+[31m-                    b.Property<string>("GenericName")[m
+[31m-                        .IsRequired()[m
+[31m-                        .HasMaxLength(200)[m
+[31m-                        .HasColumnType("character varying(200)");[m
+[31m-[m
+[31m-                    b.Property<bool>("IsDeleted")[m
+[31m-                        .HasColumnType("boolean");[m
+[31m-[m
+[31m-                    b.Property<string>("Status")[m
+                         .IsRequired()[m
+                         .HasColumnType("text");[m
+ [m
+[31m-                    b.Property<string>("StorageType")[m
+[32m+[m[32m                    b.Property<string>("Symbol")[m
+                         .IsRequired()[m
+                         .HasColumnType("text");[m
+ [m
+[31m-                    b.Property<string>("Strength")[m
+[31m-                        .IsRequired()[m
+[31m-                        .HasMaxLength(50)[m
+[31m-                        .HasColumnType("character varying(50)");[m
+[31m-[m
+[31m-                    b.Property<DateTime?>("UpdatedOnUtc")[m
+[31m-                        .HasColumnType("timestamp with time zone");[m
+[31m-[m
+                     b.HasKey("Id");[m
+ [m
+[31m-                    b.HasIndex("Code")[m
+[31m-                        .IsUnique();[m
+[31m-[m
+[31m-                    b.ToTable("MedicineKnowledge", (string)null);[m
+[32m+[m[32m                    b.ToTable("UnitOfMeasures");[m
+                 });[m
+ [m
+             modelBuilder.Entity("Chandanala.ERP.Web.Models.AuditLog", b =>[m
+[36m@@ -1312,31 +1241,6 @@[m [mnamespace Chandanala.ERP.Web.Migrations[m
+                     b.ToTable("DosageForms", (string)null);[m
+                 });[m
+ [m
+[31m-            modelBuilder.Entity("Chandanala.ERP.Domain.MedicineKnowledge.Entities.MedicineKnowledge", b =>[m
+[31m-                {[m
+[31m-                    b.OwnsOne("Chandanala.ERP.Domain.MedicineKnowledge.ValueObjects.Barcode", "Barcode", b1 =>[m
+[31m-                        {[m
+[31m-                            b1.Property<Guid>("MedicineKnowledgeId")[m
+[31m-                                .HasColumnType("uuid");[m
+[31m-[m
+[31m-                            b1.Property<string>("Value")[m
+[31m-                                .IsRequired()[m
+[31m-                                .HasMaxLength(20)[m
+[31m-                                .HasColumnType("character varying(20)")[m
+[31m-                                .HasColumnName("Barcode");[m
+[31m-[m
+[31m-                            b1.HasKey("MedicineKnowledgeId");[m
+[31m-[m
+[31m-                            b1.ToTable("MedicineKnowledge");[m
+[31m-[m
+[31m-                            b1.WithOwner()[m
+[31m-                                .HasForeignKey("MedicineKnowledgeId");[m
+[31m-                        });[m
+[31m-[m
+[31m-                    b.Navigation("Barcode")[m
+[31m-                        .IsRequired();[m
+[31m-                });[m
+[31m-[m
+             modelBuilder.Entity("Chandanala.ERP.Web.Models.Batch", b =>[m
+                 {[m
+                     b.HasOne("Chandanala.ERP.Web.Models.Medicine", null)[m

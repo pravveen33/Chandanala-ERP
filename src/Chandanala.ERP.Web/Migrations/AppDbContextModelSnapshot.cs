@@ -30,8 +30,7 @@ namespace Chandanala.ERP.Web.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("text");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
@@ -41,15 +40,11 @@ namespace Chandanala.ERP.Web.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("PackTypes", (string)null);
+                    b.ToTable("PackTypes");
                 });
 
             modelBuilder.Entity("Chandanala.ERP.Domain.Masters.Entities.UnitOfMeasure", b =>
@@ -60,8 +55,7 @@ namespace Chandanala.ERP.Web.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("text");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
@@ -71,80 +65,15 @@ namespace Chandanala.ERP.Web.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Symbol")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("UnitOfMeasures", (string)null);
-                });
-
-            modelBuilder.Entity("Chandanala.ERP.Domain.MedicineKnowledge.Entities.MedicineKnowledge", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("BrandName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DosageForm")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("DrugSchedule")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("GenericName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("StorageType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Strength")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime?>("UpdatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("MedicineKnowledge", (string)null);
+                    b.ToTable("UnitOfMeasures");
                 });
 
             modelBuilder.Entity("Chandanala.ERP.Web.Models.AuditLog", b =>
@@ -1310,31 +1239,6 @@ namespace Chandanala.ERP.Web.Migrations
                     b.HasIndex("Name");
 
                     b.ToTable("DosageForms", (string)null);
-                });
-
-            modelBuilder.Entity("Chandanala.ERP.Domain.MedicineKnowledge.Entities.MedicineKnowledge", b =>
-                {
-                    b.OwnsOne("Chandanala.ERP.Domain.MedicineKnowledge.ValueObjects.Barcode", "Barcode", b1 =>
-                        {
-                            b1.Property<Guid>("MedicineKnowledgeId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Value")
-                                .IsRequired()
-                                .HasMaxLength(20)
-                                .HasColumnType("character varying(20)")
-                                .HasColumnName("Barcode");
-
-                            b1.HasKey("MedicineKnowledgeId");
-
-                            b1.ToTable("MedicineKnowledge");
-
-                            b1.WithOwner()
-                                .HasForeignKey("MedicineKnowledgeId");
-                        });
-
-                    b.Navigation("Barcode")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Chandanala.ERP.Web.Models.Batch", b =>
