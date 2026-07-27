@@ -15,3 +15,4 @@ C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chand
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\refint\Chandanala.ERP.Infrastructure.dll
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.pdb
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\ref\Chandanala.ERP.Infrastructure.dll
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.sourcelink.json
