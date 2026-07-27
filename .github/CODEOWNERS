@@ -1,0 +1,39 @@
+﻿# ============================================================
+# CHANDANALA CORE™ Repository Ownership
+# ============================================================
+
+# Default owner
+* @pravveen33
+
+# GitHub configuration
+/.github/ @pravveen33
+/.github/workflows/ @pravveen33
+/.github/actions/ @pravveen33
+
+# Documentation
+/docs/ @pravveen33
+*.md @pravveen33
+
+# Source code
+/src/ @pravveen33
+
+# Domain Layer
+/src/Chandanala.ERP.Domain/ @pravveen33
+
+# Application Layer
+/src/Chandanala.ERP.Application/ @pravveen33
+
+# Infrastructure Layer
+/src/Chandanala.ERP.Infrastructure/ @pravveen33
+
+# Web Layer
+/src/Chandanala.ERP.Web/ @pravveen33
+
+# Configuration
+*.json @pravveen33
+*.yml @pravveen33
+*.yaml @pravveen33
+
+# Solution
+*.sln @pravveen33
+*.slnx @pravveen33
