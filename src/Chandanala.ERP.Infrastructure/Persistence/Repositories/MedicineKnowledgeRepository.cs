@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 using MedicineKnowledgeEntity = Chandanala.ERP.Domain.MedicineKnowledge.Entities.MedicineKnowledge;
 using Chandanala.ERP.Domain.MedicineKnowledge.Interfaces;
 using Chandanala.ERP.Infrastructure.Persistence;
-=======
-﻿using MedicineKnowledgeEntity = Chandanala.ERP.Domain.MedicineKnowledge.Entities.MedicineKnowledge;
-using Chandanala.ERP.Domain.MedicineKnowledge.Interfaces;
->>>>>>> 32cfcd94981e9d5c801d548069a8a07d3cdb66f6
 using Microsoft.EntityFrameworkCore;
 
 namespace Chandanala.ERP.Infrastructure.Persistence.Repositories;
@@ -13,15 +8,9 @@ namespace Chandanala.ERP.Infrastructure.Persistence.Repositories;
 public sealed class MedicineKnowledgeRepository
     : IMedicineKnowledgeRepository
 {
-<<<<<<< HEAD
     private readonly CoreDbContext _context;
 
     public MedicineKnowledgeRepository(CoreDbContext context)
-=======
-    private readonly ApplicationDbContext _context;
-
-    public MedicineKnowledgeRepository(ApplicationDbContext context)
->>>>>>> 32cfcd94981e9d5c801d548069a8a07d3cdb66f6
     {
         _context = context;
     }
@@ -71,7 +60,3 @@ public sealed class MedicineKnowledgeRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> 32cfcd94981e9d5c801d548069a8a07d3cdb66f6
