@@ -1,0 +1,61 @@
+
+
+<h3>Users Management</h3>
+
+<button class="btn btn-primary"
+        @onclick="AddUser">
+    Add User
+</button>
+
+<br />
+<br />
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>User name</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in UserList)
+        {
+            <tr>
+                <td>@user.Id</td>
+                <td>@user.Username</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@using Microsoft.EntityFrameworkCore
+@using Chandanala.ERP.Web.Data
+@using Chandanala.ERP.Web.Models
+
+@inject AppDbContext Db
+
+@code
+{
+    private List<User> UserList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserList = await Db.Users.ToListAsync();
+    }
+
+    private async Task AddUser()
+    {
+        var user = new User
+        {
+            Username = "user" + DateTime.Now.Ticks,
+            PasswordHash = "123456",
+            IsActive = true
+        };
+
+        Db.Users.Add(user);
+        await Db.SaveChangesAsync();
+
+        UserList = await Db.Users.ToListAsync();
+
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,4 @@
+# Inventory Module
+
+Generated automatically.
+

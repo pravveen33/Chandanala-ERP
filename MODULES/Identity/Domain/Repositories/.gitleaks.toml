@@ -1,0 +1,9 @@
+title = "CHANDANALA CORE Gitleaks Configuration"
+
+[allowlist]
+description = "Ignore common development files"
+paths = [
+  '''bin/''',
+  '''obj/''',
+  '''.git/'''
+]

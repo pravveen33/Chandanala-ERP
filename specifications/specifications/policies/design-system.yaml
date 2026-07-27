@@ -1,0 +1,26 @@
+design_system:
+
+  allow:
+
+    components:
+      - Button
+      - Card
+      - Input
+      - Label
+      - Dialog
+      - Table
+      - Badge
+
+  forbid:
+
+    - inline_styles
+
+    - raw_html
+
+    - custom_css
+
+validation:
+
+  unknown_props: error
+
+  unknown_components: error

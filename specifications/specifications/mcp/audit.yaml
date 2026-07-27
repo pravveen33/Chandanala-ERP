@@ -1,0 +1,97 @@
+version: "1.0"
+
+audit:
+
+  enabled: true
+
+  provider: application
+
+  retention:
+    days: 365
+
+  events:
+
+    request:
+      enabled: true
+
+    response:
+      enabled: true
+
+    approval:
+      enabled: true
+
+    authentication:
+      enabled: true
+
+    authorization:
+      enabled: true
+
+    security:
+      enabled: true
+
+    error:
+      enabled: true
+
+    configuration:
+      enabled: true
+
+  fields:
+
+    - timestamp
+    - correlation_id
+    - request_id
+    - session_id
+    - user
+    - role
+    - server
+    - capability
+    - operation
+    - resource
+    - duration_ms
+    - status
+    - result
+    - error
+
+storage:
+
+  type: database
+
+  table: AuditLog
+
+security:
+
+  immutable: true
+
+  hash_events: true
+
+  mask:
+
+    - password
+    - token
+    - api_key
+    - access_token
+    - refresh_token
+    - connection_string
+
+monitoring:
+
+  metrics:
+
+    enabled: true
+
+  alerts:
+
+    failed_requests: true
+
+    unauthorized_access: true
+
+    repeated_failures: true
+
+telemetry:
+
+  enabled: true
+
+  export:
+
+    - console
+    - database

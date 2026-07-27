@@ -1,0 +1,432 @@
+
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Forms
+@using Chandanala.ERP.Web.Models
+@using Chandanala.ERP.Web.Data
+
+@inject AppDbContext Db
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+<h3 class="mb-4">Manufacturer Master</h3>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div class="alert @(message.Contains("Successfully") ? "alert-success" : "alert-danger") alert-dismissible fade show">
+        @message
+        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <strong>@(editingId is null ? "Add" : "Update") Manufacturer</strong>
+    </div>
+
+    <div class="card-body">
+
+        <EditForm Model="@manufacturer" OnValidSubmit="SaveManufacturer">
+
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Name *</label>
+                    <input class="form-control" @bind="manufacturer.Name" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Short Name</label>
+                    <input class="form-control" @bind="manufacturer.ShortName" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">License Number</label>
+                    <input class="form-control" @bind="manufacturer.LicenseNumber" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">GST Number</label>
+                    <input class="form-control" @bind="manufacturer.GSTNumber" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Contact Person</label>
+                    <input class="form-control" @bind="manufacturer.ContactPerson" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Mobile</label>
+                    <input class="form-control" @bind="manufacturer.Mobile" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" @bind="manufacturer.Email" />
+                </div>
+
+                <div class="col-md-8 mb-3">
+                    <label class="form-label">Address</label>
+                    <input class="form-control" @bind="manufacturer.Address" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">City</label>
+                    <input class="form-control" @bind="manufacturer.City" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">State</label>
+                    <input class="form-control" @bind="manufacturer.State" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Pincode</label>
+                    <input class="form-control" @bind="manufacturer.Pincode" />
+                </div>
+
+                <div class="col-md-4 mb-3 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="isActive" @bind="manufacturer.IsActive" />
+                        <label class="form-check-label" for="isActive">Active</label>
+                    </div>
+                </div>
+
+            </div>
+
+            <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                @(isSaving ? "Saving..." : (editingId is null ? "Save Manufacturer" : "Update Manufacturer"))
+            </button>
+
+            @if (editingId is not null)
+            {
+                <button type="button" class="btn btn-secondary ms-2" @onclick="ClearForm">
+                    Cancel
+                </button>
+            }
+
+        </EditForm>
+
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <strong>Manufacturer List (@FilteredManufacturers.Count() total)</strong>
+
+        <div style="min-width: 280px;">
+            <input class="form-control"
+                   placeholder="Search Name / Short Name / City / GST..."
+                   value="@searchText"
+                   @oninput="OnSearchChanged" />
+        </div>
+    </div>
+
+    <div class="card-body">
+
+        @if (isLoading)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+            </div>
+        }
+        else if (!FilteredManufacturers.Any())
+        {
+            <p class="text-muted mb-0">No manufacturers found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Short Name</th>
+                            <th>License No.</th>
+                            <th>GST No.</th>
+                            <th>Contact</th>
+                            <th>City / State</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in PagedManufacturers)
+                        {
+                            <tr>
+                                <td>@m.Name</td>
+                                <td>@m.ShortName</td>
+                                <td>@m.LicenseNumber</td>
+                                <td>@m.GSTNumber</td>
+                                <td>
+                                    @m.ContactPerson
+                                    @if (!string.IsNullOrWhiteSpace(m.Mobile))
+                                    {
+                                        <div class="text-muted small">@m.Mobile</div>
+                                    }
+                                </td>
+                                <td>@m.City @(!string.IsNullOrWhiteSpace(m.City) && !string.IsNullOrWhiteSpace(m.State) ? "," : "") @m.State</td>
+                                <td>
+                                    @if (m.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-nowrap">
+                                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditManufacturer(m)">
+                                        Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteManufacturer(m)">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (totalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(currentPage - 1)">Previous</button>
+                        </li>
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            var pageNumber = i;
+                            <li class="page-item @(currentPage == pageNumber ? "active" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                            </li>
+                        }
+
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">Next</button>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        }
+
+    </div>
+</div>
+
+@code {
+
+    private List<Manufacturer> manufacturers = new();
+    private Manufacturer manufacturer = new();
+
+    private string searchText = string.Empty;
+    private string message = string.Empty;
+
+    private bool isSaving = false;
+    private bool isLoading = true;
+
+    private int? editingId = null;
+
+    private int currentPage = 1;
+    private const int pageSize = 10;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadManufacturers();
+    }
+
+    private async Task LoadManufacturers()
+    {
+        isLoading = true;
+        try
+        {
+            manufacturers = await Db.Manufacturers
+                .AsNoTracking()
+                .Where(m => !m.IsDeleted)
+                .OrderBy(m => m.Name)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            message = $"Failed to load manufacturers: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private IEnumerable<Manufacturer> FilteredManufacturers =>
+        manufacturers.Where(x =>
+            string.IsNullOrWhiteSpace(searchText) ||
+            (x.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (x.ShortName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (x.City?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (x.GSTNumber?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private int totalPages =>
+        (int)Math.Ceiling(FilteredManufacturers.Count() / (double)pageSize);
+
+    private IEnumerable<Manufacturer> PagedManufacturers =>
+        FilteredManufacturers
+            .Skip((currentPage - 1) * pageSize)
+            .Take(pageSize);
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? string.Empty;
+        currentPage = 1;
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+    }
+
+    private async Task SaveManufacturer()
+    {
+        isSaving = true;
+        message = string.Empty;
+
+        try
+        {
+            // Duplicate name check (skip current record when editing)
+            var duplicateName = await Db.Manufacturers
+                .AsNoTracking()
+                .AnyAsync(m => !m.IsDeleted
+                    && m.Id != manufacturer.Id
+                    && m.Name.ToLower() == manufacturer.Name.ToLower());
+
+            if (duplicateName)
+            {
+                message = "A manufacturer with this Name already exists.";
+                isSaving = false;
+                return;
+            }
+
+            bool isNew = editingId is null;
+
+            if (isNew)
+            {
+                manufacturer.CreatedDate = DateTime.UtcNow;
+                Db.Manufacturers.Add(manufacturer);
+            }
+            else
+            {
+                manufacturer.ModifiedDate = DateTime.UtcNow;
+                Db.Manufacturers.Update(manufacturer);
+            }
+
+            await Db.SaveChangesAsync();
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                Module = "Manufacturer Master",
+                EntityName = nameof(Manufacturer),
+                EntityId = manufacturer.Id,
+                Action = isNew ? AuditActions.Create : AuditActions.Update,
+                Details = manufacturer.Name
+            });
+            await Db.SaveChangesAsync();
+
+            message = isNew
+                ? "Manufacturer Saved Successfully."
+                : "Manufacturer Updated Successfully.";
+
+            await LoadManufacturers();
+            ClearForm();
+        }
+        catch (Exception ex)
+        {
+            message = $"Error saving manufacturer: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void EditManufacturer(Manufacturer selected)
+    {
+        // Clone so edits in the form don't mutate the list until saved
+        manufacturer = new Manufacturer
+        {
+            Id = selected.Id,
+            Name = selected.Name,
+            ShortName = selected.ShortName,
+            LicenseNumber = selected.LicenseNumber,
+            GSTNumber = selected.GSTNumber,
+            ContactPerson = selected.ContactPerson,
+            Mobile = selected.Mobile,
+            Email = selected.Email,
+            Address = selected.Address,
+            City = selected.City,
+            State = selected.State,
+            Pincode = selected.Pincode,
+            IsActive = selected.IsActive,
+            CreatedDate = selected.CreatedDate,
+            IsDeleted = selected.IsDeleted,
+            DeletedOn = selected.DeletedOn
+        };
+
+        editingId = selected.Id;
+        message = string.Empty;
+    }
+
+    private async Task DeleteManufacturer(Manufacturer selected)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Are you sure you want to delete \"{selected.Name}\"? This can be reversed later from the database if needed.");
+
+        if (!confirmed) return;
+
+        try
+        {
+            var entity = await Db.Manufacturers.FindAsync(selected.Id);
+            if (entity is not null)
+            {
+                // Soft delete — keep the row for audit/history instead of removing it.
+                entity.IsDeleted = true;
+                entity.DeletedOn = DateTime.UtcNow;
+                entity.IsActive = false;
+
+                await Db.SaveChangesAsync();
+
+                Db.AuditLogs.Add(new AuditLog
+                {
+                    Module = "Manufacturer Master",
+                    EntityName = nameof(Manufacturer),
+                    EntityId = entity.Id,
+                    Action = AuditActions.Delete,
+                    Details = entity.Name
+                });
+                await Db.SaveChangesAsync();
+
+                message = "Manufacturer Deleted Successfully.";
+                await LoadManufacturers();
+
+                if (editingId == selected.Id)
+                {
+                    ClearForm();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error deleting manufacturer: {ex.Message}";
+        }
+    }
+
+    private void ClearForm()
+    {
+        manufacturer = new Manufacturer();
+        editingId = null;
+    }
+}

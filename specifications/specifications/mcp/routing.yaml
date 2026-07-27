@@ -1,0 +1,111 @@
+version: "1.0"
+
+routing:
+
+  defaults:
+    strategy: priority
+    timeout_seconds: 30
+    retries: 2
+    fallback_enabled: true
+
+  routes:
+
+    repository.read:
+      server: github
+
+    repository.search:
+      server: github
+
+    commit.read:
+      server: github
+
+    issue.read:
+      server: github
+
+    pullrequest.read:
+      server: github
+
+    workflow.read:
+      server: github
+
+    documentation.read:
+      server: filesystem
+
+    specification.read:
+      server: filesystem
+
+    architecture.read:
+      server: filesystem
+
+    adr.read:
+      server: filesystem
+
+    file.read:
+      server: filesystem
+
+    directory.list:
+      server: filesystem
+
+    sql.select:
+      server: postgres
+
+    inventory.read:
+      server: postgres
+
+    inventory.search:
+      server: postgres
+
+    medicine.read:
+      server: postgres
+
+    medicine.search:
+      server: postgres
+
+    supplier.read:
+      server: postgres
+
+    customer.read:
+      server: postgres
+
+    report.read:
+      server: postgres
+
+    api.get:
+      server: openapi
+
+    inventory.get:
+      server: openapi
+
+    medicine.get:
+      server: openapi
+
+    customer.get:
+      server: openapi
+
+    supplier.get:
+      server: openapi
+
+    report.get:
+      server: openapi
+
+fallback:
+
+  unknown_capability: deny
+
+  unknown_server: deny
+
+logging:
+
+  enabled: true
+
+  include:
+
+    - timestamp
+    - capability
+    - server
+    - duration
+    - result
+
+telemetry:
+
+  enabled: true

@@ -50,6 +50,10 @@ public sealed class MedicineKnowledgeConfiguration
 
         builder.HasIndex(x => x.Code)
             .IsUnique();
-builder.HasQueryFilter(x => !x.IsDeleted);
+
+        builder.HasIndex("Barcode")
+            .IsUnique();
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

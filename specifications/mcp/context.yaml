@@ -1,0 +1,16 @@
+version: "1.0"
+
+context:
+
+  include:
+
+    - architecture
+    - coding-standards
+    - security
+    - specifications
+
+  sanitize: true
+
+  cache: true
+
+  max_tokens: 12000

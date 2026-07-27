@@ -1,0 +1,546 @@
+
+@rendermode InteractiveServer
+
+@using Microsoft.EntityFrameworkCore
+@using Chandanala.ERP.Web.Models
+@using Chandanala.ERP.Web.Data
+
+@inject AppDbContext Db
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+<h3 class="mb-4">Sales / Billing</h3>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div class="alert @(message.Contains("Successfully") ? "alert-success" : "alert-danger") alert-dismissible fade show">
+        @message
+        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
+    </div>
+}
+
+<div class="row">
+
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white"><strong>Add Item</strong></div>
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <label class="form-label">Medicine</label>
+                    <select class="form-select" value="@selectedMedicineId" @onchange="OnMedicineChanged">
+                        <option value="0">-- Select Medicine --</option>
+                        @foreach (var m in medicines)
+                        {
+                            <option value="@m.Id">@m.BrandName (@m.Strength)</option>
+                        }
+                    </select>
+                </div>
+
+                @if (selectedMedicineId > 0)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Batch (earliest expiry selected by default — FEFO)</label>
+                        <select class="form-select" @bind="selectedBatchId">
+                            <option value="0">-- Select Batch --</option>
+                            @foreach (var b in availableBatches)
+                            {
+                                <option value="@b.Id">@b.BatchNo — Avail: @b.QuantityAvailable — Exp: @b.ExpiryDate.ToString("MM/yyyy")</option>
+                            }
+                        </select>
+                        @if (!availableBatches.Any())
+                        {
+                            <div class="form-text text-danger">No available (non-expired, in-stock) batches for this medicine.</div>
+                        }
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control" @bind="lineQuantity" min="1" />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Rate (pre-tax) *</label>
+                            <input type="number" step="0.01" class="form-control" @bind="lineRate" />
+                            <div class="form-text">Defaulted from Medicine.SellingPrice — assumed pre-tax. Adjust if that assumption is wrong for this item.</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">GST %</label>
+                            <input type="number" step="0.01" class="form-control" @bind="lineGstPercent" />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Discount (₹)</label>
+                            <input type="number" step="0.01" class="form-control" @bind="lineDiscount" />
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100" @onclick="AddToCart">Add to Cart</button>
+                }
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white"><strong>Cart</strong></div>
+            <div class="card-body">
+
+                @if (!cart.Any())
+                {
+                    <p class="text-muted mb-0">Cart is empty. Add items on the left.</p>
+                }
+                else
+                {
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Medicine</th><th>Batch</th><th>Qty</th><th>Rate</th>
+                                    <th>Disc</th><th>GST%</th><th>Net</th><th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var line in cart)
+                                {
+                                    <tr>
+                                        <td>@line.MedicineName</td>
+                                        <td>@line.BatchNo</td>
+                                        <td>@line.Quantity</td>
+                                        <td>@line.Rate.ToString("N2")</td>
+                                        <td>@line.DiscountAmount.ToString("N2")</td>
+                                        <td>@line.GstPercent.ToString("N1")</td>
+                                        <td>@line.NetAmount.ToString("N2")</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveFromCart(line)">✕</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row justify-content-end">
+                        <div class="col-md-5">
+                            <table class="table table-sm mb-0">
+                                <tr><td>Subtotal (taxable value)</td><td class="text-end">₹@cartSubTotal.ToString("N2")</td></tr>
+                                <tr><td>GST</td><td class="text-end">₹@cartTax.ToString("N2")</td></tr>
+                                <tr class="fw-bold"><td>Total</td><td class="text-end">₹@cartNet.ToString("N2")</td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Customer Name *</label>
+                            <input class="form-control" @bind="customerName" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Mobile</label>
+                            <input class="form-control" @bind="customerMobile" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Payment Mode</label>
+                            <select class="form-select" @bind="paymentMode">
+                                <option value="Cash">Cash</option>
+                                <option value="Card">Card</option>
+                                <option value="UPI">UPI</option>
+                                <option value="Credit">Credit</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Prescription Reference</label>
+                            <input class="form-control" @bind="prescriptionReference" placeholder="optional" />
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success w-100 mt-2" disabled="@isCheckingOut" @onclick="CompleteSale">
+                        @(isCheckingOut ? "Processing..." : $"Complete Sale — ₹{cartNet:N2}")
+                    </button>
+                }
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header"><strong>Recent Invoices</strong></div>
+    <div class="card-body">
+        @if (isLoadingSales)
+        {
+            <div class="text-center py-3"><div class="spinner-border text-primary"></div></div>
+        }
+        else if (!recentSales.Any())
+        {
+            <p class="text-muted mb-0">No invoices yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-sm align-middle">
+                    <thead>
+                        <tr><th>Invoice #</th><th>Date</th><th>Customer</th><th>Amount</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in recentSales)
+                        {
+                            <tr>
+                                <td>@s.InvoiceNumber</td>
+                                <td>@s.SaleDate=DateTime.UtcNow.ToString("dd-MMM-yyyy HH:mm")</td>
+                                <td>@s.CustomerName</td>
+                                <td>₹@s.NetAmount.ToString("N2")</td>
+                                <td>
+                                    @if (s.Status == SaleStatus.Cancelled)
+                                    {
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Completed</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (s.Status == SaleStatus.Completed)
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => CancelSale(s)">Cancel</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Medicine> medicines = new();
+    private List<Batch> availableBatches = new();
+    private List<Sale> recentSales = new();
+
+    private int selectedMedicineId = 0;
+    private int selectedBatchId = 0;
+    private int lineQuantity = 1;
+    private decimal lineRate = 0;
+    private decimal lineGstPercent = 0;
+    private decimal lineDiscount = 0;
+
+    private List<CartLine> cart = new();
+
+    private string customerName = string.Empty;
+    private string customerMobile = string.Empty;
+    private string paymentMode = "Cash";
+    private string prescriptionReference = string.Empty;
+
+    private string message = string.Empty;
+    private bool isCheckingOut = false;
+    private bool isLoadingSales = true;
+
+    private decimal cartSubTotal => cart.Sum(l => l.Amount);
+    private decimal cartTax => cart.Sum(l => l.GstAmount);
+    private decimal cartNet => cart.Sum(l => l.NetAmount);
+
+    protected override async Task OnInitializedAsync()
+    {
+        medicines = await Db.Medicines.AsNoTracking()
+            .Where(m => !m.IsDeleted && m.IsActive)
+            .OrderBy(m => m.BrandName)
+            .ToListAsync();
+
+        await LoadRecentSales();
+    }
+
+    private async Task LoadRecentSales()
+    {
+        isLoadingSales = true;
+        recentSales = await Db.Sales.AsNoTracking()
+            .OrderByDescending(s => s.SaleDate)
+            .Take(25)
+            .ToListAsync();
+        isLoadingSales = false;
+    }
+
+    private async Task OnMedicineChanged(ChangeEventArgs e)
+    {
+        selectedMedicineId = int.Parse(e.Value?.ToString() ?? "0");
+        selectedBatchId = 0;
+        availableBatches = new();
+
+        if (selectedMedicineId <= 0) return;
+
+        var medicine = medicines.First(m => m.Id == selectedMedicineId);
+        lineRate = medicine.SellingPrice;
+        lineGstPercent = medicine.GstPercent;
+        lineDiscount = 0;
+        lineQuantity = 1;
+
+        availableBatches = await Db.Batches.AsNoTracking()
+            .Where(b => !b.IsDeleted
+                && b.MedicineId == selectedMedicineId
+                && b.QuantityAvailable > 0
+                && b.ExpiryDate >= DateTime.UtcNow.Date)
+            .OrderBy(b => b.ExpiryDate) // FEFO
+            .ToListAsync();
+
+        // Default to the earliest-expiry batch, matching FEFO — user can override.
+        selectedBatchId = availableBatches.FirstOrDefault()?.Id ?? 0;
+    }
+
+    private void AddToCart()
+    {
+        message = string.Empty;
+
+        if (selectedBatchId <= 0)
+        {
+            message = "Please select a batch.";
+            return;
+        }
+        if (lineQuantity <= 0)
+        {
+            message = "Quantity must be greater than zero.";
+            return;
+        }
+
+        var batch = availableBatches.FirstOrDefault(b => b.Id == selectedBatchId);
+        if (batch is null)
+        {
+            message = "Selected batch is no longer available.";
+            return;
+        }
+
+        // Account for quantity already added to the cart from this same batch,
+        // so the cart can't oversell a batch across multiple line additions.
+        var alreadyInCart = cart.Where(l => l.BatchId == selectedBatchId).Sum(l => l.Quantity);
+        if (alreadyInCart + lineQuantity > batch.QuantityAvailable)
+        {
+            message = $"Only {batch.QuantityAvailable - alreadyInCart} more unit(s) available in this batch.";
+            return;
+        }
+
+        var medicine = medicines.First(m => m.Id == selectedMedicineId);
+        var amount = (lineQuantity * lineRate) - lineDiscount;
+        var gstAmount = Math.Round(amount * lineGstPercent / 100m, 2);
+
+        cart.Add(new CartLine
+        {
+            MedicineId = selectedMedicineId,
+            MedicineName = medicine.BrandName,
+            BatchId = selectedBatchId,
+            BatchNo = batch.BatchNo,
+            Quantity = lineQuantity,
+            Rate = lineRate,
+            GstPercent = lineGstPercent,
+            DiscountAmount = lineDiscount,
+            Amount = amount,
+            GstAmount = gstAmount,
+            NetAmount = amount + gstAmount
+        });
+
+        selectedMedicineId = 0;
+        selectedBatchId = 0;
+        availableBatches = new();
+    }
+
+    private void RemoveFromCart(CartLine line) => cart.Remove(line);
+
+    private async Task CompleteSale()
+    {
+        isCheckingOut = true;
+        message = string.Empty;
+
+        try
+        {
+            if (!cart.Any())
+            {
+                message = "Cart is empty.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(customerName))
+            {
+                message = "Customer Name is required.";
+                return;
+            }
+
+            // Re-validate stock at checkout time (not just at add-to-cart time), since
+            // stock could have moved between adding to cart and clicking checkout.
+            foreach (var line in cart)
+            {
+                var freshBatch = await Db.Batches.AsNoTracking().FirstOrDefaultAsync(b => b.Id == line.BatchId);
+                if (freshBatch is null || freshBatch.QuantityAvailable < line.Quantity)
+                {
+                    message = $"Stock changed since this item was added — {line.MedicineName} / {line.BatchNo} no longer has enough available quantity. Please review the cart.";
+                    return;
+                }
+            }
+
+            var sale = new Sale
+            {
+                InvoiceNumber = await GenerateInvoiceNumber(),
+                SaleDate = DateTime.UtcNow,
+                CustomerName = customerName,
+                CustomerMobile = string.IsNullOrWhiteSpace(customerMobile) ? null : customerMobile,
+                SubTotal = cartSubTotal,
+                DiscountAmount = cart.Sum(l => l.DiscountAmount),
+                TaxAmount = cartTax,
+                NetAmount = cartNet,
+                PaymentMode = paymentMode,
+                PrescriptionReference = string.IsNullOrWhiteSpace(prescriptionReference) ? null : prescriptionReference,
+                Status = SaleStatus.Completed
+            };
+            Db.Sales.Add(sale);
+            await Db.SaveChangesAsync();
+
+            foreach (var line in cart)
+            {
+                Db.SaleItems.Add(new SaleItem
+                {
+                    SaleId = sale.Id,
+                    MedicineId = line.MedicineId,
+                    BatchId = line.BatchId,
+                    Quantity = line.Quantity,
+                    Rate = line.Rate,
+                    GstPercent = line.GstPercent,
+                    DiscountAmount = line.DiscountAmount,
+                    Amount = line.Amount,
+                    GstAmount = line.GstAmount,
+                    NetAmount = line.NetAmount
+                });
+
+                var batch = await Db.Batches.FindAsync(line.BatchId);
+                if (batch is not null)
+                {
+                    batch.QuantityAvailable -= line.Quantity;
+                    batch.ModifiedDate = DateTime.UtcNow;
+                }
+
+                Db.StockTransactions.Add(new StockTransaction
+                {
+                    MedicineId = line.MedicineId,
+                    BatchId = line.BatchId,
+                    TransactionType = StockTransactionTypes.Sale,
+                    Quantity = -line.Quantity, // negative — stock going out
+                    ReferenceType = "Sale",
+                    ReferenceId = sale.Id,
+                    Remarks = $"Invoice {sale.InvoiceNumber}"
+                });
+            }
+
+            await Db.SaveChangesAsync();
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                Module = "Sales",
+                EntityName = nameof(Sale),
+                EntityId = sale.Id,
+                Action = AuditActions.Create,
+                Details = $"Invoice {sale.InvoiceNumber} — {customerName} — ₹{cartNet:N2}"
+            });
+            await Db.SaveChangesAsync();
+
+            message = $"Sale Completed Successfully. Invoice {sale.InvoiceNumber}.";
+
+            cart.Clear();
+            customerName = string.Empty;
+            customerMobile = string.Empty;
+            prescriptionReference = string.Empty;
+            paymentMode = "Cash";
+
+            await LoadRecentSales();
+        }
+        catch (Exception ex)
+        {
+            message = $"Error completing sale: {ex.Message}";
+        }
+        finally
+        {
+            isCheckingOut = false;
+        }
+    }
+
+    private async Task CancelSale(Sale sale)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Cancel invoice {sale.InvoiceNumber}? This will restore the sold stock and cannot be undone.");
+        if (!confirmed) return;
+
+        try
+        {
+            var entity = await Db.Sales.FindAsync(sale.Id);
+            if (entity is null || entity.Status == SaleStatus.Cancelled) return;
+
+            var items = await Db.SaleItems.Where(si => si.SaleId == sale.Id).ToListAsync();
+
+            foreach (var item in items)
+            {
+                var batch = await Db.Batches.FindAsync(item.BatchId);
+                if (batch is not null)
+                {
+                    batch.QuantityAvailable += item.Quantity;
+                    batch.ModifiedDate = DateTime.UtcNow;
+                }
+
+                Db.StockTransactions.Add(new StockTransaction
+                {
+                    MedicineId = item.MedicineId,
+                    BatchId = item.BatchId,
+                    TransactionType = StockTransactionTypes.SaleCancellation,
+                    Quantity = item.Quantity, // positive — stock coming back
+                    ReferenceType = "Sale",
+                    ReferenceId = sale.Id,
+                    Remarks = $"Cancellation of Invoice {entity.InvoiceNumber}"
+                });
+            }
+
+            entity.Status = SaleStatus.Cancelled;
+            entity.CancelledDate = DateTime.UtcNow;
+            entity.CancellationReason = "Cancelled from Sales screen";
+            entity.ModifiedDate = DateTime.UtcNow;
+
+            await Db.SaveChangesAsync();
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                Module = "Sales",
+                EntityName = nameof(Sale),
+                EntityId = entity.Id,
+                Action = AuditActions.Update,
+                Details = $"Invoice {entity.InvoiceNumber} cancelled — stock restored"
+            });
+            await Db.SaveChangesAsync();
+
+            message = $"Invoice {entity.InvoiceNumber} Cancelled Successfully — stock restored.";
+            await LoadRecentSales();
+        }
+        catch (Exception ex)
+        {
+            message = $"Error cancelling sale: {ex.Message}";
+        }
+    }
+
+    private async Task<string> GenerateInvoiceNumber()
+    {
+        var today = DateTime.UtcNow.ToString("yyyyMMdd");
+        var countToday = await Db.Sales.CountAsync(s => s.InvoiceNumber.StartsWith($"INV-{today}"));
+        return $"INV-{today}-{(countToday + 1):D4}";
+    }
+
+    private class CartLine
+    {
+        public int MedicineId { get; set; }
+        public string MedicineName { get; set; } = string.Empty;
+        public int BatchId { get; set; }
+        public string BatchNo { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal Rate { get; set; }
+        public decimal GstPercent { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public decimal Amount { get; set; }
+        public decimal GstAmount { get; set; }
+        public decimal NetAmount { get; set; }
+    }
+}

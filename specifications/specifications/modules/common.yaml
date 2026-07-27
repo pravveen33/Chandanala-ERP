@@ -1,0 +1,48 @@
+schema:
+  name: chandanala.module
+  version: "1.0"
+
+defaults:
+
+  audit:
+    enabled: true
+
+  health:
+    enabled: true
+
+  governance:
+
+    require_audit: true
+
+    allow_delete: false
+
+    require_role_authorization: true
+
+  security:
+
+    authentication_required: true
+
+    authorization_required: true
+
+roles:
+
+  administrator:
+    enabled: true
+
+  auditor:
+    enabled: true
+
+  manager:
+    enabled: true
+
+events:
+
+  publish: true
+
+logging:
+
+  enabled: true
+
+telemetry:
+
+  enabled: true

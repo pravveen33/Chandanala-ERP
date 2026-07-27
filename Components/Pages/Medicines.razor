@@ -1,0 +1,695 @@
+@page "/medicines"
+@rendermode InteractiveServer
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Forms
+@using Chandanala.ERP.Web.Models
+@using Chandanala.ERP.Web.Data
+
+@inject AppDbContext Db
+@inject Microsoft.JSInterop.IJSRuntime JS
+@inject ILogger<Medicines> Logger
+
+<h3 class="mb-4">Medicine Master</h3>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div class="alert @(message.Contains("Successfully") ? "alert-success" : "alert-danger") alert-dismissible fade show">
+        @message
+        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <strong>@(editingId is null ? "Add" : "Update") Medicine</strong>
+    </div>
+
+    <div class="card-body">
+
+        <EditForm Model="@medicine"
+          OnValidSubmit="SaveMedicine"
+          FormName="MedicineForm">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Medicine Code</label>
+                    <input class="form-control"
+                           @bind="medicine.MedicineCode"
+                           placeholder="Auto generated on save"
+                           readonly />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Barcode</label>
+                    <input class="form-control"
+                           @bind="medicine.Barcode" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Brand Name *</label>
+                    <InputText class="form-control" @bind-Value="medicine.BrandName" />
+                    <ValidationMessage For="@(() => medicine.BrandName)" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Dosage Form</label>
+
+                    <select class="form-select"
+                            @bind="medicine.DosageForm">
+
+                        <option value="">Select</option>
+                        <option>Tablet</option>
+                        <option>Capsule</option>
+                        <option>Syrup</option>
+                        <option>Injection</option>
+                        <option>Drops</option>
+                        <option>Cream</option>
+                        <option>Ointment</option>
+                        <option>Gel</option>
+                        <option>Lotion</option>
+                        <option>Powder</option>
+                        <option>Spray</option>
+                        <option>Inhaler</option>
+
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Category</label>
+
+                    <select class="form-select" @bind="medicine.Category">
+                        <option value="">Select</option>
+                        <option>OTC</option>
+                        <option>Pharma</option>
+                        <option>Generic</option>
+                        <option>General</option>
+                        <option>Ayurvedic</option>
+                        <option>Unani</option>
+                        <option>Homeo</option>
+                        <option>Surgical</option>
+                        <option>Nutrition</option>
+                        <option>FMCG</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Pack Type</label>
+                    <input class="form-control"
+                           @bind="medicine.PackType" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Pack Size</label>
+                    <input class="form-control"
+                           @bind="medicine.PackSize" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Unit</label>
+                    <input class="form-control"
+                           @bind="medicine.Unit" />
+                </div>
+
+                <div class="col-md-8 mb-3">
+                    <label class="form-label">Manufacturer</label>
+                    <input class="form-control"
+                           @bind="medicine.ManufacturerName" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Schedule</label>
+
+                    <select class="form-select"
+                            @bind="medicine.ScheduleType">
+
+                        <option value="">Select</option>
+                        <option>OTC</option>
+                        <option>Schedule H</option>
+                        <option>Schedule H1</option>
+                        <option>Schedule X</option>
+                        <option>Narcotic</option>
+
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">HSN Code</label>
+                    <input class="form-control"
+                           @bind="medicine.HsnCode" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">GST %</label>
+                    <InputNumber class="form-control" @bind-Value="medicine.GstPercent" />
+                    <ValidationMessage For="@(() => medicine.GstPercent)" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Purchase Price</label>
+                    <InputNumber class="form-control" @bind-Value="medicine.PurchasePrice" />
+                    <ValidationMessage For="@(() => medicine.PurchasePrice)" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">MRP</label>
+                    <InputNumber class="form-control" @bind-Value="medicine.MRP" />
+                    <ValidationMessage For="@(() => medicine.MRP)" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Selling Price</label>
+                    <InputNumber class="form-control" @bind-Value="medicine.SellingPrice" />
+                    <ValidationMessage For="@(() => medicine.SellingPrice)" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Reorder Level</label>
+                    <InputNumber class="form-control" @bind-Value="medicine.ReorderLevel" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Minimum Stock</label>
+                    <InputNumber class="form-control" @bind-Value="medicine.MinimumStock" />
+                    <ValidationMessage For="@(() => medicine.MinimumStock)" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Maximum Stock</label>
+                    <InputNumber class="form-control" @bind-Value="medicine.MaximumStock" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Rack Number</label>
+                    <input class="form-control"
+                           @bind="medicine.RackNumber" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Shelf Number</label>
+                    <input class="form-control"
+                           @bind="medicine.ShelfNumber" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Storage Condition</label>
+                    <input class="form-control"
+                           @bind="medicine.StorageCondition" />
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Remarks</label>
+                    <textarea class="form-control"
+                              rows="3"
+                              @bind="medicine.Remarks"></textarea>
+                </div>
+
+                <div class="col-md-6">
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               @bind="medicine.PrescriptionRequired" />
+                        <label class="form-check-label">
+                            Prescription Required
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               @bind="medicine.IsActive" />
+                        <label class="form-check-label">
+                            Active
+                        </label>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <hr />
+
+            <div class="mt-3">
+
+                <button type="submit"
+                        class="btn btn-primary"
+                        disabled="@isSaving">
+
+                    @if (isSaving)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"
+                              role="status"
+                              aria-hidden="true"></span>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        @(editingId is null ? "Save Medicine" : "Update Medicine")
+                    }
+
+                </button>
+
+                <button type="button" class="btn btn-secondary ms-2" @onclick="ClearForm">
+                    Cancel
+                </button>
+
+            </div>
+
+        </EditForm>
+
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <strong>Medicine List (@FilteredMedicines.Count() total)</strong>
+
+        <div style="min-width: 280px;">
+            <input class="form-control"
+                   placeholder="Search Brand / Barcode / Manufacturer..."
+                   value="@searchText"
+                   @oninput="OnSearchChanged" />
+        </div>
+
+        <div style="width: 100px;">
+            <select class="form-select" @onchange="OnPageSizeChanged">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="card-body">
+
+        @if (isLoading)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+            </div>
+        }
+        else if (!FilteredMedicines.Any())
+        {
+            <p class="text-muted mb-0">No medicines found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th role="button" @onclick='() => SortBy("MedicineCode")'>
+                                Code @(sortColumn == "MedicineCode" ? (sortAscending ? "▲" : "▼") : "")
+                            </th>
+                            <th>Barcode</th>
+                            <th role="button" @onclick='() => SortBy("BrandName")'>
+                                Brand Name @(sortColumn == "BrandName" ? (sortAscending ? "▲" : "▼") : "")
+                            </th>
+                            <th>Form</th>
+                            <th role="button" @onclick='() => SortBy("MRP")'>
+                                MRP @(sortColumn == "MRP" ? (sortAscending ? "▲" : "▼") : "")
+                            </th>
+                            <th>Stock (Min/Max)</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in PagedMedicines)
+                        {
+                            <tr>
+                                <td>@m.MedicineCode</td>
+                                <td>@m.Barcode</td>
+                                <td>@m.BrandName</td>
+                                <td>@m.DosageForm</td>
+                                <td>@m.MRP.ToString("N2")</td>
+                                <td>@m.MinimumStock / @m.MaximumStock</td>
+                                <td>
+                                    @if (m.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-nowrap">
+                                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditMedicine(m)">
+                                        Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteMedicine(m)">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (totalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(currentPage - 1)">Previous</button>
+                        </li>
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            var pageNumber = i;
+                            <li class="page-item @(currentPage == pageNumber ? "active" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                            </li>
+                        }
+
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">Next</button>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        }
+
+    </div>
+</div>
+
+@code {
+
+    private const string ModuleName = "Medicine Master";
+
+    private List<Medicine> medicines = new();
+    private Medicine medicine = new();
+
+    private string searchText = string.Empty;
+    private string message = string.Empty;
+
+    private bool isSaving = false;
+    private bool isLoading = true;
+
+    private int? editingId = null;
+
+    private int currentPage = 1;
+    private int pageSize = 10;
+
+    private string sortColumn = "BrandName";
+    private bool sortAscending = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMedicines();
+    }
+
+    private async Task LoadMedicines()
+    {
+        isLoading = true;
+        try
+        {
+            medicines = await Db.Medicines
+                .AsNoTracking()
+                .Where(m => !m.IsDeleted)
+                .OrderBy(m => m.BrandName)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load Medicines list");
+            message = "Could not load the medicine list. Please refresh the page.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private IEnumerable<Medicine> FilteredMedicines =>
+        medicines.Where(x =>
+            string.IsNullOrWhiteSpace(searchText) ||
+            (x.BrandName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (x.Barcode?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (x.MedicineCode?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (x.ManufacturerName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (x.Category?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private IEnumerable<Medicine> SortedMedicines
+    {
+        get
+        {
+            IOrderedEnumerable<Medicine> sorted = sortColumn switch
+            {
+                "MedicineCode" => FilteredMedicines.OrderBy(m => m.MedicineCode),
+                "BrandName" => FilteredMedicines.OrderBy(m => m.BrandName),
+                "MRP" => FilteredMedicines.OrderBy(m => m.MRP),
+                "CreatedDate" => FilteredMedicines.OrderBy(m => m.CreatedDate),
+                _ => FilteredMedicines.OrderBy(m => m.BrandName)
+            };
+            return sortAscending ? sorted : sorted.Reverse();
+        }
+    }
+
+    private int totalPages =>
+        (int)Math.Ceiling(FilteredMedicines.Count() / (double)pageSize);
+
+    private IEnumerable<Medicine> PagedMedicines =>
+        SortedMedicines
+            .Skip((currentPage - 1) * pageSize)
+            .Take(pageSize);
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? string.Empty;
+        currentPage = 1;
+    }
+
+    private void OnPageSizeChanged(ChangeEventArgs e)
+    {
+        pageSize = int.Parse(e.Value?.ToString() ?? "10");
+        currentPage = 1;
+    }
+
+    private void SortBy(string column)
+    {
+        if (sortColumn == column)
+        {
+            sortAscending = !sortAscending;
+        }
+        else
+        {
+            sortColumn = column;
+            sortAscending = true;
+        }
+        currentPage = 1;
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+    }
+
+    private async Task SaveMedicine()
+    {
+        isSaving = true;
+        message = string.Empty;
+
+        try
+        {
+            bool isNew = editingId is null;
+
+            if (isNew && string.IsNullOrWhiteSpace(medicine.MedicineCode))
+            {
+                medicine.MedicineCode = await GenerateMedicineCodeAsync();
+            }
+
+            if (!string.IsNullOrWhiteSpace(medicine.MedicineCode))
+            {
+                var duplicateCode = await Db.Medicines
+                    .AsNoTracking()
+                    .AnyAsync(m => !m.IsDeleted && m.MedicineCode == medicine.MedicineCode && m.Id != medicine.Id);
+
+                if (duplicateCode)
+                {
+                    message = "A medicine with this Medicine Code already exists.";
+                    return;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(medicine.Barcode))
+            {
+                var duplicateBarcode = await Db.Medicines
+                    .AsNoTracking()
+                    .AnyAsync(m => !m.IsDeleted && m.Barcode == medicine.Barcode && m.Id != medicine.Id);
+
+                if (duplicateBarcode)
+                {
+                    message = "A medicine with this Barcode already exists.";
+                    return;
+                }
+            }
+
+            var duplicateCombo = await Db.Medicines
+                .AsNoTracking()
+                .AnyAsync(m => !m.IsDeleted
+                    && m.Id != medicine.Id
+                    && m.BrandName == medicine.BrandName
+                    && m.ManufacturerName == medicine.ManufacturerName);
+
+            if (duplicateCombo)
+            {
+                message = "A medicine with the same Brand Name and Manufacturer already exists.";
+                return;
+            }
+
+            if (isNew)
+            {
+                medicine.CreatedDate = DateTime.UtcNow;
+                Db.Medicines.Add(medicine);
+            }
+            else
+            {
+                medicine.ModifiedDate = DateTime.UtcNow;
+                Db.Medicines.Update(medicine);
+            }
+
+            await Db.SaveChangesAsync();
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                Module = ModuleName,
+                EntityName = nameof(Medicine),
+                EntityId = medicine.Id,
+                Action = isNew ? AuditActions.Create : AuditActions.Update,
+                Details = $"{medicine.BrandName} — {medicine.GenericName}"
+            });
+            await Db.SaveChangesAsync();
+
+            message = isNew
+                ? "Medicine Saved Successfully."
+                : "Medicine Updated Successfully.";
+
+            await LoadMedicines();
+            ClearForm();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to save Medicine (Id={MedicineId}, BrandName={BrandName})", medicine.Id, medicine.BrandName);
+            message = "Something went wrong while saving this medicine. Please try again, and contact support if the problem continues.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task<string> GenerateMedicineCodeAsync()
+    {
+        var lastId = await Db.Medicines
+            .AsNoTracking()
+            .OrderByDescending(m => m.Id)
+            .Select(m => m.Id)
+            .FirstOrDefaultAsync();
+
+        return $"MED{lastId + 1:000000}";
+    }
+    private void EditMedicine(Medicine selected)
+    {
+        medicine = new Medicine
+        {
+            Id = selected.Id,
+            MedicineCode = selected.MedicineCode,
+            Barcode = selected.Barcode,
+            BrandName = selected.BrandName,
+            DosageForm = selected.DosageForm,
+            Category = selected.Category,
+            PackType = selected.PackType,
+            PackSize = selected.PackSize,
+            Unit = selected.Unit,
+            ManufacturerName = selected.ManufacturerName,
+            ScheduleType = selected.ScheduleType,
+            HsnCode = selected.HsnCode,
+            GstPercent = selected.GstPercent,
+            PurchasePrice = selected.PurchasePrice,
+            MRP = selected.MRP,
+            SellingPrice = selected.SellingPrice,
+            ReorderLevel = selected.ReorderLevel,
+            MinimumStock = selected.MinimumStock,
+            MaximumStock = selected.MaximumStock,
+            RackNumber = selected.RackNumber,
+            ShelfNumber = selected.ShelfNumber,
+            StorageCondition = selected.StorageCondition,
+            Remarks = selected.Remarks,
+            PrescriptionRequired = selected.PrescriptionRequired,
+            IsActive = selected.IsActive,
+            CreatedDate = selected.CreatedDate,
+            IsDeleted = selected.IsDeleted,
+            DeletedOn = selected.DeletedOn
+        };
+
+        editingId = selected.Id;
+        message = string.Empty;
+    }
+
+    private async Task DeleteMedicine(Medicine selected)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Are you sure you want to delete \"{selected.BrandName}\"? This can be reversed later from the database if needed.");
+
+        if (!confirmed) return;
+
+        try
+        {
+            var entity = await Db.Medicines.FindAsync(selected.Id);
+            if (entity is not null)
+            {
+                entity.IsDeleted = true;
+                entity.DeletedOn = DateTime.UtcNow;
+                entity.IsActive = false;
+
+                await Db.SaveChangesAsync();
+
+                Db.AuditLogs.Add(new AuditLog
+                {
+                    Module = ModuleName,
+                    EntityName = nameof(Medicine),
+                    EntityId = entity.Id,
+                    Action = AuditActions.Delete,
+                    Details = $"{entity.BrandName} — {entity.GenericName}"
+                });
+                await Db.SaveChangesAsync();
+
+                message = "Medicine Deleted Successfully.";
+                await LoadMedicines();
+
+                if (editingId == selected.Id)
+                {
+                    ClearForm();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to delete Medicine (Id={MedicineId})", selected.Id);
+            message = "Something went wrong while deleting this medicine. Please try again, and contact support if the problem continues.";
+        }
+    }
+
+    private void ClearForm()
+    {
+        medicine = new Medicine();
+        editingId = null;
+    }
+}
+
+
+
+
+
+

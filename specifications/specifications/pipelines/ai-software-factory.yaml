@@ -1,0 +1,98 @@
+version: "1.0"
+
+pipeline:
+  id: ai-software-factory
+  name: CHANDANALA CORE AI Software Factory
+
+execution:
+  mode: parallel
+  max_retries: 3
+  timeout_minutes: 30
+  fail_fast: true
+
+context:
+  provider: ContextEngine
+  sanitize: true
+  cache: true
+  max_tokens: 16000
+
+knowledge:
+  architecture: true
+  coding_standards: true
+  design_system: true
+  security: true
+  testing: true
+
+routing:
+  planner: reasoning
+  ui_generation: fast
+  api_generation: fast
+  documentation: fast
+  test_generation: fast
+  correction: fast
+  architecture_review: reasoning
+  security_review: audit
+
+stages:
+
+  - name: Planning
+    enabled: true
+    agent: PlanningAgent
+
+  - name: Specification
+    enabled: true
+    output:
+      - README.md
+      - openapi.yaml
+      - ui-spec.yaml
+
+  - name: ContextRetrieval
+    enabled: true
+    source:
+      - architecture
+      - design-system
+      - coding-standards
+
+  - name: UIGeneration
+    enabled: true
+    parallel: true
+
+  - name: APIGeneration
+    enabled: true
+    parallel: true
+
+  - name: TestGeneration
+    enabled: true
+    parallel: true
+
+  - name: DocumentationGeneration
+    enabled: true
+    parallel: true
+
+  - name: StaticValidation
+    enabled: true
+
+    checks:
+      - component_validation
+      - type_check
+      - lint
+      - build
+
+  - name: SelfCorrection
+    enabled: true
+    max_iterations: 3
+
+  - name: SandboxExecution
+    enabled: true
+
+  - name: SecurityValidation
+    enabled: true
+
+  - name: ArchitectureValidation
+    enabled: true
+
+  - name: HumanReview
+    required: true
+
+  - name: Deployment
+    approval_required: true

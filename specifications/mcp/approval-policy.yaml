@@ -1,0 +1,21 @@
+version: "1.0"
+
+approval:
+
+  default: required
+
+  exempt:
+
+    - repository.read
+    - file.read
+    - directory.list
+    - sql.select
+    - api.get
+
+  always_require:
+
+    - repository.write
+    - database.write
+    - api.post
+    - api.put
+    - api.delete
