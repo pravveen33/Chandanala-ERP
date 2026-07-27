@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Chandanala.ERP.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3cd13a16324d45f0a82a8ca88a5acd5cb3fe81d6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aa420cbf1f4051ac0d9b0e6a43f39aa3be6c08a9")]
 [assembly: System.Reflection.AssemblyProductAttribute("Chandanala.ERP.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Chandanala.ERP.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
