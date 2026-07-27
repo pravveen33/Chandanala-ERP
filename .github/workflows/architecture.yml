@@ -23,10 +23,10 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore
-        run: dotnet restore CHANDANALA CORE.slnx
+        run: dotnet restore "CHANDANALA CORE.slnx"
 
       - name: Build
-        run: dotnet build CHANDANALA CORE.slnx --configuration Release --no-restore
+        run: dotnet build "CHANDANALA CORE.slnx" --configuration Release --no-restore
 
       - name: Verify Solution Builds
         run: echo "Build validation completed."
@@ -45,4 +45,4 @@ jobs:
           fi
 
       - name: Verify Formatting
-        run: dotnet format CHANDANALA CORE.slnx --verify-no-changes
+        run: dotnet format "CHANDANALA CORE.slnx" --verify-no-changes
