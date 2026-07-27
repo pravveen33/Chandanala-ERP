@@ -22,14 +22,14 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore
-        run: dotnet restore Chandanala.ERP.sln
+        run: dotnet restore CHANDANALA CORE.slnx
 
       - name: Build
-        run: dotnet build Chandanala.ERP.sln --configuration Release --no-restore
+        run: dotnet build CHANDANALA CORE.slnx --configuration Release --no-restore
 
       - name: Test
         run: |
-          dotnet test Chandanala.ERP.sln \
+          dotnet test CHANDANALA CORE.slnx \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
             --logger trx
