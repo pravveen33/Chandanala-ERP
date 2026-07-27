@@ -1,0 +1,47 @@
+﻿name: Deploy Staging
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - staging
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-stage:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+
+    environment:
+      name: staging
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore "CHANDANALA CORE.slnx"
+
+      - name: Build
+        run: dotnet build "CHANDANALA CORE.slnx" --configuration Release --no-restore
+
+      - name: Publish
+        run: >
+          dotnet publish
+          "src/Chandanala.ERP.Web/Chandanala.ERP.Web.csproj"
+          --configuration Release
+          --output publish
+
+      - name: Upload Deployment Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-package
+          path: publish
