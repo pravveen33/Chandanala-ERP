@@ -6,6 +6,9 @@
     <Project Path="src/Chandanala.ERP.Web/Chandanala.ERP.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Chandanala.ERP.Application.Tests/Chandanala.ERP.Application.Tests.csproj" />
     <Project Path="tests/Chandanala.ERP.Domain.Tests/Chandanala.ERP.Domain.Tests.csproj" />
+    <Project Path="tests/Chandanala.ERP.Infrastructure.Tests/Chandanala.ERP.Infrastructure.Tests.csproj" />
+    <Project Path="tests/Chandanala.ERP.Web.Tests/Chandanala.ERP.Web.Tests.csproj" />
   </Folder>
 </Solution>
