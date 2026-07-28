@@ -1,4 +1,5 @@
-﻿using Chandanala.ERP.Application.Abstractions.Persistence;
+﻿using Chandanala.ERP.Infrastructure;
+using Chandanala.ERP.Application.Abstractions.Persistence;
 using Chandanala.ERP.Infrastructure.Persistence;
 using Chandanala.ERP.Infrastructure.Persistence.Seed;
 using Chandanala.ERP.Domain.MedicineKnowledge.Interfaces;
@@ -36,6 +37,8 @@ builder.Services.AddDbContext<CatalogDbContext>(options =>
 
 builder.Services.AddScoped<ICatalogDbContext>(
     sp => sp.GetRequiredService<CatalogDbContext>());
+
+builder.Services.AddInfrastructure();
 
 // ======================================================
 // Core ERP Services
@@ -106,6 +109,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
 
 
 
