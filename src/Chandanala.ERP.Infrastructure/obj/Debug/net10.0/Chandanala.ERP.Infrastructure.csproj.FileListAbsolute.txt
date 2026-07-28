@@ -10,9 +10,9 @@ C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chand
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.AssemblyInfoInputs.cache
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.AssemblyInfo.cs
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.csproj.CoreCompileInputs.cache
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.sourcelink.json
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandana.D6758A92.Up2Date
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.dll
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\refint\Chandanala.ERP.Infrastructure.dll
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.pdb
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\ref\Chandanala.ERP.Infrastructure.dll
-C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Infrastructure\obj\Debug\net10.0\Chandanala.ERP.Infrastructure.sourcelink.json

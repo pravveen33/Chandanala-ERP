@@ -1,9 +1,15 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 namespace Chandanala.ERP.Domain.Common.ValueObjects;
 
 public sealed record EmailAddress
 {
+    // Required by EF Core
+    private EmailAddress()
+    {
+        Value = string.Empty;
+    }
+
     private static readonly Regex EmailRegex =
         new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
 
@@ -27,3 +33,4 @@ public sealed record EmailAddress
     public static implicit operator string(EmailAddress email)
         => email.Value;
 }
+

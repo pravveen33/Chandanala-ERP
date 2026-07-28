@@ -1,9 +1,14 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 namespace Chandanala.ERP.Domain.Common.ValueObjects;
 
 public sealed record PhoneNumber
 {
+    // Required by EF Core
+    private PhoneNumber()
+    {
+        Value = string.Empty;
+    }
     private static readonly Regex PhoneRegex =
         new(@"^[6-9]\d{9}$", RegexOptions.Compiled);
 
@@ -27,3 +32,4 @@ public sealed record PhoneNumber
     public static implicit operator string(PhoneNumber phone)
         => phone.Value;
 }
+

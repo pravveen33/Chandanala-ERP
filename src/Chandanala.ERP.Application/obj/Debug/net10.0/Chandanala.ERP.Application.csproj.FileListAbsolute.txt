@@ -8,9 +8,9 @@ C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\Chandana
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\Chandanala.ERP.Application.AssemblyInfoInputs.cache
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\Chandanala.ERP.Application.AssemblyInfo.cs
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\Chandanala.ERP.Application.csproj.CoreCompileInputs.cache
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\Chandanala.ERP.Application.sourcelink.json
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\Chandana.724B53C8.Up2Date
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\Chandanala.ERP.Application.dll
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\refint\Chandanala.ERP.Application.dll
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\Chandanala.ERP.Application.pdb
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\ref\Chandanala.ERP.Application.dll
-C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Application\obj\Debug\net10.0\Chandanala.ERP.Application.sourcelink.json

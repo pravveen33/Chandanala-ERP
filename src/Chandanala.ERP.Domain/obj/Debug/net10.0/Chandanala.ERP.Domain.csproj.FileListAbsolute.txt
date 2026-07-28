@@ -5,8 +5,8 @@ C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\Chandanala.ER
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\Chandanala.ERP.Domain.AssemblyInfoInputs.cache
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\Chandanala.ERP.Domain.AssemblyInfo.cs
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\Chandanala.ERP.Domain.csproj.CoreCompileInputs.cache
+C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\Chandanala.ERP.Domain.sourcelink.json
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\Chandanala.ERP.Domain.dll
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\refint\Chandanala.ERP.Domain.dll
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\Chandanala.ERP.Domain.pdb
 C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\ref\Chandanala.ERP.Domain.dll
-C:\ERP\CHANDANALA-CORE\src\Chandanala.ERP.Domain\obj\Debug\net10.0\Chandanala.ERP.Domain.sourcelink.json

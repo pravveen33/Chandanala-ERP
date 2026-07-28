@@ -1,7 +1,12 @@
-﻿namespace Chandanala.ERP.Domain.MedicineKnowledge.ValueObjects;
+namespace Chandanala.ERP.Domain.MedicineKnowledge.ValueObjects;
 
 public sealed record Barcode
 {
+    // Required by EF Core
+    private Barcode()
+    {
+        Value = string.Empty;
+    }
     public string Value { get; }
 
     private Barcode(string value)
@@ -27,3 +32,4 @@ public sealed record Barcode
 
     public override string ToString() => Value;
 }
+

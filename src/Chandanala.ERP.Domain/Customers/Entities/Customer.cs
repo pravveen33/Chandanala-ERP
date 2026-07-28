@@ -1,9 +1,22 @@
-﻿using Chandanala.ERP.Domain.Common.ValueObjects;
+using Chandanala.ERP.Domain.Common.ValueObjects;
 
 namespace Chandanala.ERP.Domain.Customers.Entities;
 
 public class Customer
 {
+    // Required by EF Core
+private Customer()
+{
+    CustomerCode = string.Empty;
+    FullName = string.Empty;
+
+    PhoneNumber = null!;
+    Email = null;
+    Address = null;
+
+    CreatedOn = default;
+    IsActive = true;
+}
     public Guid Id { get; private set; }
 
     public string CustomerCode { get; private set; }
@@ -57,3 +70,5 @@ public class Customer
         Email = email;
     }
 }
+
+

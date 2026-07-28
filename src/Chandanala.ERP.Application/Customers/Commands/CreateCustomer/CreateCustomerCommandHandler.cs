@@ -1,5 +1,7 @@
 ﻿using Chandanala.ERP.Application.Common.Interfaces;
 using Chandanala.ERP.Application.Common.Interfaces.Persistence;
+using Chandanala.ERP.Domain.Common.ValueObjects;
+using Chandanala.ERP.Domain.Customers.Entities;
 using MediatR;
 
 namespace Chandanala.ERP.Application.Customers.Commands.CreateCustomer;
@@ -22,15 +24,43 @@ public sealed class CreateCustomerCommandHandler
         CreateCustomerCommand request,
         CancellationToken cancellationToken)
     {
-        // Domain object creation will be added once the aggregate
-        // constructor/factory is finalised.
+        var existingCustomer =
+            await _customerRepository.GetByCustomerCodeAsync(
+                request.CustomerCode,
+                cancellationToken);
 
-        // Example:
-        // var customer = Customer.Create(...);
+        if (existingCustomer is not null)
+            throw new InvalidOperationException(
+                $"Customer '{request.CustomerCode}' already exists.");
 
-        // await _customerRepository.AddAsync(customer, cancellationToken);
-        // await _unitOfWork.SaveChangesAsync(cancellationToken);
+        var phone = new PhoneNumber(request.PhoneNumber);
 
-        return Guid.NewGuid();
+        EmailAddress? email = null;
+
+        if (!string.IsNullOrWhiteSpace(request.Email))
+            email = new EmailAddress(request.Email);
+
+        var address = new Address(
+            request.AddressLine1,
+            null,
+            request.City,
+            request.State,
+            request.PostalCode);
+
+        var customer = new Customer(
+            request.CustomerCode,
+            request.FullName,
+            phone,
+            email,
+            address);
+
+        await _customerRepository.AddAsync(
+            customer,
+            cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(
+            cancellationToken);
+
+        return customer.Id;
     }
 }

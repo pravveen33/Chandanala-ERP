@@ -1,7 +1,17 @@
-﻿namespace Chandanala.ERP.Domain.Common.ValueObjects;
+namespace Chandanala.ERP.Domain.Common.ValueObjects;
 
 public sealed record Address
 {
+    // Required by EF Core
+    private Address()
+    {
+        Line1 = string.Empty;
+        City = string.Empty;
+        State = string.Empty;
+        PostalCode = string.Empty;
+        Country = "India";
+    }
+
     public string Line1 { get; }
     public string? Line2 { get; }
     public string City { get; }
@@ -40,3 +50,4 @@ public sealed record Address
     public override string ToString()
         => $"{Line1}, {City}, {State} {PostalCode}, {Country}";
 }
+

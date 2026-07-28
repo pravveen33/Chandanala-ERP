@@ -1,4 +1,4 @@
-﻿using Chandanala.ERP.Web.Data.Configurations;
+using Chandanala.ERP.Web.Data.Configurations;
 using Chandanala.ERP.Domain.Masters.Entities;
 using Chandanala.ERP.Web.Models;
 using Chandanala.ERP.Web.Modules.MasterData.DosageForms.Models;
@@ -131,7 +131,7 @@ public class AppDbContext : DbContext
                 .HasColumnType("timestamp with time zone");
 
             // Optimistic concurrency token backed by Postgres' native xmin
-            // system column â€” no extra storage, automatically maintained by
+            // system column — no extra storage, automatically maintained by
             // Postgres on every row version.
             entity.Property(s => s.RowVersion)
                 .HasColumnName("xmin")
@@ -163,14 +163,14 @@ public class AppDbContext : DbContext
                 .HasColumnType("timestamp with time zone");
 
             // Restrict, not Cascade: a supplier is soft-deleted (IsDeleted flag),
-            // never hard-deleted, so this should never fire in practice â€” but if
+            // never hard-deleted, so this should never fire in practice — but if
             // it ever did, silently cascading away audit history would be wrong.
             entity.HasOne(h => h.Supplier)
                 .WithMany()
                 .HasForeignKey(h => h.SupplierId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // One history row per (SupplierId, VersionNumber) â€” guards against
+            // One history row per (SupplierId, VersionNumber) — guards against
             // ever double-writing the same version if a save is retried.
             entity.HasIndex(h => new { h.SupplierId, h.VersionNumber })
                 .IsUnique();
@@ -205,7 +205,7 @@ public class AppDbContext : DbContext
             entity.Property(r => r.ReviewedAt)
                 .HasColumnType("timestamp with time zone");
 
-            // Restrict, matching SupplierHistory â€” a supplier is soft-deleted,
+            // Restrict, matching SupplierHistory — a supplier is soft-deleted,
             // never hard-deleted, so this is a safety net rather than a real path.
             entity.HasOne(r => r.Supplier)
                 .WithMany()
@@ -379,15 +379,15 @@ public class AppDbContext : DbContext
         // --- Uniqueness (filtered to exclude soft-deleted rows, so a deleted
         //     record's name/code can be reused by a genuinely new record) ---
         //
-        // NOTE â€” case sensitivity: these are standard B-tree unique indexes, which
+        // NOTE — case sensitivity: these are standard B-tree unique indexes, which
         // are case-SENSITIVE in PostgreSQL by default. The existing application-level
         // duplicate checks (Medicines.razor / Manufacturers.razor) use .ToLower()
-        // comparisons specifically to catch "Dolo" vs "DOLO" as duplicates â€” this
+        // comparisons specifically to catch "Dolo" vs "DOLO" as duplicates — this
         // index does NOT replace that check, it only closes the race-condition gap
         // where two near-simultaneous saves could both pass the app-level check
         // before either commits. If full case-insensitive enforcement at the
         // database level is wanted later, that needs either a citext column type
-        // or a computed lowercase shadow property with its own unique index â€”
+        // or a computed lowercase shadow property with its own unique index —
         // deliberately not done here to keep this change minimal and reversible.
         modelBuilder.Entity<Medicine>()
             .HasIndex(m => new { m.BrandName, m.ManufacturerName })
