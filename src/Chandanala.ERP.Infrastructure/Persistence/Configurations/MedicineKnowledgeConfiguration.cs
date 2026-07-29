@@ -53,5 +53,3 @@ public sealed class MedicineKnowledgeConfiguration
 builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }
-
-

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Chandanala.ERP.Web.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260712063943_UpdateSchemaAfterRebase")]
-    partial class UpdateSchemaAfterRebase
+    [Migration("20260725184813_AddPackagingMasters")]
+    partial class AddPackagingMasters
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,131 @@ namespace Chandanala.ERP.Web.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Chandanala.ERP.Domain.Masters.Entities.PackType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("PackTypes", (string)null);
+                });
+
+            modelBuilder.Entity("Chandanala.ERP.Domain.Masters.Entities.UnitOfMeasure", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("UnitOfMeasures", (string)null);
+                });
+
+            modelBuilder.Entity("Chandanala.ERP.Domain.MedicineKnowledge.Entities.MedicineKnowledge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BrandName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DosageForm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("DrugSchedule")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("GenericName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StorageType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Strength")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("MedicineKnowledge", (string)null);
+                });
 
             modelBuilder.Entity("Chandanala.ERP.Web.Models.AuditLog", b =>
                 {
@@ -131,6 +256,32 @@ namespace Chandanala.ERP.Web.Migrations
                         .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Batches");
+                });
+
+            modelBuilder.Entity("Chandanala.ERP.Web.Models.Bill", b =>
+                {
+                    b.Property<int>("BillId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BillId"));
+
+                    b.Property<string>("PaymentMode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TotalSavings")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("TransactionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("BillId");
+
+                    b.ToTable("Bills");
                 });
 
             modelBuilder.Entity("Chandanala.ERP.Web.Models.Manufacturer", b =>
@@ -334,9 +485,9 @@ namespace Chandanala.ERP.Web.Migrations
                     b.HasIndex("BrandName")
                         .HasDatabaseName("IX_Medicines_BrandName");
 
-                    b.HasIndex("BrandName", "Strength")
+                    b.HasIndex("BrandName", "ManufacturerName")
                         .IsUnique()
-                        .HasDatabaseName("IX_Medicines_BrandName_Strength_Unique")
+                        .HasDatabaseName("IX_Medicines_BrandName_ManufacturerName_Unique")
                         .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Medicines");
@@ -365,7 +516,12 @@ namespace Chandanala.ERP.Web.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long?>("RoleId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
 
                     b.ToTable("Permissions");
                 });
@@ -1109,6 +1265,81 @@ namespace Chandanala.ERP.Web.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("Chandanala.ERP.Web.Modules.MasterData.DosageForms.Models.DosageForm", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("DosageForms", (string)null);
+                });
+
+            modelBuilder.Entity("Chandanala.ERP.Domain.MedicineKnowledge.Entities.MedicineKnowledge", b =>
+                {
+                    b.OwnsOne("Chandanala.ERP.Domain.MedicineKnowledge.ValueObjects.Barcode", "Barcode", b1 =>
+                        {
+                            b1.Property<Guid>("MedicineKnowledgeId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("Barcode");
+
+                            b1.HasKey("MedicineKnowledgeId");
+
+                            b1.ToTable("MedicineKnowledge");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MedicineKnowledgeId");
+                        });
+
+                    b.Navigation("Barcode")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Chandanala.ERP.Web.Models.Batch", b =>
                 {
                     b.HasOne("Chandanala.ERP.Web.Models.Medicine", null)
@@ -1116,6 +1347,13 @@ namespace Chandanala.ERP.Web.Migrations
                         .HasForeignKey("MedicineId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Chandanala.ERP.Web.Models.Permission", b =>
+                {
+                    b.HasOne("Chandanala.ERP.Web.Models.Role", null)
+                        .WithMany("Permissions")
+                        .HasForeignKey("RoleId");
                 });
 
             modelBuilder.Entity("Chandanala.ERP.Web.Models.Purchase", b =>
@@ -1228,6 +1466,11 @@ namespace Chandanala.ERP.Web.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Chandanala.ERP.Web.Models.Role", b =>
+                {
+                    b.Navigation("Permissions");
                 });
 #pragma warning restore 612, 618
         }

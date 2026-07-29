@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj",
+      "projectUniqueName": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj",
       "projectName": "Chandanala.ERP.Domain",
-      "projectPath": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj",
+      "projectPath": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj",
       "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
-      "outputPath": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Domain\\obj\\",
+      "outputPath": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Domain\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

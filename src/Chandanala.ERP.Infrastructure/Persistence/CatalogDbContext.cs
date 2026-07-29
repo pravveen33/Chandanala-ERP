@@ -26,8 +26,6 @@ public sealed class CatalogDbContext : DbContext, ICatalogDbContext
 
     public DbSet<PackType> PackTypes => Set<PackType>();
 
-    public DbSet<PackSize> PackSizes => Set<PackSize>();
-
     public DbSet<UnitOfMeasure> UnitOfMeasures => Set<UnitOfMeasure>();
 
     public DbSet<MedicineBatch> MedicineBatches => Set<MedicineBatch>();
@@ -40,5 +38,4 @@ public sealed class CatalogDbContext : DbContext, ICatalogDbContext
             typeof(MedicineConfiguration).Assembly);
     }
 }
-
 

@@ -1042,11 +1042,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Infrastructure\\Chandanala.ERP.Infrastructure.csproj",
+      "projectUniqueName": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Infrastructure\\Chandanala.ERP.Infrastructure.csproj",
       "projectName": "Chandanala.ERP.Infrastructure",
-      "projectPath": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Infrastructure\\Chandanala.ERP.Infrastructure.csproj",
+      "projectPath": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Infrastructure\\Chandanala.ERP.Infrastructure.csproj",
       "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
-      "outputPath": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Infrastructure\\obj\\",
+      "outputPath": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -1068,11 +1068,11 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Application\\Chandanala.ERP.Application.csproj": {
-              "projectPath": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Application\\Chandanala.ERP.Application.csproj"
+            "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Application\\Chandanala.ERP.Application.csproj": {
+              "projectPath": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Application\\Chandanala.ERP.Application.csproj"
             },
-            "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj": {
-              "projectPath": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj"
+            "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj": {
+              "projectPath": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj"
             }
           }
         }

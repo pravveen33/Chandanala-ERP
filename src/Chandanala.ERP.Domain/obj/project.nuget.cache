@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "/Yg0Mzs1dhk=",
+  "dgSpecHash": "mNw5TkmYnH0=",
   "success": true,
-  "projectFilePath": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj",
+  "projectFilePath": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Domain\\Chandanala.ERP.Domain.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

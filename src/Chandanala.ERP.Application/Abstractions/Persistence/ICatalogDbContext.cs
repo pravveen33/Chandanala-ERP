@@ -17,8 +17,6 @@ public interface ICatalogDbContext
 
     DbSet<PackType> PackTypes { get; }
 
-    DbSet<PackSize> PackSizes { get; }
-
     DbSet<UnitOfMeasure> UnitOfMeasures { get; }
 
     DbSet<MedicineSchedule> MedicineSchedules { get; }
@@ -28,4 +26,3 @@ public interface ICatalogDbContext
     Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default);
 }
-

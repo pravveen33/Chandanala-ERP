@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "bCUzV8b/xvs=",
+  "dgSpecHash": "nSasOQIAPsE=",
   "success": true,
-  "projectFilePath": "C:\\ERP\\CHANDANALA-CORE\\src\\Chandanala.ERP.Application\\Chandanala.ERP.Application.csproj",
+  "projectFilePath": "C:\\ERP\\Chandanala.ERP.Web\\src\\Chandanala.ERP.Application\\Chandanala.ERP.Application.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\HP\\.nuget\\packages\\automapper\\16.2.0\\automapper.16.2.0.nupkg.sha512",
     "C:\\Users\\HP\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
