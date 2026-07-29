@@ -1,4 +1,5 @@
-﻿using Chandanala.ERP.Infrastructure;
+using Chandanala.ERP.Application;
+using Chandanala.ERP.Infrastructure;
 using Chandanala.ERP.Application.Abstractions.Persistence;
 using Chandanala.ERP.Infrastructure.Persistence;
 using Chandanala.ERP.Infrastructure.Persistence.Seed;
@@ -38,6 +39,7 @@ builder.Services.AddDbContext<CatalogDbContext>(options =>
 builder.Services.AddScoped<ICatalogDbContext>(
     sp => sp.GetRequiredService<CatalogDbContext>());
 
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
 
 // ======================================================
@@ -109,6 +111,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
 
 
 
