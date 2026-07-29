@@ -1,0 +1,42 @@
+@page "/dashboard"
+@using Microsoft.AspNetCore.Components.Web
+@using Chandanala.ERP.Web.Models
+@using Chandanala.ERP.Web.Services
+
+@inject DashboardService DashboardService
+
+<PageTitle>Executive Dashboard</PageTitle>
+
+<h2>Executive Dashboard</h2>
+
+@if (_summary == null)
+{
+    <p><em>Loading dashboard...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <tbody>
+            <tr><td>Today's Sales</td><td>@_summary.TodaySales</td></tr>
+            <tr><td>Monthly Sales</td><td>@_summary.MonthlySales</td></tr>
+            <tr><td>Total Bills</td><td>@_summary.TotalBills</td></tr>
+            <tr><td>Medicines</td><td>@_summary.TotalMedicines</td></tr>
+            <tr><td>Suppliers</td><td>@_summary.SupplierCount</td></tr>
+            <tr><td>Customers</td><td>@_summary.CustomerCount</td></tr>
+            <tr><td>Low Stock</td><td>@_summary.LowStockCount</td></tr>
+            <tr><td>Expired Batches</td><td>@_summary.ExpiredBatchCount</td></tr>
+            <tr><td>Audit Events Today</td><td>@_summary.AuditEventsToday</td></tr>
+            <tr><td>Last Updated</td><td>@_summary.LastUpdated</td></tr>
+        </tbody>
+    </table>
+}
+
+@code
+{
+    private DashboardSummary? _summary;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _summary = await DashboardService.GetDashboardAsync();
+    }
+}

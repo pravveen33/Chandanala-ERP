@@ -47,6 +47,8 @@ builder.Services.AddScoped<SupplierService>();
 builder.Services.AddScoped<PurchaseService>();
 builder.Services.AddScoped<VerificationService>();
 
+builder.Services.AddScoped<DashboardService>();
+
 // ======================================================
 // Procurement Module Services
 // ======================================================
@@ -112,6 +114,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
 
 
 
