@@ -1,0 +1,94 @@
+name: CHANDANALA CORE Deployment
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: chandanala-erp-2026
+  REGION: asia-south1
+  REPOSITORY: chandanala-core
+  SERVICE: chandanala-core
+  IMAGE: chandanala-core
+
+jobs:
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: |
+          dotnet restore "CHANDANALA CORE.slnx"
+
+      - name: Build
+        run: |
+          dotnet build "CHANDANALA CORE.slnx" \
+            --configuration Release \
+            --no-restore
+
+      - name: Run Tests
+        run: |
+          dotnet test "CHANDANALA CORE.slnx" \
+            --configuration Release \
+            --no-build
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+            -t asia-south1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }} \
+            .
+
+      - name: Push Docker Image
+        run: |
+          docker push \
+            asia-south1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE }} \
+            --image asia-south1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --quiet
+
+      - name: Smoke Test
+        run: |
+          sleep 20
+          curl --fail https://chandanala-core-244996371571.asia-south1.run.app
+
+      - name: Deployment Complete
+        run: |
+          echo "======================================="
+          echo "CHANDANALA CORE Deployment Completed"
+          echo "======================================="
