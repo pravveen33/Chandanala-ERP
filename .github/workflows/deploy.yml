@@ -9,6 +9,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # Required if uploading security results
 
     steps:
       - name: Checkout Repository
