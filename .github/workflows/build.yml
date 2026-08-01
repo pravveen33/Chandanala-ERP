@@ -1,9 +1,28 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4  # Or check for the absolute latest release tag
+        uses: actions/checkout@v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4 # Update to latest patch/major if available
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
-      - name: Upload Publish Artifact
-        uses: actions/upload-artifact@v4 # Update to latest patch/major if available
+      - name: Restore
+        run: dotnet restore "CHANDANALA CORE.slnx"
+
+      - name: Build
+        run: dotnet build "CHANDANALA CORE.slnx" --configuration Release --no-restore
