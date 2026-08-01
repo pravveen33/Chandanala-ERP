@@ -48,7 +48,7 @@ jobs:
         run: docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/chandanala-core:latest
 
       - name: Deploy to Google Cloud Run
-        uses: google-github-actions/deploy-cloud-run@v2
+        uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: chandanala-core-api
           image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/chandanala-core:latest
