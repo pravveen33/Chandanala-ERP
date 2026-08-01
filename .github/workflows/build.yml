@@ -1,13 +1,13 @@
-name: Build and Validate ERP
+name: CHANDANALA CORE Deployment
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,10 +25,19 @@ jobs:
       - name: Build Solution (Release)
         run: dotnet build "CHANDANALA CORE.slnx" --configuration Release --no-restore
 
-      - name: Run Unit Tests
+      - name: Run Tests
         run: dotnet test "CHANDANALA CORE.slnx" --configuration Release --no-build --verbosity normal
 
-      - name: Check EF Core Model Changes
-        run: |
-          dotnet tool install --global dotnet-ef
-          dotnet ef migrations has-pending-model-changes --project src/Chandanala.Infrastructure --startup-project src/Chandanala.WebAPI || echo "Model changes checked"
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCP
+        run: gcloud auth configure-docker gcr.io --quiet
+
+      - name: Build Docker Image
+        run: docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/chandanala-core:latest -f src/Chandanala.WebAPI/Dockerfile .
