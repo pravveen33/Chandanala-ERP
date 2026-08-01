@@ -1,19 +1,11 @@
-/.github/governance/verification/
-
-├── customer-verification.yml
-├── supplier-verification.yml
-├── medicine-verification.yml
-├── inventory-verification.yml
-├── purchase-verification.yml
-├── sales-verification.yml
-├── finance-verification.yml
-├── hr-verification.yml
-├── reporting-verification.yml
-├── ai-verification.yml
-├── security-verification.yml
-├── integration-verification.yml
-├── workflow-verification.yml
-├── notification-verification.yml
-├── audit-verification.yml
-├── identity-verification.yml
-└── architecture-verification.yml
+version: v1
+code_review:
+  # Minimum severity for Gemini to post comments (LOW, MEDIUM, HIGH)
+  comment_severity_threshold: MEDIUM
+  
+  # Glob patterns for files/folders you want Gemini to ignore during reviews
+  ignore_patterns:
+    - "vendor/**"
+    - "dist/**"
+    - "*.min.js"
+    - "package-lock.json"
