@@ -1,37 +1,9 @@
-name: Build
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # Or check for the absolute latest release tag
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore
-        run: dotnet restore "CHANDANALA CORE.slnx"
-
-      - name: Build
-        run: dotnet build "CHANDANALA CORE.slnx" --configuration Release --no-restore
-
-      - name: Publish Web
-        run: dotnet publish ./src/Chandanala.ERP.Web/Chandanala.ERP.Web.csproj --configuration Release --output ./publish --no-build
+        uses: actions/setup-dotnet@v4 # Update to latest patch/major if available
 
       - name: Upload Publish Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: chandanala-core-publish
-          path: ./publish
+        uses: actions/upload-artifact@v4 # Update to latest patch/major if available
