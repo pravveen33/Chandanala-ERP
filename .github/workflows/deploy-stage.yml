@@ -1,47 +1,82 @@
-﻿name: Deploy Staging
+name: Deploy Staging
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
-  push:
-    branches:
-      - staging
-
-permissions:
-  contents: read
+env:
+  DOTNET_VERSION: '10.0.x'
+  SOLUTION_PATH: 'CHANDANALA-CORE.sln'
+  WEB_PROJECT_PATH: 'src/Chandanala.ERP.Web/Chandanala.ERP.Web.csproj'
+  PUBLISH_DIR: './publish'
 
 jobs:
-  deploy-stage:
-    name: Deploy to Staging
+  build-and-publish:
     runs-on: ubuntu-latest
-
-    environment:
-      name: staging
+    name: Build & Publish Staging Artifact
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore
-        run: dotnet restore "CHANDANALA CORE.slnx"
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
-      - name: Build
-        run: dotnet build "CHANDANALA CORE.slnx" --configuration Release --no-restore
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
 
-      - name: Publish
-        run: >
-          dotnet publish
-          "src/Chandanala.ERP.Web/Chandanala.ERP.Web.csproj"
-          --configuration Release
-          --output publish
+      - name: Build solution
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --verbosity normal
+
+      - name: Publish Web project
+        run: dotnet publish ${{ env.WEB_PROJECT_PATH }} --configuration Release --no-build --output ${{ env.PUBLISH_DIR }} --self-contained false
 
       - name: Upload Deployment Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: staging-package
-          path: publish
+          name: chandanala-erp-staging
+          path: ${{ env.PUBLISH_DIR }}
+          retention-days: 7
+
+  deploy-staging:
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: chandanala-erp-staging
+          path: ./staging-deploy
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: ./staging-deploy
+
+      - name: Health check
+        run: |
+          sleep 15
+          curl -f ${{ vars.STAGING_URL }}/health || exit 1
