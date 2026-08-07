@@ -1,0 +1,67 @@
+steps:
+  # ─── Build & Test ───
+  - name: 'mcr.microsoft.com/dotnet/sdk:10.0'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        dotnet restore
+        dotnet build --no-restore --configuration Release
+        dotnet test --no-build --configuration Release --verbosity normal
+
+  # ─── Docker Build ───
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/chandanala-core/web:${COMMIT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/chandanala-core/web:latest'
+      - '.'
+
+  # ─── Push to Artifact Registry ───
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/chandanala-core/web:${COMMIT_SHA}'
+      - '--all-tags'
+
+  # ─── Deploy to Cloud Run ───
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'chandanala-core-api'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/chandanala-core/web:${COMMIT_SHA}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-secrets'
+      - 'ConnectionStrings__DefaultConnection=db-connection-string:latest,Jwt__Secret=jwt-secret:latest'
+      - '--set-env-vars'
+      - 'ASPNETCORE_ENVIRONMENT=Production'
+      - '--add-cloudsql-instances'
+      - '${PROJECT_ID}:${_REGION}:chandanala-db'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--concurrency'
+      - '80'
+      - '--max-instances'
+      - '5'
+      - '--min-instances'
+      - '0'
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/chandanala-core/web:${COMMIT_SHA}'
+
+substitutions:
+  _REGION: asia-south1
+
+options:
+  logging: CLOUD_LOGGING_ONLY
