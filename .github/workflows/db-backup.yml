@@ -1,0 +1,71 @@
+# CHANDANALA CORE™ — Automated Database Backup
+# Invariant: No Backup = No Update
+
+name: Database Backup
+
+on:
+  schedule:
+    # Daily at 2 AM IST (8:30 PM UTC)
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+    inputs:
+      backup_type:
+        description: 'Backup type'
+        required: true
+        default: 'manual'
+        type: choice
+        options:
+          - manual
+          - pre_update
+          - emergency
+
+env:
+  PROJECT_ID: alpine-gasket-502104-t6
+  REGION: asia-south1
+  DB_INSTANCE: chandanala-db
+  DB_NAME: ChandanalaERP
+  BUCKET: chandanala-db-backups
+
+jobs:
+  backup:
+    name: Cloud SQL Backup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Create backup
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          BACKUP_NAME="chandanala-${TIMESTAMP}"
+
+          echo "Creating backup: $BACKUP_NAME"
+          gcloud sql backups create             --instance=${{ env.DB_INSTANCE }}             --description="${{ github.event.inputs.backup_type || 'scheduled' }}-${BACKUP_NAME}"
+
+      - name: Export to Cloud Storage
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          EXPORT_FILE="chandanala-erp-${TIMESTAMP}.sql"
+
+          gcloud sql export sql ${{ env.DB_INSTANCE }}             gs://${{ env.BUCKET }}/${EXPORT_FILE}             --database=${{ env.DB_NAME }}
+
+          echo "Exported to: gs://${{ env.BUCKET }}/${EXPORT_FILE}"
+
+      - name: Verify backup
+        run: |
+          # List recent backups
+          gcloud sql backups list --instance=${{ env.DB_INSTANCE }} --limit=5
+
+      - name: Cleanup old backups (retain 30 days)
+        run: |
+          # Delete exports older than 30 days
+          gsutil ls gs://${{ env.BUCKET }}/ | while read file; do
+            AGE=$(gsutil stat "$file" | grep "Creation time" | awk '{print $3}')
+            # TODO: Implement age-based deletion
+            echo "Checking: $file"
+          done
