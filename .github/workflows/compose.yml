@@ -1,0 +1,261 @@
+# CHANDANALA CORE™ — Local Development Stack
+# PostgreSQL + Redis + Event Bus (RabbitMQ for local) + Application
+# Invariant: No Context = No Decision
+
+version: '3.9'
+
+services:
+  # ═══════════════════════════════════════════════════════════════
+  # PostgreSQL — Authoritative System of Record
+  # ═══════════════════════════════════════════════════════════════
+  postgres:
+    image: postgres:16-alpine
+    container_name: chandanala-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ChandanalaERP
+      POSTGRES_USER: chandanala
+      POSTGRES_PASSWORD: Chandanala2026
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chandanala -d ChandanalaERP"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - chandanala-network
+
+  # ═══════════════════════════════════════════════════════════════
+  # Redis — Cache Layer
+  # ═══════════════════════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    container_name: chandanala-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ChandanalaRedis2026 --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - chandanala-network
+
+  # ═══════════════════════════════════════════════════════════════
+  # RabbitMQ — Event Bus (Local Development)
+  # ═══════════════════════════════════════════════════════════════
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: chandanala-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: chandanala
+      RABBITMQ_DEFAULT_PASS: ChandanalaMQ2026
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - chandanala-network
+
+  # ═══════════════════════════════════════════════════════════════
+  # MinIO — Object Storage (Local S3 alternative)
+  # For: Invoice images, prescription uploads, backups
+  # ═══════════════════════════════════════════════════════════════
+  minio:
+    image: minio/minio:latest
+    container_name: chandanala-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: chandanala
+      MINIO_ROOT_PASSWORD: ChandanalaMinIO2026
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - chandanala-network
+
+  # ═══════════════════════════════════════════════════════════════
+  # CHANDANALA CORE™ API
+  # ═══════════════════════════════════════════════════════════════
+  api:
+    build:
+      context: .
+      dockerfile: src/Web/Dockerfile
+      args:
+        BUILD_VERSION: local-dev
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+        VCS_REF: ${VCS_REF:-unknown}
+    container_name: chandanala-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      # Database
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=ChandanalaERP;Username=chandanala;Password=Chandanala2026
+      # Cache
+      ConnectionStrings__Redis: redis:6379,password=ChandanalaRedis2026
+      # Event Bus
+      EventBus__HostName: rabbitmq
+      EventBus__UserName: chandanala
+      EventBus__Password: ChandanalaMQ2026
+      # Storage
+      Storage__Endpoint: http://minio:9000
+      Storage__AccessKey: chandanala
+      Storage__SecretKey: ChandanalaMinIO2026
+      Storage__Bucket: chandanala-uploads
+      # Security
+      Jwt__Secret: local-dev-secret-key-min-32-chars-long
+      Jwt__Issuer: CHANDANALA-CORE
+      Jwt__Audience: CHANDANALA-CLIENTS
+      Jwt__ExpiryMinutes: 60
+      # AI
+      Ai__OpenRouterApiKey: ${OPENROUTER_API_KEY:-}
+      Ai__LocalModelEndpoint: ${LOCAL_MODEL_ENDPOINT:-}
+      Ai__EnableLocalModel: "false"
+      # Feature Flags
+      Features__EnableAi: "false"
+      Features__EnableOcr: "false"
+      Features__EnableOfflineMode: "false"
+      # Observability
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_SERVICE_NAME: chandanala-core-api
+      # Logging
+      Serilog__MinimumLevel__Default: Information
+      Serilog__MinimumLevel__Override__Microsoft: Warning
+      Serilog__MinimumLevel__Override__System: Warning
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - chandanala-network
+    volumes:
+      - ./logs:/app/logs
+
+  # ═══════════════════════════════════════════════════════════════
+  # Jaeger — Distributed Tracing
+  # ═══════════════════════════════════════════════════════════════
+  jaeger:
+    image: jaegertracing/all-in-one:1.50
+    container_name: chandanala-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    networks:
+      - chandanala-network
+
+  # ═══════════════════════════════════════════════════════════════
+  # Prometheus — Metrics Collection
+  # ═══════════════════════════════════════════════════════════════
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    container_name: chandanala-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - chandanala-network
+
+  # ═══════════════════════════════════════════════════════════════
+  # Grafana — Metrics Visualization
+  # ═══════════════════════════════════════════════════════════════
+  grafana:
+    image: grafana/grafana:10.3.0
+    container_name: chandanala-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ChandanalaGrafana2026
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - chandanala-network
+
+  # ═══════════════════════════════════════════════════════════════
+  # MailHog — Email Testing (for notifications)
+  # ═══════════════════════════════════════════════════════════════
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: chandanala-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - chandanala-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  minio_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  chandanala-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
