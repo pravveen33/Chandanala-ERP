@@ -1,0 +1,127 @@
+# ============================================================
+# CHANDANALA CORE™ — Database Backup Workflow
+# Priority: P0 (Data Integrity) / P1 (Security / DR)
+# Invariant: No Backup = No Update
+# ============================================================
+
+name: Database Backup
+
+on:
+  schedule:
+    # Daily at 2 AM IST (8:30 PM UTC)
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+    inputs:
+      backup_type:
+        description: 'Backup type'
+        required: true
+        default: 'manual'
+        type: choice
+        options:
+          - manual
+          - pre_update
+          - emergency
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_ID: alpine-gasket-502104-t6
+  REGION: asia-south1
+  DB_INSTANCE: chandanala-db
+  DB_NAME: ChandanalaERP
+  BUCKET: chandanala-db-backups
+  BACKUP_RETENTION_DAYS: 30
+
+jobs:
+  backup:
+    name: Cloud SQL Backup & Export
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure GCP Project
+        run: gcloud config set project ${{ env.PROJECT_ID }}
+
+      - name: Create managed backup
+        id: backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          BACKUP_NAME="chandanala-${TIMESTAMP}"
+          EXPORT_FILE="chandanala-erp-${TIMESTAMP}.sql"
+          BACKUP_TYPE="${{ github.event.inputs.backup_type || 'scheduled' }}"
+          
+          echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "export_file=${EXPORT_FILE}" >> $GITHUB_OUTPUT
+          echo "backup_name=${BACKUP_NAME}" >> $GITHUB_OUTPUT
+          
+          echo "=== Creating Cloud SQL backup: ${BACKUP_NAME} ==="
+          gcloud sql backups create \
+            --instance=${{ env.DB_INSTANCE }} \
+            --description="${BACKUP_TYPE}-${BACKUP_NAME}"
+
+      - name: Export to Cloud Storage
+        run: |
+          set -euo pipefail
+          gcloud sql export sql ${{ env.DB_INSTANCE }} \
+            gs://${{ env.BUCKET }}/${{ steps.backup.outputs.export_file }} \
+            --database=${{ env.DB_NAME }} \
+            --offload
+
+      - name: Verify backup integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPORT_FILE="${{ steps.backup.outputs.export_file }}"
+          
+          echo "=== Verifying GCS export ==="
+          gsutil ls gs://${{ env.BUCKET }}/${EXPORT_FILE}
+          
+          SIZE=$(gsutil du gs://${{ env.BUCKET }}/${EXPORT_FILE} | awk '{print $1}')
+          if [ "$SIZE" -eq 0 ]; then
+            echo "ERROR: Backup file is empty!"
+            exit 1
+          fi
+          echo "Backup verified: ${SIZE} bytes"
+
+      - name: List recent managed backups
+        run: |
+          gcloud sql backups list \
+            --instance=${{ env.DB_INSTANCE }} \
+            --limit=5 \
+            --format='table(id, type, state, time)'
+
+      - name: Cleanup old exports
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== Cleaning up backups older than ${{ env.BACKUP_RETENTION_DAYS }} days ==="
+          
+          CUTOFF=$(date -d "${{ env.BACKUP_RETENTION_DAYS }} days ago" +%Y-%m-%d)
+          
+          gsutil ls gs://${{ env.BUCKET }}/ | while read -r file; do
+            FILE_DATE=$(gsutil stat "$file" 2>/dev/null | grep "Creation time" | grep -oP '\d{4}-\d{2}-\d{2}' || true)
+            if [ -n "$FILE_DATE" ] && [[ "$FILE_DATE" < "$CUTOFF" ]]; then
+              echo "Deleting: $file (created $FILE_DATE)"
+              gsutil rm "$file"
+            fi
+          done
+
+      - name: Record provenance
+        if: always()
+        run: |
+          echo "::notice:: Backup ${{ steps.backup.outputs.backup_name }} completed at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "::notice:: Triggered by: ${{ github.actor }} | Type: ${{ github.event.inputs.backup_type || 'scheduled' }}"
