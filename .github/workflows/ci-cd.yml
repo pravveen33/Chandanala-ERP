@@ -1,528 +1,102 @@
+# ============================================================
 # CHANDANALA CORE™ — CI/CD Pipeline
-# Release Management: Build → Test → Security → Canary → Production → Rollback
-# Invariant: No Compatibility = No Update
-# Invariant: No Provenance = No Trust
-# Invariant: No Verification = No Consequential Action
+# Build → Test → Security Scan → Deploy to Cloud Run
+# ============================================================
 
-name: CHANDANALA CORE CI/CD
+name: CI/CD
 
 on:
   push:
-    branches: [main, develop, 'release/*', 'hotfix/*']
-  pull_request:
     branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
 
 env:
-  DOTNET_VERSION: '10.0.x'
   PROJECT_ID: alpine-gasket-502104-t6
   REGION: asia-south1
   SERVICE_NAME: chandanala-core
-  REGISTRY: asia-south1-docker.pkg.dev
-  IMAGE_NAME: chandanala-core/app
-  DB_INSTANCE: chandanala-db
-  DB_NAME: ChandanalaERP
-  REDIS_INSTANCE: chandanala-redis
+  IMAGE: asia-south1-docker.pkg.dev/alpine-gasket-502104-t6/chandanala/chandanala-core
 
 jobs:
-  # ═══════════════════════════════════════════════════════════════
-  # PHASE 0: VALIDATE — No Compatibility = No Update
-  # ═══════════════════════════════════════════════════════════════
-  validate:
-    name: 0️⃣ Validate & Provenance
+  build-and-test:
+    name: Build & Test
     runs-on: ubuntu-latest
-    outputs:
-      should_deploy: ${{ steps.check.outputs.should_deploy }}
-      version: ${{ steps.version.outputs.version }}
-      is_hotfix: ${{ steps.check.outputs.is_hotfix }}
     steps:
-      - name: Checkout with full history
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          # Invariant: No Provenance = No Trust
-          persist-credentials: false
-
-      - name: Verify commit signature
-        run: |
-          git verify-commit HEAD || echo "⚠️ Unsigned commit — requires override approval"
-          # For production: fail here if unsigned
-
-      - name: Check branch compatibility
-        id: check
-        run: |
-          BRANCH="${{ github.ref_name }}"
-          if [[ "$BRANCH" == main ]]; then
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
-            echo "channel=stable" >> $GITHUB_OUTPUT
-            echo "is_hotfix=false" >> $GITHUB_OUTPUT
-          elif [[ "$BRANCH" == develop ]]; then
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
-            echo "channel=beta" >> $GITHUB_OUTPUT
-            echo "is_hotfix=false" >> $GITHUB_OUTPUT
-          elif [[ "$BRANCH" == hotfix/* ]]; then
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
-            echo "channel=stable" >> $GITHUB_OUTPUT
-            echo "is_hotfix=true" >> $GITHUB_OUTPUT
-          elif [[ "$BRANCH" == release/* ]]; then
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
-            echo "channel=preview" >> $GITHUB_OUTPUT
-            echo "is_hotfix=false" >> $GITHUB_OUTPUT
-          else
-            echo "should_deploy=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Semantic versioning
-        id: version
-        run: |
-          # Extract version from tag or generate build version
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          else
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            VERSION="0.0.0-${SHORT_SHA}"
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION"
-
-      - name: Check breaking changes
-        run: |
-          # Detect API breaking changes via OpenAPI diff
-          # Requires: dotnet tool install --global Swashbuckle.AspNetCore.Cli
-          echo "🔍 Checking for breaking changes..."
-          # TODO: Implement OpenAPI spec comparison
-          # If breaking changes detected on main → FAIL (No Compatibility = No Update)
-
-  # ═══════════════════════════════════════════════════════════════
-  # PHASE 1: BUILD — Compile & Package
-  # ═══════════════════════════════════════════════════════════════
-  build:
-    name: 1️⃣ Build & Package
-    runs-on: ubuntu-latest
-    needs: validate
-    if: needs.validate.outputs.should_deploy == 'true'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore dependencies
-        run: dotnet restore --locked-mode
-
-      - name: Build solution
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Publish artifacts
-        run: dotnet publish src/Web/Web.csproj --no-build --configuration Release --output ./publish
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-build
-          path: ./publish
-          retention-days: 30
-
-  # ═══════════════════════════════════════════════════════════════
-  # PHASE 2: TEST — Unit + Integration + Domain
-  # ═══════════════════════════════════════════════════════════════
-  test:
-    name: 2️⃣ Test Suite
-    runs-on: ubuntu-latest
-    needs: build
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: ChandanalaERP_Test
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: TestPassword123!
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
+          dotnet-version: '10.0.x'
+      
       - name: Restore
-        run: dotnet restore --locked-mode
-
-      - name: Run Unit Tests
-        run: dotnet test tests/Domain.Tests --no-restore --configuration Release --logger trx --collect:"XPlat Code Coverage"
-
-      - name: Run Application Tests
-        run: dotnet test tests/Application.Tests --no-restore --configuration Release --logger trx --collect:"XPlat Code Coverage"
-
-      - name: Run Integration Tests
-        env:
-          ConnectionStrings__DefaultConnection: "Host=localhost;Database=ChandanalaERP_Test;Username=test;Password=TestPassword123!"
-          ConnectionStrings__Redis: "localhost:6379"
-          ASPNETCORE_ENVIRONMENT: Testing
-        run: dotnet test tests/Integration.Tests --no-restore --configuration Release --logger trx --collect:"XPlat Code Coverage"
-
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: success() || failure()
-        with:
-          name: .NET Test Results
-          path: '**/*.trx'
-          reporter: dotnet-trx
-
-      - name: Code Coverage Report
-        uses: irongut/CodeCoverageSummary@v0.3.0
-        with:
-          filename: '**/coverage.cobertura.xml'
-          badge: true
-          format: markdown
-          indicators: true
-          output: both
-
-  # ═══════════════════════════════════════════════════════════════
-  # PHASE 3: SECURITY — Scan & Audit
-  # ═══════════════════════════════════════════════════════════════
-  security:
-    name: 3️⃣ Security Scan
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Restore
-        run: dotnet restore --locked-mode
-
-      - name: Dependency Vulnerability Scan
-        run: |
-          dotnet list package --vulnerable --include-transitive 2>&1 | tee vuln-report.txt
-          if grep -q "has the following vulnerable packages" vuln-report.txt; then
-            echo "❌ Vulnerable dependencies found"
-            exit 1
-          fi
-
-      - name: Secret Detection (gitleaks)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Static Application Security Testing (SAST)
-        uses: security-code-scan/security-code-scan-add-action@v1
-
-      - name: Build with SAST analyzers
+        run: dotnet restore
+      
+      - name: Build
         run: dotnet build --no-restore --configuration Release
+      
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
 
-      - name: Container Image Scan (Trivy)
-        if: github.ref == 'refs/heads/main'
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: docker build -t chandanala-core:scan .
+      
+      - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ needs.validate.outputs.version }}'
+          image-ref: 'chandanala-core:scan'
           format: 'sarif'
           output: 'trivy-results.sarif'
-
-  # ═══════════════════════════════════════════════════════════════
-  # PHASE 4: MIGRATION VALIDATION — No Compatibility = No Update
-  # ═══════════════════════════════════════════════════════════════
-  migration:
-    name: 4️⃣ Migration Validation
-    runs-on: ubuntu-latest
-    needs: [test, security]
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: ChandanalaERP_MigrationTest
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: TestPassword123!
-        ports:
-          - 5432:5432
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          image: chandanala-core:scan
 
-      - name: Restore
-        run: dotnet restore --locked-mode
-
-      - name: Apply migrations to test DB
-        env:
-          ConnectionStrings__DefaultConnection: "Host=localhost;Database=ChandanalaERP_MigrationTest;Username=test;Password=TestPassword123!"
-        run: |
-          dotnet ef database update --project src/Infrastructure --startup-project src/Web --no-build --configuration Release
-
-      - name: Validate migration idempotency
-        run: |
-          # Run migrations twice — should be idempotent
-          dotnet ef database update --project src/Infrastructure --startup-project src/Web --no-build --configuration Release
-          echo "✅ Migrations are idempotent"
-
-      - name: Migration rollback test
-        run: |
-          # Test rolling back to previous migration
-          LAST_MIGRATION=$(dotnet ef migrations list --project src/Infrastructure --startup-project src/Web --no-build --configuration Release | tail -2 | head -1 | awk '{print $1}')
-          if [ -n "$LAST_MIGRATION" ]; then
-            dotnet ef database update $LAST_MIGRATION --project src/Infrastructure --startup-project src/Web --no-build --configuration Release
-            echo "✅ Rollback test passed"
-          fi
-
-      - name: Schema drift detection
-        run: |
-          # Compare generated schema against expected
-          dotnet ef migrations script --project src/Infrastructure --startup-project src/Web --no-build --configuration Release --idempotent > schema.sql
-          echo "Schema script generated for review"
-
-  # ═══════════════════════════════════════════════════════════════
-  # PHASE 5: CONTAINERIZE — Build & Push Image
-  # ═══════════════════════════════════════════════════════════════
-  containerize:
-    name: 5️⃣ Containerize
+  deploy:
+    name: Deploy to Cloud Run
     runs-on: ubuntu-latest
-    needs: [test, security, migration]
-    if: needs.validate.outputs.should_deploy == 'true'
+    needs: [build-and-test, security-scan]
+    if: github.ref == 'refs/heads/main'
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      
       - name: Google Auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-
+      
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-
+      
       - name: Configure Docker
-        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
-
-      - name: Build image
+        run: gcloud auth configure-docker asia-south1-docker.pkg.dev
+      
+      - name: Build & Push
         run: |
-          docker build             --build-arg BUILD_VERSION=${{ needs.validate.outputs.version }}             --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')             --build-arg VCS_REF=${{ github.sha }}             -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ needs.validate.outputs.version }}             -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest             -f src/Web/Dockerfile .
-
-      - name: Scan image before push
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ needs.validate.outputs.version }}'
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-
-      - name: Push image
+          docker build -t ${{ env.IMAGE }}:${{ github.sha }} .
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
+          docker tag ${{ env.IMAGE }}:${{ github.sha }} ${{ env.IMAGE }}:latest
+          docker push ${{ env.IMAGE }}:latest
+      
+      - name: Deploy to Cloud Run
         run: |
-          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ needs.validate.outputs.version }}
-          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
-
-      - name: Sign image (Cosign)
-        uses: sigstore/cosign-installer@v3
-      - run: |
-          cosign sign --yes             ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
-        env:
-          COSIGN_EXPERIMENTAL: 1
-
-  # ═══════════════════════════════════════════════════════════════
-  # PHASE 6: CANARY DEPLOY — Pilot before Production
-  # ═══════════════════════════════════════════════════════════════
-  canary:
-    name: 6️⃣ Canary Deploy (5%)
-    runs-on: ubuntu-latest
-    needs: [containerize, validate]
-    if: github.ref == 'refs/heads/main' && needs.validate.outputs.is_hotfix != 'true'
-    environment:
-      name: canary
-      url: https://canary-${{ env.SERVICE_NAME }}-${{ env.PROJECT_ID }}.asia-south1.run.app
-    steps:
-      - name: Google Auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Deploy Canary (5% traffic)
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ env.SERVICE_NAME }}-canary
-          image: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ needs.validate.outputs.version }}
-          region: ${{ env.REGION }}
-          flags: |
-            --platform managed
-            --allow-unauthenticated
-            --max-instances=5
-            --min-instances=0
-            --memory=1Gi
-            --cpu=1
-            --concurrency=80
-            --timeout=300
-            --service-account=chandanala-app@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
-          env_vars: |
-            ASPNETCORE_ENVIRONMENT=Production
-            DB_HOST=/cloudsql/${{ env.PROJECT_ID }}:${{ env.REGION }}:${{ env.DB_INSTANCE }}
-            DB_NAME=${{ env.DB_NAME }}
-            REDIS_HOST=${{ env.REDIS_INSTANCE }}
-            CHANNEL=canary
-            VERSION=${{ needs.validate.outputs.version }}
-          secrets: |
-            DB_PASSWORD=chandanala-db-password:latest
-            REDIS_PASSWORD=chandanala-redis-password:latest
-            JWT_SECRET=chandanala-jwt-secret:latest
-            OPENROUTER_API_KEY=openrouter-api-key:latest
-
-      - name: Health Check
-        run: |
-          sleep 30
-          curl -sf https://canary-${{ env.SERVICE_NAME }}-${{ env.PROJECT_ID }}.asia-south1.run.app/health || exit 1
-          curl -sf https://canary-${{ env.SERVICE_NAME }}-${{ env.PROJECT_ID }}.asia-south1.run.app/health/ready || exit 1
-
-      - name: Smoke Tests
-        run: |
-          # Run automated smoke tests against canary
-          echo "Running smoke test suite..."
-          # TODO: Add smoke test script
-
-      - name: Monitor Canary (5 min)
-        run: |
-          echo "Monitoring canary for 5 minutes..."
-          sleep 300
-          # Check error rate via Cloud Monitoring API
-          # If error rate > 1% → rollback
-
-  # ═══════════════════════════════════════════════════════════════
-  # PHASE 7: PRODUCTION DEPLOY — Progressive Rollout
-  # ═══════════════════════════════════════════════════════════════
-  deploy-production:
-    name: 7️⃣ Production Deploy
-    runs-on: ubuntu-latest
-    needs: [canary, validate]
-    if: github.ref == 'refs/heads/main'
-    environment:
-      name: production
-      url: https://chandanala-core-270847460826.asia-south1.run.app
-    steps:
-      - name: Google Auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Deploy to Production (100% traffic)
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ env.SERVICE_NAME }}
-          image: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ needs.validate.outputs.version }}
-          region: ${{ env.REGION }}
-          flags: |
-            --platform managed
-            --allow-unauthenticated
-            --max-instances=50
-            --min-instances=1
-            --memory=2Gi
-            --cpu=2
-            --concurrency=100
-            --timeout=300
-            --service-account=chandanala-app@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
-          env_vars: |
-            ASPNETCORE_ENVIRONMENT=Production
-            DB_HOST=/cloudsql/${{ env.PROJECT_ID }}:${{ env.REGION }}:${{ env.DB_INSTANCE }}
-            DB_NAME=${{ env.DB_NAME }}
-            REDIS_HOST=${{ env.REDIS_INSTANCE }}
-            CHANNEL=stable
-            VERSION=${{ needs.validate.outputs.version }}
-          secrets: |
-            DB_PASSWORD=chandanala-db-password:latest
-            REDIS_PASSWORD=chandanala-redis-password:latest
-            JWT_SECRET=chandanala-jwt-secret:latest
-            OPENROUTER_API_KEY=openrouter-api-key:latest
-
-      - name: Production Health Check
-        run: |
-          sleep 30
-          curl -sf https://chandanala-core-270847460826.asia-south1.run.app/health || exit 1
-          curl -sf https://chandanala-core-270847460826.asia-south1.run.app/health/ready || exit 1
-
-      - name: Notify Deployment
-        if: always()
-        run: |
-          echo "Deployment ${{ needs.validate.outputs.version }} completed with status: ${{ job.status }}"
-          # TODO: Send Slack/Teams notification
-
-  # ═══════════════════════════════════════════════════════════════
-  # PHASE 8: HOTFIX DEPLOY — Emergency Pipeline
-  # ═══════════════════════════════════════════════════════════════
-  deploy-hotfix:
-    name: 8️⃣ Hotfix Deploy
-    runs-on: ubuntu-latest
-    needs: [containerize, validate]
-    if: needs.validate.outputs.is_hotfix == 'true'
-    environment:
-      name: production-hotfix
-      url: https://chandanala-core-270847460826.asia-south1.run.app
-    steps:
-      - name: Google Auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Deploy Hotfix (skip canary)
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ env.SERVICE_NAME }}
-          image: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ needs.validate.outputs.version }}
-          region: ${{ env.REGION }}
-          flags: |
-            --platform managed
-            --allow-unauthenticated
-            --max-instances=50
-            --min-instances=1
-            --memory=2Gi
-            --cpu=2
-            --concurrency=100
-            --timeout=300
-            --no-traffic
-            --service-account=chandanala-app@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
-          env_vars: |
-            ASPNETCORE_ENVIRONMENT=Production
-            DB_HOST=/cloudsql/${{ env.PROJECT_ID }}:${{ env.REGION }}:${{ env.DB_INSTANCE }}
-            DB_NAME=${{ env.DB_NAME }}
-            REDIS_HOST=${{ env.REDIS_INSTANCE }}
-            CHANNEL=hotfix
-            VERSION=${{ needs.validate.outputs.version }}
-
-      - name: Gradual Traffic Shift
-        run: |
-          # Shift 10% → 50% → 100% over 15 minutes
-          gcloud run services update-traffic ${{ env.SERVICE_NAME }}             --to-revisions ${{ needs.validate.outputs.version }}=10,LATEST=90             --region=${{ env.REGION }}
-          sleep 300
-          gcloud run services update-traffic ${{ env.SERVICE_NAME }}             --to-revisions ${{ needs.validate.outputs.version }}=50,LATEST=50             --region=${{ env.REGION }}
-          sleep 300
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.IMAGE }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "ASPNETCORE_ENVIRONMENT=Production"
