@@ -1,0 +1,660 @@
+agent:
+  id: openrouter-agent
+  name: "CHANDANALA CORE™ OpenRouter Agent"
+  version: "1.0.0"
+  status: "PROPOSED"
+
+  purpose: >
+    Provide a governed technology-routing capability for selecting and invoking
+    validated AI model technologies through OpenRouter, while preserving
+    Stable Core authority, least-privilege execution, independent verification,
+    and immutable evidence.
+
+  architectural_scope:
+    layer: "Adaptive Edge"
+    control_plane: "Evolution Control Plane"
+    architectural_plane: false
+
+  authority:
+    business_authority: false
+    clinical_authority: false
+    financial_authority: false
+    approval_authority: false
+    execution_authority: false
+    authority_granting: false
+    policy_override: false
+    credential_granting: false
+
+  canonical_rule:
+    adoption: >
+      Only TECHNOLOGY may be adopted.
+    statement: >
+      OpenRouter Agent is a routing technology component. Its presence,
+      availability, or recommendation does not constitute authority to use
+      any model, provider, tool, data source, or business capability.
+
+# ------------------------------------------------------------
+# CORE RESPONSIBILITIES
+# ------------------------------------------------------------
+
+responsibilities:
+
+  primary:
+    - "Receive governed AI execution requests."
+    - "Resolve capability requirements."
+    - "Receive routing constraints from Signal 64."
+    - "Evaluate eligible validated model technologies."
+    - "Select an appropriate model/provider route."
+    - "Invoke the selected technology through the AI Execution Gateway."
+    - "Return structured execution results."
+    - "Emit routing and execution evidence."
+    - "Support controlled fallback."
+    - "Trigger re-evaluation when runtime evidence indicates degradation."
+
+  prohibited:
+    - "Grant business authority."
+    - "Approve invoices."
+    - "Approve supplier payments."
+    - "Post financial transactions."
+    - "Dispense medicines."
+    - "Modify Stable Core policy."
+    - "Change user permissions."
+    - "Grant credentials."
+    - "Bypass human approval."
+    - "Override security policy."
+    - "Select an unapproved technology for production execution."
+    - "Treat model output as authoritative business truth."
+
+# ------------------------------------------------------------
+# REQUEST CONTRACT
+# ------------------------------------------------------------
+
+request_contract:
+
+  required:
+    - request_id
+    - principal_id
+    - capability_id
+    - workstream_id
+    - context_scope
+    - data_classification
+    - risk_class
+    - authority_scope
+    - verification_requirement
+
+  optional:
+    - preferred_model
+    - preferred_provider
+    - latency_target
+    - cost_budget
+    - quality_threshold
+    - context_limit
+    - geographic_constraint
+    - availability_requirement
+    - fallback_policy
+
+  rejected_if_missing:
+    - "principal_id"
+    - "capability_id"
+    - "workstream_id"
+    - "context_scope"
+    - "risk_class"
+    - "authority_scope"
+    - "verification_requirement"
+
+# ------------------------------------------------------------
+# ROUTING PIPELINE
+# ------------------------------------------------------------
+
+routing_pipeline:
+
+  stages:
+
+    - stage: "IDENTITY"
+      action: "Validate principal identity."
+      failure: "DENY"
+
+    - stage: "WORKSTREAM"
+      action: "Validate workstream scope."
+      failure: "DENY"
+
+    - stage: "CAPABILITY"
+      action: "Resolve requested capability contract."
+      failure: "DENY"
+
+    - stage: "CONTEXT"
+      action: "Validate permitted context and data scope."
+      failure: "DENY"
+
+    - stage: "POLICY"
+      action: "Evaluate applicable Stable Core policy."
+      failure: "DENY"
+
+    - stage: "AUTHORITY"
+      action: "Validate required authority independently."
+      failure: "DENY"
+
+    - stage: "MODEL_DISCOVERY"
+      action: "Retrieve eligible validated technologies."
+      failure: "DENY"
+
+    - stage: "MODEL_FILTER"
+      action: "Remove technologies violating capability, security, data, or policy requirements."
+      failure: "DENY"
+
+    - stage: "ROUTING"
+      action: "Select technology using governed routing criteria."
+      failure: "DENY"
+
+    - stage: "EXECUTION"
+      action: "Invoke technology through AI Execution Gateway."
+      failure: "FAIL_SAFE"
+
+    - stage: "VERIFICATION"
+      action: "Apply required independent verification."
+      failure: "HOLD"
+
+    - stage: "EVIDENCE"
+      action: "Persist immutable routing and execution evidence."
+      failure: "ALERT"
+
+# ------------------------------------------------------------
+# ROUTING CRITERIA
+# ------------------------------------------------------------
+
+routing_policy:
+
+  dimensions:
+
+    capability_fit:
+      priority: 1
+      mandatory: true
+
+    security:
+      priority: 2
+      mandatory: true
+
+    governance_fit:
+      priority: 3
+      mandatory: true
+
+    verification_compatibility:
+      priority: 4
+      mandatory: true
+
+    quality:
+      priority: 5
+      mandatory: true
+
+    reliability:
+      priority: 6
+      mandatory: true
+
+    latency:
+      priority: 7
+      mandatory: false
+
+    cost:
+      priority: 8
+      mandatory: false
+
+  principle: >
+    Select the least-cost validated technology that satisfies the complete
+    capability, security, quality, reliability, verification, and governance
+    requirements of the workload.
+
+  constraints:
+    - "Cost must never override security."
+    - "Cost must never override correctness."
+    - "Cost must never override authority requirements."
+    - "Latency must never override mandatory verification."
+    - "Model capability must not expand authority."
+    - "Routing must not modify the capability contract."
+
+# ------------------------------------------------------------
+# SIGNAL 64 INTEGRATION
+# ------------------------------------------------------------
+
+signal_64:
+
+  role: "Dynamic Intelligence Profile / governed routing abstraction"
+
+  may:
+    - "Evaluate routing candidates."
+    - "Compare validated technologies."
+    - "Optimise model selection."
+    - "Consider cost."
+    - "Consider latency."
+    - "Consider quality."
+    - "Consider reliability."
+    - "Consider current runtime evidence."
+    - "Recommend fallback routes."
+
+  may_not:
+    - "Grant authority."
+    - "Modify Stable Core authority."
+    - "Approve financial actions."
+    - "Approve clinical actions."
+    - "Bypass verification."
+    - "Override security controls."
+    - "Register an unapproved production technology."
+    - "Convert a recommendation into adoption."
+
+  invariant:
+    - "Dynamic Intelligence != Dynamic Authority"
+    - "Model Routing != Authority"
+    - "Routing Optimisation != Policy Override"
+
+# ------------------------------------------------------------
+# OPENROUTER TECHNOLOGY BOUNDARY
+# ------------------------------------------------------------
+
+openrouter:
+
+  role: "Technology routing substrate"
+
+  adoption_status: "REQUIRES_SEPARATE_TECHNOLOGY_EVALUATION"
+
+  adoption_rule: >
+    OpenRouter may be adopted only as a technology implementation after
+    evidence-based evaluation of security, reliability, privacy, routing
+    behaviour, observability, cost, provider handling, contractual suitability,
+    and ERP integration requirements.
+
+  must_not:
+    - "Become the Stable Core."
+    - "Become the source of business authority."
+    - "Become the source of truth."
+    - "Receive unrestricted ERP credentials."
+    - "Receive unrestricted database access."
+
+# ------------------------------------------------------------
+# MODEL REGISTRY
+# ------------------------------------------------------------
+
+model_registry:
+
+  requirements:
+    - model_id
+    - provider
+    - technology_status
+    - evaluation_status
+    - capability_classes
+    - permitted_data_classes
+    - security_profile
+    - quality_evidence
+    - latency_evidence
+    - cost_profile
+    - reliability_evidence
+    - verification_compatibility
+    - approved_environments
+    - last_evaluation
+    - next_evaluation
+
+  allowed_status:
+    - "DISCOVERED"
+    - "CANDIDATE"
+    - "EVALUATING"
+    - "VALIDATED"
+    - "ADOPTED"
+    - "RESTRICTED"
+    - "RETIRED"
+
+  production_rule: >
+    Only technologies in an explicitly approved production state may be routed
+    for production workloads.
+
+# ------------------------------------------------------------
+# FALLBACK
+# ------------------------------------------------------------
+
+fallback:
+
+  enabled: true
+
+  rules:
+    - "Fallback technology must independently satisfy the capability contract."
+    - "Fallback must satisfy the same security requirements."
+    - "Fallback must satisfy applicable data restrictions."
+    - "Fallback must satisfy verification requirements."
+    - "Fallback must not expand authority."
+    - "Fallback selection must be recorded."
+
+  prohibited:
+    - "Fallback to an unapproved model."
+    - "Fallback to a technology with weaker mandatory security controls."
+    - "Fallback solely because it is cheaper."
+
+# ------------------------------------------------------------
+# DATA GOVERNANCE
+# ------------------------------------------------------------
+
+data_governance:
+
+  principles:
+    - "Context Least Privilege"
+    - "Data Minimisation"
+    - "Purpose Limitation"
+    - "Workstream Isolation"
+    - "Credential Isolation"
+    - "No Unauthorised Cross-Workstream Transfer"
+
+  controls:
+    context_scope_required: true
+    data_classification_required: true
+    workstream_scope_required: true
+    sensitive_data_policy_required: true
+
+  invariant:
+    - "Context Availability != Permission to Use Context"
+    - "Tool Access != Data Permission"
+    - "Model Capability != Data Authority"
+
+# ------------------------------------------------------------
+# TOOL ACCESS
+# ------------------------------------------------------------
+
+tools:
+
+  policy:
+    default: "DENY"
+
+  requirements:
+    - "Tool must be explicitly registered."
+    - "Tool must have a defined capability mapping."
+    - "Tool must have scoped permissions."
+    - "Tool invocation must pass policy evaluation."
+    - "Tool invocation must be auditable."
+
+  credential_policy:
+    - "Credentials must be scoped."
+    - "Credentials must not be exposed to model output."
+    - "Credentials must not be embedded in prompts."
+    - "Credentials must not be treated as business authority."
+
+# ------------------------------------------------------------
+# SECURITY
+# ------------------------------------------------------------
+
+security:
+
+  principles:
+    - "Zero Trust"
+    - "Least Privilege"
+    - "Default Deny"
+    - "Segregation of Duties"
+    - "Untrusted Context"
+    - "Independent Verification"
+    - "Immutable Evidence"
+
+  controls:
+    authentication: required
+    authorisation: required
+    rate_limiting: required
+    secret_management: required
+    audit_logging: required
+    request_integrity: required
+    response_validation: required
+    provider_allowlist: required
+    model_allowlist: required
+
+# ------------------------------------------------------------
+# AI OUTPUT HANDLING
+# ------------------------------------------------------------
+
+output_policy:
+
+  model_output_classification:
+    - "INFORMATION"
+    - "PROPOSAL"
+    - "RECOMMENDATION"
+    - "ACTION_REQUEST"
+
+  rules:
+    - "Model output is untrusted until verified."
+    - "Model output cannot directly create authority."
+    - "Model output cannot directly approve transactions."
+    - "Model output cannot directly modify authoritative records."
+    - "Consequential actions require independent policy evaluation."
+
+  invariant:
+    - "AI Output != Authority"
+    - "Recommendation != Approval"
+    - "Approval != Execution"
+
+# ------------------------------------------------------------
+# VERIFICATION
+# ------------------------------------------------------------
+
+verification:
+
+  required_for:
+    low_risk_information:
+      level: "STANDARD"
+
+    medium_risk_proposal:
+      level: "ENHANCED"
+
+    high_risk_operation:
+      level: "INDEPENDENT"
+
+    financial_operation:
+      level: "INDEPENDENT_AND_AUTHORISED"
+
+    clinical_operation:
+      level: "INDEPENDENT_AND_AUTHORISED"
+
+  principle: >
+    Verification requirements are determined by capability and impact, not by
+    which model or provider produced the output.
+
+# ------------------------------------------------------------
+# EVIDENCE
+# ------------------------------------------------------------
+
+evidence:
+
+  immutable: true
+
+  record:
+    - request_id
+    - principal_id
+    - workstream_id
+    - capability_id
+    - selected_provider
+    - selected_model
+    - routing_reason
+    - routing_policy_version
+    - model_registry_version
+    - context_policy_version
+    - security_policy_version
+    - timestamp
+    - latency
+    - cost_metadata
+    - verification_result
+    - execution_result
+    - fallback_status
+    - failure_reason
+
+  principle: >
+    Every consequential routing decision must be reconstructable from
+    immutable evidence.
+
+# ------------------------------------------------------------
+# MONITORING
+# ------------------------------------------------------------
+
+monitoring:
+
+  metrics:
+    - routing_success_rate
+    - routing_failure_rate
+    - model_latency
+    - model_error_rate
+    - quality_score
+    - verification_failure_rate
+    - fallback_rate
+    - cost_per_request
+    - cost_per_capability
+    - provider_failure_rate
+    - security_events
+    - policy_denials
+
+  triggers:
+    - "Quality degradation"
+    - "Security incident"
+    - "Provider instability"
+    - "Unexpected cost increase"
+    - "Latency degradation"
+    - "Policy change"
+    - "Model change"
+    - "Provider change"
+    - "Verification failure increase"
+
+  action:
+    - "Trigger technology re-evaluation."
+    - "Restrict affected route where necessary."
+    - "Replace technology when evidence justifies replacement."
+    - "Preserve evidence."
+
+# ------------------------------------------------------------
+# TECHNOLOGY LIFECYCLE
+# ------------------------------------------------------------
+
+technology_lifecycle:
+
+  states:
+    - DISCOVERED
+    - CANDIDATE
+    - EVALUATING
+    - VALIDATED
+    - ADOPTED
+    - MONITORED
+    - RE_EVALUATING
+    - RESTRICTED
+    - REPLACED
+    - RETIRED
+
+  transition_rule: >
+    Technology adoption requires an explicit governed decision supported by
+    evaluation evidence.
+
+  invariant:
+    - "Discovery != Adoption"
+    - "Recommendation != Adoption"
+    - "Validation != Authority"
+    - "Adoption != Permanent Trust"
+
+# ------------------------------------------------------------
+# ERP BOUNDARY
+# ------------------------------------------------------------
+
+erp_boundary:
+
+  allowed:
+    - "Provide AI technology implementation for governed ERP capabilities."
+    - "Route approved AI workloads."
+    - "Support AI-assisted analysis."
+    - "Support governed proposals."
+    - "Support controlled automation."
+
+  prohibited:
+    - "Modify ERP authority rules."
+    - "Bypass segregation of duties."
+    - "Approve invoices."
+    - "Approve supplier payments."
+    - "Post financial transactions without independent authority."
+    - "Dispense or authorise medicines."
+    - "Modify authoritative ERP records without authorised execution."
+    - "Grant itself additional permissions."
+
+# ------------------------------------------------------------
+# FAILURE BEHAVIOUR
+# ------------------------------------------------------------
+
+failure_policy:
+
+  default: "FAIL_SAFE"
+
+  on:
+    identity_failure: "DENY"
+    policy_failure: "DENY"
+    authority_failure: "DENY"
+    model_unavailable: "CONTROLLED_FALLBACK"
+    provider_failure: "CONTROLLED_FALLBACK"
+    verification_failure: "HOLD"
+    security_failure: "DENY_AND_ALERT"
+    evidence_failure: "HOLD_OR_DENY"
+    unknown_model: "DENY"
+    unknown_provider: "DENY"
+
+# ------------------------------------------------------------
+# GOVERNANCE INVARIANTS
+# ------------------------------------------------------------
+
+canonical_invariants:
+
+  - "Dynamic Intelligence != Dynamic Authority"
+  - "Model Routing != Authority"
+  - "Routing Optimisation != Policy Override"
+  - "Technology Capability != Business Authority"
+  - "Model Output != Truth Authority"
+  - "AI Output != Approval"
+  - "Tool Access != Authority"
+  - "Credential != Authority"
+  - "Context Availability != Permission"
+  - "Discovery != Adoption"
+  - "Technology Adoption != Permanent Trust"
+  - "Maximum Capability != Maximum Authority"
+  - "Cost Optimisation != Safety Override"
+  - "Fallback != Policy Bypass"
+
+# ------------------------------------------------------------
+# ACCEPTANCE CRITERIA
+# ------------------------------------------------------------
+
+acceptance_criteria:
+
+  architecture:
+    - "Agent resides in Adaptive Edge."
+    - "Agent does not create a new architectural plane."
+    - "Stable Core remains authoritative."
+    - "Signal 64 remains non-authoritative."
+
+  security:
+    - "Default deny is enforced."
+    - "Provider/model allowlists exist."
+    - "Credentials remain scoped."
+    - "Workstream boundaries are preserved."
+    - "Sensitive context is policy-controlled."
+
+  routing:
+    - "Routing considers capability fit."
+    - "Routing considers security."
+    - "Routing considers quality."
+    - "Routing considers reliability."
+    - "Routing considers cost."
+    - "Routing considers governance."
+    - "Routing decisions are auditable."
+
+  verification:
+    - "Consequential outputs have independent verification."
+    - "Financial and clinical operations cannot bypass authority."
+    - "Model output cannot directly become authoritative ERP state."
+
+  evidence:
+    - "Routing decisions are reconstructable."
+    - "Policy versions are recorded."
+    - "Model/provider identity is recorded."
+    - "Verification outcomes are recorded."
+
+  lifecycle:
+    - "Technology can be re-evaluated."
+    - "Technology can be restricted."
+    - "Technology can be replaced."
+    - "Technology can be retired."
+
+status:
+  current: "SPECIFICATION_ONLY"
+  adoption: "NOT_YET_GRANTED"
+  next_gate: "INDEPENDENT_TECHNOLOGY_EVALUATION"
