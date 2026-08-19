@@ -1,0 +1,425 @@
+task:
+  name: "CHANDANALA CORE™ ERP Production Hardening Audit"
+  mode: READ_ONLY
+  objective: >
+    Perform a comprehensive, evidence-based, read-only production-hardening
+    audit of the existing CHANDANALA CORE™ ERP codebase.
+
+governance:
+  rules:
+    - "Do not modify, create, delete, rename, or reformat files."
+    - "Do not generate implementation code."
+    - "Do not redesign the architecture."
+    - "Do not invent missing functionality."
+    - "Treat the repository implementation as the source of truth."
+    - "Treat documentation claims as unproven unless implementation evidence exists."
+    - "Every finding must include concrete repository evidence."
+    - "If something cannot be verified, mark it UNKNOWN."
+    - "Do not convert assumptions into findings."
+    - "Do not silently expand ERP scope."
+    - "Only TECHNOLOGY may be classified as ADOPTED."
+
+architecture_principles:
+  stable_core:
+    defines:
+      - business_capabilities
+      - authority
+      - policies
+      - constraints
+      - required_outcomes
+
+  adaptive_edge:
+    implements:
+      - technologies
+      - models
+      - tools
+      - agents
+      - runtimes
+      - infrastructure
+
+  evolution_control_plane:
+    governs:
+      - technology_evaluation
+      - technology_selection
+      - model_routing
+      - controlled_evolution
+      - monitoring
+      - re_evaluation
+
+  canonical_separation:
+    - "Concepts are understood."
+    - "Knowledge is learned and validated."
+    - "Capabilities are defined and governed."
+    - "Workflows are modelled and standardised."
+    - "Technology is evaluated and adopted."
+    - "Tools are evaluated and controlled."
+    - "Models are evaluated and routed."
+    - "Credentials are scoped and controlled."
+    - "Actions are authorised and executed."
+    - "Outcomes are verified and measured."
+    - "Evidence is preserved and audited."
+
+inspection:
+
+  repository:
+    inspect:
+      - repository_structure
+      - source_directories
+      - modules
+      - services
+      - shared_libraries
+      - configuration
+      - infrastructure
+      - deployment
+      - documentation
+
+  database:
+    inspect:
+      - entities
+      - tables
+      - relationships
+      - primary_keys
+      - foreign_keys
+      - indexes
+      - constraints
+      - migrations
+      - seed_data
+      - transaction_boundaries
+      - concurrency_controls
+      - financial_precision
+      - audit_columns
+      - soft_delete_patterns
+      - data_integrity
+
+  erp_domains:
+    inspect:
+      - authentication
+      - authorisation
+      - medicine
+      - customer
+      - supplier
+      - billing
+      - purchase
+      - inventory
+      - supplier_ledger
+      - returns
+      - credit_management
+      - expenses
+      - cash_and_bank
+      - reporting
+      - audit
+      - notifications
+
+  billing:
+    inspect:
+      - invoice_creation
+      - invoice_numbering
+      - line_items
+      - taxes
+      - discounts
+      - totals
+      - payment
+      - credit_sales
+      - returns
+      - cancellation
+      - reprint
+      - audit_trail
+      - prescription_linkage
+      - transaction_integrity
+
+  supplier_ledger:
+    inspect:
+      - supplier_bills
+      - payment_vouchers
+      - cheque_references
+      - neft_references
+      - bill_allocation
+      - multi_bill_payment_allocation
+      - debit_entries
+      - credit_entries
+      - carried_forward_balances
+      - ledger_balance_integrity
+      - reconciliation
+
+  inventory:
+    inspect:
+      - medicine_master
+      - batch_management
+      - stock_movements
+      - purchase_receipts
+      - sales_deductions
+      - returns
+      - expiry
+      - stock_adjustments
+      - concurrency
+      - negative_stock_controls
+      - auditability
+
+  security:
+    inspect:
+      - authentication
+      - authorisation
+      - RBAC
+      - permissions
+      - identity
+      - session_management
+      - MFA
+      - secrets
+      - encryption
+      - input_validation
+      - injection_risks
+      - privilege_escalation
+      - IDOR
+      - CSRF
+      - XSS
+      - rate_limiting
+      - API_security
+
+  ai:
+    inspect:
+      - ai_gateway
+      - provider_abstraction
+      - model_routing
+      - Signal_64
+      - prompt_governance
+      - context_engine
+      - tool_permissions
+      - AI_authority_boundaries
+      - human_approval
+      - verification
+      - AI_audit
+      - evidence
+
+  backup_recovery:
+    inspect:
+      - automated_backups
+      - backup_frequency
+      - encryption
+      - retention
+      - redundancy
+      - offsite_storage
+      - integrity_verification
+      - checksums
+      - restore_procedures
+      - point_in_time_recovery
+      - restore_testing
+      - failure_detection
+      - recovery_monitoring
+      - alerting
+
+  testing:
+    inspect:
+      - unit_tests
+      - integration_tests
+      - API_tests
+      - database_tests
+      - security_tests
+      - authorization_tests
+      - financial_tests
+      - concurrency_tests
+      - AI_governance_tests
+      - adversarial_tests
+      - regression_tests
+
+  ci_security:
+    inspect:
+      - build_workflows
+      - test_workflows
+      - CodeQL
+      - Trivy
+      - Gitleaks
+      - SBOM
+      - dependency_scanning
+      - secret_scanning
+      - container_scanning
+      - deployment_gates
+
+defect_detection:
+
+  identify:
+    - duplicate_implementations
+    - duplicate_routes
+    - duplicate_services
+    - dead_code
+    - unreachable_code
+    - TODO_FIXME_affecting_correctness
+    - missing_validation
+    - missing_authorisation
+    - missing_transaction_boundaries
+    - incorrect_transaction_boundaries
+    - data_integrity_risks
+    - financial_calculation_errors
+    - concurrency_risks
+    - race_conditions
+    - security_weaknesses
+    - auditability_gaps
+    - resilience_gaps
+    - backup_gaps
+    - recovery_gaps
+    - observability_gaps
+    - build_errors
+    - compiler_warnings
+    - test_failures
+    - dependency_risks
+    - configuration_risks
+    - production_controls_missing
+
+severity:
+
+  P0:
+    definition: >
+      Data corruption, security bypass, authority bypass, financial/accounting
+      error, critical transaction-integrity failure, or production-blocking defect.
+
+  P1:
+    definition: >
+      Serious security, resilience, recovery, auditability, correctness,
+      governance, or operational-control issue.
+
+  P2:
+    definition: >
+      Performance, scalability, reliability, observability, or operational
+      weakness that does not immediately compromise correctness or security.
+
+  P3:
+    definition: >
+      Maintainability, duplication, architecture hygiene, technical debt,
+      code quality, or structural weakness.
+
+  P4:
+    definition: >
+      UX refinement or non-critical improvement.
+
+evidence_policy:
+
+  every_finding_requires:
+    - severity
+    - confidence
+    - finding
+    - file
+    - symbol_or_location
+    - repository_evidence
+    - why_it_matters
+    - minimal_fix
+
+  confidence_levels:
+    - CONFIRMED
+    - LIKELY
+    - POSSIBLE
+    - UNKNOWN
+
+  prohibited_assumptions:
+    - "Do not claim security enforcement from comments alone."
+    - "Do not claim authorisation from UI visibility."
+    - "Do not claim transaction integrity from method names."
+    - "Do not claim backup recoverability because backup code exists."
+    - "Do not claim architecture conformance from documentation alone."
+    - "Do not claim AI governance merely because an AI service exists."
+
+verification:
+
+  execute_if_environment_allows:
+    - build
+    - automated_tests
+    - relevant_static_analysis
+    - existing_security_scans
+
+  rules:
+    - "Do not modify configuration to make checks pass."
+    - "Do not modify source code."
+    - "Do not install unnecessary dependencies."
+    - "Record exact commands executed."
+    - "Record exact results."
+    - "Record reproducibility."
+    - "Separate environment failures from code failures."
+
+report:
+
+  output_format: JSON
+
+  schema:
+
+    build:
+      status: ""
+      commands: []
+      errors: []
+      warnings: []
+
+    findings:
+
+      P0: []
+
+      P1: []
+
+      P2: []
+
+      P3: []
+
+      P4: []
+
+    architecture_conformance:
+
+      Stable_Core:
+        status: ""
+        evidence: []
+
+      Adaptive_Edge:
+        status: ""
+        evidence: []
+
+      Evolution_Control_Plane:
+        status: ""
+        evidence: []
+
+      Authority_Model:
+        status: ""
+        evidence: []
+
+      AI_Governance:
+        status: ""
+        evidence: []
+
+      Evidence_Model:
+        status: ""
+        evidence: []
+
+    verification:
+      - command: ""
+        result: ""
+        evidence: ""
+        reproducible: ""
+
+    recommended_next_step:
+      priority: ""
+      action: ""
+      reason: ""
+
+final_constraints:
+
+  - "READ-ONLY audit."
+  - "No source-code modifications."
+  - "No architecture expansion."
+  - "No speculative features."
+  - "No invented implementation."
+  - "No automatic technology adoption."
+  - "Only TECHNOLOGY can be ADOPTED."
+  - "Capabilities are defined and governed."
+  - "Workflows are modelled and standardised."
+  - "Actions are authorised and executed."
+  - "Outcomes are verified and measured."
+  - "Evidence is preserved and audited."
+
+success_criteria:
+
+  - "All major ERP domains inspected."
+  - "All P0-P4 findings evidence-backed."
+  - "Build status verified."
+  - "Test status verified."
+  - "Security controls inspected."
+  - "Financial integrity inspected."
+  - "Supplier ledger integrity inspected."
+  - "Backup and recovery inspected."
+  - "AI authority boundaries inspected."
+  - "Duplicate routes and implementations identified."
+  - "Architecture claims separated from implementation evidence."
+  - "No repository modifications performed."
