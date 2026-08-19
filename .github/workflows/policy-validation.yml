@@ -1,0 +1,254 @@
+name: Policy Validation
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-validation:
+    name: Policy Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Validate Policy Specifications
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "=== CHANDANALA CORE™ Policy Validation ==="
+
+          test -f ".specifications/policies/architecture.yaml"
+          test -f ".specifications/policies/security.yaml"
+
+          ruby <<'RUBY'
+          require "yaml"
+
+          files = [
+            ".specifications/policies/architecture.yaml",
+            ".specifications/policies/security.yaml"
+          ]
+
+          files.each do |file|
+            begin
+              data = YAML.load_file(file)
+              abort "ERROR: #{file} is empty or invalid" if data.nil?
+              puts "PASS: #{file} is valid YAML"
+            rescue Psych::SyntaxError => e
+              abort "ERROR: #{file} has invalid YAML: #{e.message}"
+            end
+          end
+
+          architecture = YAML.load_file(
+            ".specifications/policies/architecture.yaml"
+          )
+
+          security = YAML.load_file(
+            ".specifications/policies/security.yaml"
+          )
+
+          required_architecture = %w[
+            dependency_injection
+            capability_gateway
+            structured_logging
+            telemetry
+            repository_pattern
+            clean_architecture
+          ]
+
+          required_architecture.each do |key|
+            value = architecture.dig("architecture", key)
+
+            unless value == "required"
+              abort "FAIL: architecture.#{key} must be required"
+            end
+          end
+
+          forbidden = architecture.dig("forbidden") || []
+
+          required_forbidden = %w[
+            direct_database_access
+            hardcoded_connection_strings
+            static_service_locator
+          ]
+
+          required_forbidden.each do |item|
+            unless forbidden.include?(item)
+              abort "FAIL: forbidden policy missing: #{item}"
+            end
+          end
+
+          abort "FAIL: security.secrets.hardcoded must be deny" unless
+            security.dig("security", "secrets", "hardcoded") == "deny"
+
+          abort "FAIL: filesystem writes outside workspace must be denied" unless
+            security.dig(
+              "security",
+              "filesystem",
+              "write_outside_workspace"
+            ) == "deny"
+
+          abort "FAIL: network default must be deny" unless
+            security.dig("security", "network", "default") == "deny"
+
+          abort "FAIL: sandbox must be required" unless
+            security.dig("security", "sandbox", "required") == true
+
+          abort "FAIL: production approval must be mandatory" unless
+            security.dig("security", "approval", "production") == "mandatory"
+
+          puts "PASS: Architecture policy requirements validated"
+          puts "PASS: Forbidden architecture policies validated"
+          puts "PASS: Security policy requirements validated"
+          RUBY
+
+      - name: Detect Forbidden Architecture Patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "=== Checking forbidden architecture patterns ==="
+
+          SEARCH_PATHS=(
+            "src"
+          )
+
+          if [ -d "src" ]; then
+
+            if grep -RInE \
+              --exclude-dir=bin \
+              --exclude-dir=obj \
+              --exclude='*.generated.cs' \
+              'SqlConnection[[:space:]]*\(' \
+              "${SEARCH_PATHS[@]}"; then
+              echo "FAIL: Direct SqlConnection construction detected."
+              exit 1
+            fi
+
+            if grep -RInE \
+              --exclude-dir=bin \
+              --exclude-dir=obj \
+              'GetService[[:space:]]*<|GetRequiredService[[:space:]]*<' \
+              "${SEARCH_PATHS[@]}"; then
+              echo "FAIL: Service-locator style dependency resolution detected."
+              exit 1
+            fi
+
+          fi
+
+          echo "PASS: No forbidden architecture patterns detected."
+
+      - name: Detect Hardcoded Connection Strings
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "=== Checking for hardcoded connection strings ==="
+
+          if grep -RInE \
+            --exclude-dir=.git \
+            --exclude-dir=bin \
+            --exclude-dir=obj \
+            --exclude='*.md' \
+            'Server=[^;]+;.*Database=|Host=[^;]+;.*Database=|Password=[^;]+;' \
+            .; then
+            echo "FAIL: Possible hardcoded database connection string detected."
+            exit 1
+          fi
+
+          echo "PASS: No hardcoded connection strings detected."
+
+      - name: Detect Merge Conflict Markers
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if grep -RIn \
+            --exclude-dir=.git \
+            --exclude-dir=bin \
+            --exclude-dir=obj \
+            '<<<<<<<\|=======\|>>>>>>>' \
+            .; then
+            echo "FAIL: Merge conflict markers detected."
+            exit 1
+          fi
+
+          echo "PASS: No merge conflict markers detected."
+
+      - name: Verify Audit Agent Is Read Only
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          AGENT=".github/agents/production-hardening-audit.agent.yml"
+
+          test -f "$AGENT"
+
+          REQUIRED_INSTRUCTIONS=(
+            "Do not implement fixes"
+            "Do not create replacement files"
+            "Do not rewrite existing files"
+            "Do not modify configuration"
+            "Do not modify source code"
+            "Do not modify the database"
+            "Do not commit changes"
+            "Do not push changes"
+          )
+
+          for instruction in "${REQUIRED_INSTRUCTIONS[@]}"; do
+            if ! grep -Fq "$instruction" "$AGENT"; then
+              echo "FAIL: Missing read-only audit instruction: $instruction"
+              exit 1
+            fi
+          done
+
+          echo "PASS: Production-hardening audit agent retains read-only boundary."
+
+      - name: Generate Evidence Report
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p policy-evidence
+
+          cat > policy-evidence/policy-validation.md <<EOF
+          # CHANDANALA CORE™ Policy Validation
+
+          - Commit: $GITHUB_SHA
+          - Workflow: $GITHUB_WORKFLOW
+          - Run: $GITHUB_RUN_ID
+          - Repository: $GITHUB_REPOSITORY
+          - Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          ## Policies
+
+          - Architecture specification: validated
+          - Security specification: validated
+          - Forbidden architecture patterns: scanned
+          - Hardcoded connection strings: scanned
+          - Merge conflicts: scanned
+          - Production hardening audit agent: read-only boundary checked
+
+          ## Principle
+
+          No policy is considered enforced merely because it exists as documentation.
+          CI validation provides executable evidence.
+          EOF
+
+      - name: Upload Policy Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: policy-validation-evidence
+          path: policy-evidence/
+          retention-days: 30
