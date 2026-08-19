@@ -31,4 +31,4 @@ jobs:
         run: dotnet build "CHANDANALA CORE.slnx" --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test "CHANDANALA CORE.slnx" --configuration Release --no-build
+        run: dotnet test "CHANDANALA CORE.slnx" --configuration Release --no-build 
