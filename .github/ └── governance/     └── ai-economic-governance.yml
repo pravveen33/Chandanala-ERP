@@ -1,0 +1,362 @@
+version: "1.0"
+name: "chandanala-core-ai-economic-governance"
+status: "canonical"
+
+principles:
+  default:
+    rule: "one_sufficient_model_per_task"
+
+  token_minimisation:
+    rule: "minimum_context_minimum_sufficient_model_maximum_useful_output"
+
+  escalation:
+    rule: "escalate_only_when_justified"
+
+  authority:
+    rule: "ai_intelligence_never_implies_business_authority"
+
+  safety:
+    rule: "cost_optimisation_must_not_reduce_safety_correctness_verification_or_evidence"
+
+resource_budget:
+  dimensions:
+    - context
+    - tokens
+    - model_cost
+    - tool_calls
+    - compute
+    - time
+
+  constraints:
+    - safety
+    - correctness
+    - authority
+    - verification
+    - evidence
+
+model_registry:
+
+  codex:
+    role: "primary_engineering_execution"
+    priority: 1
+    preferred_for:
+      - implementation
+      - debugging
+      - repository_changes
+      - refactoring
+    escalation_class: "engineering"
+
+  gemini:
+    role: "large_context_general_analysis"
+    priority: 1
+    subscription_first: true
+    preferred_for:
+      - large_repository_analysis
+      - large_documents
+      - general_analysis
+      - google_ecosystem_tasks
+    escalation_class: "analysis"
+
+  chatgpt:
+    role: "architecture_governance_reasoning"
+    priority: 1
+    preferred_for:
+      - architecture
+      - governance
+      - requirements
+      - complex_reasoning
+      - final_synthesis
+    escalation_class: "strategic"
+
+  claude:
+    role: "independent_verification"
+    priority: 2
+    preferred_for:
+      - consequential_review
+      - independent_reasoning
+      - architecture_review
+    escalation_class: "verification"
+
+  kimi:
+    role: "long_context_specialist"
+    priority: 2
+    preferred_for:
+      - document_analysis
+      - long_context_tasks
+    escalation_class: "analysis"
+
+  deepseek:
+    role: "cost_efficient_reasoning"
+    priority: 1
+    preferred_for:
+      - routine_coding
+      - simple_refactoring
+      - low_risk_reasoning
+    escalation_class: "routine"
+
+  qwen:
+    role: "cost_efficient_specialist"
+    priority: 1
+    preferred_for:
+      - routine_coding
+      - documentation
+      - specialised_reasoning
+    escalation_class: "routine"
+
+routing:
+
+  selection_factors:
+    - capability
+    - cost
+    - latency
+    - context_size
+    - risk
+    - task_type
+
+  default_strategy:
+    max_primary_models: 1
+    parallel_models: false
+
+  escalation:
+    enabled: true
+    trigger_conditions:
+      - insufficient_result
+      - low_confidence
+      - elevated_risk
+      - context_complexity
+      - verification_required
+
+  subscription_first:
+    enabled: true
+    rule: "reuse_existing_subscription_capacity_before_incremental_api_spend"
+
+  openrouter:
+    enabled: true
+    mode: "conditional"
+    purpose:
+      - provider_routing
+      - fallback
+      - cost_optimisation
+      - capability_matching
+    authority: false
+
+task_classes:
+
+  routine:
+    strategy: "cheapest_sufficient_model"
+    verification: "ci"
+    parallel_agents: false
+
+  normal:
+    strategy: "best_fit_model"
+    verification: "ci"
+    parallel_agents: false
+
+  complex:
+    strategy: "best_capability_model"
+    verification:
+      - ci
+      - targeted_review
+
+  high_risk:
+    strategy: "primary_plus_independent_verification"
+    workflow:
+      - primary_agent
+      - independent_agent
+      - ci
+      - security
+      - governance
+      - human_approval
+
+context_policy:
+
+  minimum_context: true
+
+  preferred_inputs:
+    - relevant_files
+    - changed_files
+    - git_diff
+    - impacted_symbols
+    - relevant_specifications
+    - relevant_architecture_decisions
+
+  avoid:
+    - full_repository_dump
+    - irrelevant_history
+    - repeated_prompts
+    - redundant_tool_output
+
+  pipeline:
+    - retrieve
+    - rank
+    - compress
+    - cache
+    - deliver
+
+prompt_policy:
+  stable_rules_location:
+    - ".github/instructions"
+    - ".github/agents"
+    - ".github/skills"
+    - "README.md"
+    - "governance/"
+
+  repeat_stable_context: false
+
+agent_policy:
+
+  minimum_context_per_agent: true
+
+  role_isolation: true
+
+  unrestricted_shared_branch_write: false
+
+  capability_grants_required: true
+
+  authority_is_separate_from_capability: true
+
+  delegation:
+    structured_outputs_only: true
+    full_conversation_forwarding: false
+
+git_policy:
+
+  source_of_truth: "github"
+
+  branching: "gitflow"
+
+  protected_branches:
+    - main
+    - develop
+
+  agent_write_policy:
+    shared_protected_branch: false
+    isolated_branch_required: true
+
+  pull_request_required: true
+
+verification:
+
+  deterministic_first: true
+
+  github_actions:
+    enabled: true
+
+  checks:
+    - build
+    - unit_tests
+    - integration_tests
+    - static_analysis
+    - dependency_scan
+    - secret_scan
+    - security_scan
+
+  independent_verification:
+    required_for:
+      - high_risk
+      - security_sensitive
+      - financial
+      - transaction_integrity
+      - authority_changes
+
+governance:
+
+  capability_authorisation: true
+  risk_classification: true
+  approval_gate: true
+
+  authority_invariants:
+    - "capability != authority"
+    - "context != permission"
+    - "permission != approval"
+    - "intelligence != authority"
+    - "execution != authorisation"
+    - "verification != approval"
+    - "deployment != evidence"
+
+  human_authority:
+    required_for_consequential_changes: true
+
+evidence:
+
+  enabled: true
+
+  record:
+    - task_id
+    - agent
+    - model
+    - provider
+    - relevant_context_reference
+    - tools_used
+    - changes
+    - tests
+    - verification
+    - approval
+    - deployment
+
+  full_evidence_storage: "external_durable_store"
+  agent_context_reference: "compact_reference"
+
+cost_governance:
+
+  enabled: true
+
+  budgets:
+    context: true
+    tokens: true
+    model_cost: true
+    tool_calls: true
+    compute: true
+    time: true
+
+  optimisation_order:
+    - reuse_subscription
+    - minimise_context
+    - select_sufficient_model
+    - cache
+    - minimise_tool_calls
+    - deterministic_ci
+    - escalate_only_when_required
+
+  safety_override:
+    enabled: true
+    rule: "never_reduce_required_safety_or_verification_to_save_cost"
+
+observability:
+
+  enabled: true
+
+  trace:
+    - agent
+    - model
+    - provider
+    - tool
+    - latency
+    - token_usage
+    - estimated_cost
+    - result
+    - verification_status
+
+canonical_workflow:
+
+  - specify
+  - classify
+  - contextualise
+  - select_model
+  - authorise_capabilities
+  - execute
+  - verify
+  - escalate_if_required
+  - approve
+  - merge
+  - deploy
+  - observe
+  - record_evidence
+  - evaluate
+
+final_policy:
+  statement: >
+    Use the minimum number of AI systems necessary to achieve the required
+    confidence for the risk level. Optimise tokens, model cost, tool calls,
+    compute and time without reducing safety, correctness, authority,
+    verification or evidence.
