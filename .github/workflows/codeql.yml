@@ -1,39 +1,6 @@
-name: "CodeQL Analysis"
-
-on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
-
-permissions:
-  contents: read
-  security-events: write # Required to upload Code Scanning SARIF results
-  actions: read
-
-jobs:
-  analyze:
-    name: Analyze
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: csharp
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
-
-    - name: Build Solution
-      run: dotnet build Chandanala-ERP/Chandanala.ERP.sln
-
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:csharp"
-        upload: true
+        upload: false
+        output: '../results'
