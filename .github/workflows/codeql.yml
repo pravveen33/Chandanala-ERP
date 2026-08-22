@@ -1,53 +1,39 @@
-﻿name: CodeQL
+name: "CodeQL Analysis"
 
 on:
   push:
-    branches:
-      - main
-      - develop
-
+    branches: [ "main", "master" ]
   pull_request:
-    branches:
-      - main
-      - develop
-
-  schedule:
-    - cron: '30 2 * * 1'
+    branches: [ "main", "master" ]
 
 permissions:
-  actions: read
   contents: read
-  security-events: write
+  security-events: write # Required to upload Code Scanning SARIF results
+  actions: read
 
 jobs:
   analyze:
-    name: CodeQL Analysis
+    name: Analyze
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language:
-          - csharp
-
     steps:
-      - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.0.x"
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
 
-      - name: Restore
-        run: dotnet restore "CHANDANALA CORE.slnx"
+    - name: Build Solution
+      run: dotnet build Chandanala-ERP/Chandanala.ERP.sln
 
-      - name: Build
-        run: dotnet build "CHANDANALA CORE.slnx" --configuration Release --no-restore
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
+        upload: true
