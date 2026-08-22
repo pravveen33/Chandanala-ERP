@@ -1,0 +1,89 @@
+# security/p0-a-capability-security-tests.yml
+version: "1.0"
+
+suite:
+  id: "P0-A-CAPABILITY-SECURITY"
+  name: "Capability Token and Domain Authorization Security"
+  fail_on_any: true
+
+tests:
+
+  - id: "AUTH-001"
+    name: "Reject forged capability token"
+    category: "identity"
+    expected: "TOKEN_INVALID"
+
+  - id: "AUTH-002"
+    name: "Reject expired capability token"
+    category: "identity"
+    expected: "TOKEN_EXPIRED"
+
+  - id: "AUTH-003"
+    name: "Reject replayed JTI"
+    category: "replay"
+    expected: "REPLAY_DETECTED"
+
+  - id: "AUTH-004"
+    name: "Reject revoked delegation"
+    category: "delegation"
+    expected: "DELEGATION_REVOKED"
+
+  - id: "AUTH-005"
+    name: "Reject wrong module capability"
+    category: "capability"
+    expected: "CAPABILITY_DENIED"
+
+  - id: "AUTH-006"
+    name: "Reject wrong action capability"
+    category: "capability"
+    expected: "CAPABILITY_DENIED"
+
+  - id: "AUTH-007"
+    name: "Reject exhausted execution budget"
+    category: "budget"
+    expected: "BUDGET_EXCEEDED"
+
+  - id: "AUTH-008"
+    name: "Reject transaction above transaction budget"
+    category: "transaction-budget"
+    expected: "TRANSACTION_BUDGET_EXCEEDED"
+
+  - id: "AUTH-009"
+    name: "Reject payload hash mismatch"
+    category: "integrity"
+    expected: "PAYLOAD_HASH_MISMATCH"
+
+  - id: "AUTH-010"
+    name: "Reject ABAC violation"
+    category: "authorization"
+    expected: "ABAC_DENIED"
+
+  - id: "AUTH-011"
+    name: "Reject execution while kill switch is active"
+    category: "emergency"
+    expected: "KILL_SWITCH_ACTIVE"
+
+  - id: "AUTH-012"
+    name: "Reject invalid request schema"
+    category: "validation"
+    expected: "SCHEMA_INVALID"
+
+  - id: "AUTH-013"
+    name: "Rollback budget after failed domain execution"
+    category: "budget-integrity"
+    expected: "BUDGET_ROLLED_BACK"
+
+  - id: "AUTH-014"
+    name: "Commit budget after successful transaction"
+    category: "budget-integrity"
+    expected: "BUDGET_COMMITTED"
+
+  - id: "AUTH-015"
+    name: "Valid request reaches deterministic domain transaction"
+    category: "positive"
+    expected: "TRANSACTION_COMMITTED"
+
+production_gate:
+  mandatory: true
+  minimum_pass_rate: 100
+  unresolved_p0_allowed: 0
