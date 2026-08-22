@@ -1,56 +1,32 @@
-name: CHANDANALA CORE Deployment
+name: Chandanala Core ERP - Build & Verify CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main", "master" ]
 
 jobs:
-  deploy:
+  build-and-verify:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout Codebase
+      uses: actions/checkout@v4
 
-      - name: Setup .NET 10 SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
 
-      - name: Restore Dependencies
-        run: dotnet restore "CHANDANALA CORE.slnx"
+    - name: Restore Dependencies
+      run: dotnet restore Chandanala-ERP/Chandanala.ERP.sln
 
-      - name: Build Solution (Release)
-        run: dotnet build "CHANDANALA CORE.slnx" --configuration Release --no-restore
+    - name: Build ERP Solution
+      run: dotnet build Chandanala-ERP/Chandanala.ERP.sln --configuration Release --no-restore
 
-      - name: Run Tests
-        run: dotnet test "CHANDANALA CORE.slnx" --configuration Release --no-build --verbosity normal
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Setup Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker for GCP
-        run: gcloud auth configure-docker gcr.io --quiet
-
-      - name: Build Docker Image
-        run: docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/chandanala-core:latest -f src/Chandanala.WebAPI/Dockerfile .
-
-      - name: Push Docker Image to GCR
-        run: docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/chandanala-core:latest
-
-      - name: Deploy to Google Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: chandanala-core-api
-          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/chandanala-core:latest
-          region: us-central1
-          flags: '--allow-unauthenticated'
+    - name: Run Verification Script
+      run: |
+        chmod +x ./chandanala-verify.sh
+        ./chandanala-verify.sh
+      continue-on-error: false
