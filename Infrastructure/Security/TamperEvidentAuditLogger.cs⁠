@@ -1,0 +1,55 @@
+using Chandanala.ERP.Application.Interfaces.Security;
+using Chandanala.ERP.Domain.Entities.Security;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Chandanala.ERP.Infrastructure.Security
+{
+    public class TamperEvidentAuditLogger : IAuditLogger
+    {
+        private readonly IDbContextFactory<AuditDbContext> _contextFactory;
+
+        // Using a DbContextFactory ensures the audit log commits independently 
+        // of the main ERP transaction. If a proposal is blocked and throws, 
+        // the audit log must still persist.
+        public TamperEvidentAuditLogger(IDbContextFactory<AuditDbContext> contextFactory)
+        {
+            _contextFactory = contextFactory;
+        }
+
+        public async Task LogBlockedProposalAsync(Guid tenantId, Guid proposalId, string reason)
+        {
+            await AppendLogAsync(tenantId, proposalId, "Blocked", reason);
+        }
+
+        public async Task LogSuccessfulProposalExecutionAsync(Guid tenantId, Guid proposalId, string reason)
+        {
+            await AppendLogAsync(tenantId, proposalId, "Executed", reason);
+        }
+
+        private async Task AppendLogAsync(Guid tenantId, Guid proposalId, string status, string reason)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            // Retrieve the absolute latest hash to maintain the chain
+            // Requires an index on Timestamp in PostgreSQL for performance
+            var lastRecord = await context.AiAuditRecords
+                .OrderByDescending(x => x.Timestamp)
+                .FirstOrDefaultAsync();
+
+            var previousHash = lastRecord?.CurrentHash ?? "GENESIS_BLOCK";
+
+            var newRecord = AiAuditRecord.Create(
+                tenantId, 
+                proposalId, 
+                status, 
+                reason, 
+                previousHash);
+
+            context.AiAuditRecords.Add(newRecord);
+            await context.SaveChangesAsync();
+        }
+    }
+}
