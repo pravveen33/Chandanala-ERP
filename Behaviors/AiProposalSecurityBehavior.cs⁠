@@ -1,0 +1,64 @@
+using MediatR;
+using Chandanala.ERP.Application.Interfaces.Security;
+using Chandanala.ERP.Domain.Exceptions;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Chandanala.ERP.Application.Behaviors
+{
+    /// <summary>
+    /// Enforces the AI/Agent Security Chain. 
+    /// Blocks untrusted proposals from reaching the domain unless verified.
+    /// </summary>
+    public class AiProposalSecurityBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+        where TRequest : IAiProposalCommand<TResponse>
+    {
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IPolicyEvaluator _policyEvaluator;
+        private readonly IVgpValidator _vgpValidator;
+        private readonly IAuditLogger _auditLogger;
+
+        public AiProposalSecurityBehavior(
+            ICurrentUserService currentUserService,
+            IPolicyEvaluator policyEvaluator,
+            IVgpValidator vgpValidator,
+            IAuditLogger auditLogger)
+        {
+            _currentUserService = currentUserService;
+            _policyEvaluator = policyEvaluator;
+            _vgpValidator = vgpValidator;
+            _auditLogger = auditLogger;
+        }
+
+        public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+        {
+            // 1. Identity, Tenant, & Scope Verification
+            var tenantId = _currentUserService.TenantId 
+                ?? throw new SecurityException("Tenant context missing for AI proposal.");
+            
+            // 2. Capability & Policy Verification
+            if (!await _policyEvaluator.HasCapabilityAsync(tenantId, request.RequiredCapability, cancellationToken))
+            {
+                await _auditLogger.LogBlockedProposalAsync(tenantId, request.ProposalId, "Policy Violation");
+                throw new UnauthorizedAccessException("Agent lacks capability for this proposal.");
+            }
+
+            // 3. Output/Tool & VGP (Valid Governance Proposal) Verification
+            var vgpResult = await _vgpValidator.ValidateAsync(request.ProposalData, cancellationToken);
+            if (!vgpResult.IsValid)
+            {
+                await _auditLogger.LogBlockedProposalAsync(tenantId, request.ProposalId, "VGP Failure");
+                throw new VgpValidationException("Proposal failed Valid Governance Proposal checks.");
+            }
+
+            // 4. Proceed to Domain Validation & ICommandHandler
+            // The handler will execute within a PostgreSQL Transaction boundary
+            var response = await next();
+
+            // 5. Tamper-Evident Audit
+            await _auditLogger.LogSuccessfulProposalExecutionAsync(tenantId, request.ProposalId, "Executed");
+
+            return response;
+        }
+    }
+}
