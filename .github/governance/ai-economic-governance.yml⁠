@@ -1,0 +1,9 @@
+# Add this to ai-economic-governance.yml
+principles:
+  - rule: "Infrastructure Parsimony"
+    description: "Use the least expensive technology that reliably satisfies the required capability."
+  - routing_hierarchy:
+      1_deterministic: "PostgreSQL / SQL (Cost: ₹0)"
+      2_policy: "Domain Rules (Cost: ₹0)"
+      3_predictive: "TabFM / Local Models (Cost: Hardware Amortization)"
+      4_agentic: "Cloud LLM / Gemini Pro (Cost: Bounded by Rate Limits)"
