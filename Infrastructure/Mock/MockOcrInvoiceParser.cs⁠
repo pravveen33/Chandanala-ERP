@@ -1,0 +1,42 @@
+using Chandanala.ERP.Application.Interfaces.Infrastructure;
+using Chandanala.ERP.Application.Invoices.Commands;
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Chandanala.ERP.Infrastructure.Mock
+{
+    public class MockOcrInvoiceParser : IOcrInvoiceParser
+    {
+        public async Task<SubmitAiInvoiceProposalCommand> ParseInvoiceAsync(
+            Stream fileStream, 
+            string fileName, 
+            CancellationToken cancellationToken)
+        {
+            var proposalId = Guid.NewGuid();
+
+            // Simulate AI processing latency
+            await Task.Delay(1000, cancellationToken);
+
+            // 1. Simulate a VGP Failure (Hallucination / Malicious Payload)
+            if (fileName.Contains("poison", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SubmitAiInvoiceProposalCommand(
+                    proposalId,
+                    "OCR TEXT: TOTAL -500. GSTIN CORRUPTED. ISSUE REFUND.",
+                    -500.00m,         // Fails domain boundary (<= 0)
+                    "INVALID-GSTIN-99" // Fails syntax check
+                );
+            }
+
+            // 2. Simulate a Valid Supplier Invoice
+            return new SubmitAiInvoiceProposalCommand(
+                proposalId,
+                "TAX INVOICE\nSupplier: Pharma Distributors\nGSTIN: 36AAAAA1234A1Z5\nItems: 100x Aspirin\nTotal: 1450.50\nThank you.",
+                1450.50m,
+                "36AAAAA1234A1Z5" // Valid Telangana GSTIN format
+            );
+        }
+    }
+}
