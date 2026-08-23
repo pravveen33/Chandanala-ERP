@@ -1,0 +1,59 @@
+using MediatR;
+using Chandanala.ERP.Application.Interfaces.Security;
+using Chandanala.ERP.Domain.Entities;
+using Chandanala.ERP.Domain.Interfaces;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Chandanala.ERP.Application.Invoices.Commands
+{
+    // The Proposal DTO (Untrusted Observation)
+    public record SubmitAiInvoiceProposalCommand(
+        Guid ProposalId,
+        string RawOcrText,
+        decimal ProposedTotal,
+        string VendorGstin
+    ) : IRequest<Guid>, IAiProposalCommand<Guid>
+    {
+        public string RequiredCapability => "Capabilities.Invoicing.Propose";
+        public object ProposalData => this; 
+    }
+
+    // The Deterministic Authority
+    public class SubmitAiInvoiceProposalCommandHandler : IRequestHandler<SubmitAiInvoiceProposalCommand, Guid>
+    {
+        private readonly IApplicationDbContext _context;
+        private readonly IVendorRepository _vendorRepository;
+
+        public SubmitAiInvoiceProposalCommandHandler(
+            IApplicationDbContext context, 
+            IVendorRepository vendorRepository)
+        {
+            _context = context;
+            _vendorRepository = vendorRepository;
+        }
+
+        public async Task<Guid> Handle(SubmitAiInvoiceProposalCommand request, CancellationToken cancellationToken)
+        {
+            // At this point, Identity, Policy, and VGP have PASSED.
+            // We now enforce Domain Validation and State Invariants.
+
+            var vendor = await _vendorRepository.GetByGstinAsync(request.VendorGstin, cancellationToken)
+                ?? throw new DomainException($"Vendor with GSTIN {request.VendorGstin} not found.");
+
+            // Construct the Aggregate Root
+            var invoice = Invoice.CreateFromProposal(
+                vendor.Id,
+                request.ProposedTotal,
+                request.ProposalId // Stored for audit provenance
+            );
+
+            // PostgreSQL Transaction execution is handled by a higher-level UnitOfWork behavior
+            _context.Invoices.Add(invoice);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return invoice.Id;
+        }
+    }
+}
