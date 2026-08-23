@@ -1,0 +1,11 @@
+using System;
+using System.Threading.Tasks;
+
+namespace Chandanala.ERP.Application.Interfaces.Security
+{
+    public interface IAuditLogger
+    {
+        Task LogBlockedProposalAsync(Guid tenantId, Guid proposalId, string reason);
+        Task LogSuccessfulProposalExecutionAsync(Guid tenantId, Guid proposalId, string reason);
+    }
+}
