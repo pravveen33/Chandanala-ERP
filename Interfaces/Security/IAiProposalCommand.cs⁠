@@ -1,1 +1,10 @@
-Interfaces/Security/IAiProposalCommand.cs⁠
+using MediatR;
+
+namespace Chandanala.ERP.Application.Interfaces.Security
+{
+    public interface IAiProposalCommand<out TResponse> : IRequest<TResponse>
+    {
+        string RequiredCapability { get; }
+        object ProposalData { get; }
+    }
+}
