@@ -7,3 +7,25 @@ principles:
       2_policy: "Domain Rules (Cost: ₹0)"
       3_predictive: "TabFM / Local Models (Cost: Hardware Amortization)"
       4_agentic: "Cloud LLM / Gemini Pro (Cost: Bounded by Rate Limits)"
+  tabfm:
+    role: "structured_tabular_prediction"
+    priority: 1
+    type: "local_specialised"
+    evaluation_gated: true
+    preferred_for:
+      - inventory_expiry_prediction
+      - demand_forecasting
+      - tabular_anomaly_detection
+    escalation_class: "predictive"
+
+  muse_glimmer:
+    role: "local_multimodal_agentic_reasoning"
+    priority: 2
+    type: "local_open_weight"
+    evaluation_gated: true
+    preferred_for:
+      - offline_document_extraction
+      - local_analytics
+      - edge_task_execution
+    escalation_class: "local_reasoning"
+
