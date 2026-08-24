@@ -1,0 +1,61 @@
+# -------------------------------------------------------------------------
+# CHANDANALA CORE™ DOMAIN CONTRACT
+# Domain: Pharmacy / Medicine
+# -------------------------------------------------------------------------
+contract_id: "chandanala.core.medicine"
+contract_version: "v1.0.0"
+description: "Governs the intake, dispensation, and tracking of medical inventory."
+owner: "domain.pharmacy"
+status: "APPROVED"
+
+authorization_requirements:
+  default_tenant_isolation: true
+  roles:
+    - "PharmacyAdmin"
+    - "Pharmacist"
+    - "SystemAgent"
+
+aggregate:
+  name: "MedicineInventory"
+  state_schema:
+    MedicineId: "UUID (Primary Key)"
+    TenantId: "UUID (Partition Key)"
+    Name: "String (Max 255)"
+    BatchNumber: "String (Max 100)"
+    Quantity: "Integer"
+    ExpiryDate: "DateTimeOffset"
+
+  invariants:
+    - id: "INV-MED-01"
+      description: "Inventory quantity can never be less than zero."
+    - id: "INV-MED-02"
+      description: "A medicine batch cannot be received if it is already expired."
+    - id: "INV-MED-03"
+      description: "Tenant isolation must be strictly maintained across all commands."
+
+commands:
+  - name: "ReceiveStockCommand"
+    description: "Adds new stock to the medicine inventory."
+    authorized_roles: 
+      - "PharmacyAdmin"
+      - "Pharmacist"
+    payload:
+      MedicineId: "UUID"
+      BatchNumber: "String"
+      QuantityReceived: "Integer (Must be > 0)"
+      ExpiryDate: "DateTimeOffset"
+    post_conditions:
+      - "Quantity is increased by QuantityReceived."
+
+  - name: "DispenseMedicineCommand"
+    description: "Reduces stock when medicine is issued to a patient or ward."
+    authorized_roles: 
+      - "Pharmacist"
+    payload:
+      MedicineId: "UUID"
+      BatchNumber: "String"
+      QuantityDispensed: "Integer (Must be > 0)"
+      DestinationId: "UUID"
+    post_conditions:
+      - "Quantity is decreased by QuantityDispensed."
+      - "Quantity remains >= 0 (INV-MED-01)."
