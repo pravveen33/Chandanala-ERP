@@ -1,0 +1,43 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
+using Chandanala.ERP.Application.Common.Security;
+using Chandanala.ERP.Core.Identity.Capabilities;
+
+namespace Chandanala.ERP.Application.Common.Behaviors
+{
+    // The generic constraints ensure this behavior ONLY wraps requests requiring capability checks
+    public class GcefAuthorizationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+        where TRequest : IRequireGovernedCapability
+    {
+        private readonly ICapabilityValidator _validator;
+
+        public GcefAuthorizationBehavior(ICapabilityValidator validator)
+        {
+            _validator = validator;
+        }
+
+        public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+        {
+            // 1. GCEF Execution Eligibility Check (No Ambient Authority)
+            var isEligible = await _validator.IsExecutionEligibleAsync(
+                request.TenantId,
+                request.PrincipalId,
+                request.CapabilityName,
+                request.ResourceScope,
+                cancellationToken);
+
+            // 2. Strict Fail-Closed Semantics
+            if (!isEligible)
+            {
+                // In production, this is where you dispatch a telemetry event for Security Drift Detection.
+                throw new UnauthorizedAccessException(
+                    $"GCEF Check Failed: Principal '{request.PrincipalId}' lacks valid capability '{request.CapabilityName}' on scope '{request.ResourceScope}'.");
+            }
+
+            // 3. Capability Admitted -> Proceed down the pipeline to the handler
+            return await next();
+        }
+    }
+}
