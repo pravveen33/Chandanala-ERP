@@ -1,0 +1,10 @@
+namespace Chandanala.ERP.Application.Common.Security
+{
+    public interface IRequireGovernedCapability
+    {
+        string TenantId { get; }
+        string PrincipalId { get; }
+        string CapabilityName { get; }
+        string ResourceScope { get; }
+    }
+}
