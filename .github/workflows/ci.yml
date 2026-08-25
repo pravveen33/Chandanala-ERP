@@ -1,0 +1,40 @@
+# The display name of the workflow in the GitHub Actions UI.
+name: ERP Core Integration
+
+# The 'on' block defines the events that trigger this workflow.
+on:
+  push:
+    branches: [ "main", "develop" ] # Triggers on direct pushes to these branches
+  pull_request:
+    branches: [ "main" ]            # Triggers when a PR is opened against main
+
+# A workflow consists of one or more jobs that can run sequentially or in parallel.
+jobs:
+  build-and-test:
+    # The operating system environment the runner will use.
+    runs-on: ubuntu-latest
+
+    # The sequential steps executed by this job.
+    steps:
+    # Step 1: Pulls your repository's code down to the runner.
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    # Step 2: Installs the specific version of the .NET SDK required.
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x' # Ensure this matches your project's target framework
+
+    # Step 3: Downloads all NuGet package dependencies.
+    - name: Restore dependencies
+      run: dotnet restore
+
+    # Step 4: Compiles the application without restoring (saves time) and treats warnings as errors.
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+
+    # Step 5: Executes unit and integration tests.
+    # If the CapabilityLease state machine tests fail, the workflow stops here.
+    - name: Test
+      run: dotnet test --no-build --configuration Release --verbosity normal
