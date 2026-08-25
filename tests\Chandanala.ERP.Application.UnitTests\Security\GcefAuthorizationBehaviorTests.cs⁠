@@ -1,0 +1,53 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
+using Moq;
+using Xunit;
+using Chandanala.ERP.Application.Common.Behaviors;
+using Chandanala.ERP.Application.Common.Security;
+using Chandanala.ERP.Core.Identity.Capabilities;
+
+namespace Chandanala.ERP.Application.UnitTests.Security
+{
+    public class GcefAuthorizationBehaviorTests
+    {
+        // A dummy command representing a consequential action
+        public class ProcessInvoiceCommand : IRequireGovernedCapability, IRequest<string>
+        {
+            public string TenantId => "Tenant_001";
+            public string PrincipalId => "User_789";
+            public string CapabilityName => "Invoice.Create";
+            public string ResourceScope => "Pharmacy.Sales";
+        }
+
+        [Fact]
+        public async Task Handle_WhenCapabilityIsInvalid_ShouldThrowAndHaltPipeline()
+        {
+            // Arrange
+            var mockValidator = new Mock<ICapabilityValidator>();
+            
+            // Force the validator to deny execution (Simulating expired or missing lease)
+            mockValidator.Setup(v => v.IsExecutionEligibleAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            var behavior = new GcefAuthorizationBehavior<ProcessInvoiceCommand, string>(mockValidator.Object);
+            
+            var request = new ProcessInvoiceCommand();
+            
+            // A mock delegate representing the command handler. 
+            // If the pipeline works, this should NEVER be invoked.
+            var nextDelegateMock = new Mock<RequestHandlerDelegate<string>>();
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(() => 
+                behavior.Handle(request, nextDelegateMock.Object, CancellationToken.None));
+
+            Assert.Contains("GCEF Check Failed", exception.Message);
+            
+            // Absolute proof that the operation was blocked before state mutation could occur
+            nextDelegateMock.Verify(next => next(), Times.Never);
+        }
+    }
+}
