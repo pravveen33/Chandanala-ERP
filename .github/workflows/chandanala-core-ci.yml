@@ -1,0 +1,381 @@
+name: CHANDANALA CORE - CI
+
+on:
+  push:
+    branches:
+      - main
+      - working
+      - "feature/**"
+
+  pull_request:
+    branches:
+      - main
+      - working
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chandanala-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  POSTGRES_USER: chandanala_test
+  POSTGRES_PASSWORD: chandanala_test
+  POSTGRES_DB: chandanala_core_test
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+  database-security:
+    name: Database Authority Boundary
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U chandanala_test -d chandanala_core_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply database migrations
+        env:
+          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        run: |
+          for file in database/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              psql \
+                --host=localhost \
+                --port=5432 \
+                --username="${POSTGRES_USER}" \
+                --dbname="${POSTGRES_DB}" \
+                --file="$file"
+            fi
+          done
+
+      - name: Verify database boundary
+        env:
+          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        run: |
+          psql \
+            --host=localhost \
+            --port=5432 \
+            --username="${POSTGRES_USER}" \
+            --dbname="${POSTGRES_DB}" \
+            --file=tests/database/authority-boundary.sql
+
+  tests:
+    name: Positive and Negative Tests
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - database-security
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U chandanala_test -d chandanala_core_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run positive tests
+        run: |
+          dotnet test \
+            --configuration Release \
+            --no-build \
+            --filter "Category=Positive" \
+            --logger "trx;LogFileName=positive-tests.trx"
+
+      - name: Run negative tests
+        run: |
+          dotnet test \
+            --configuration Release \
+            --no-build \
+            --filter "Category=Negative" \
+            --logger "trx;LogFileName=negative-tests.trx"
+
+      - name: Run invariant tests
+        run: |
+          dotnet test \
+            --configuration Release \
+            --no-build \
+            --filter "Category=Invariant" \
+            --logger "trx;LogFileName=invariant-tests.trx"
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-evidence-${{ github.sha }}
+          path: |
+            **/*.trx
+            evidence/**
+          if-no-files-found: ignore
+
+  fault-injection:
+    name: Fault Injection
+    runs-on: ubuntu-latest
+    needs: tests
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U chandanala_test -d chandanala_core_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run fault injection suite
+        run: |
+          dotnet test \
+            --configuration Release \
+            --no-build \
+            --filter "Category=FaultInjection" \
+            --logger "trx;LogFileName=fault-injection.trx"
+
+      - name: Upload fault evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fault-injection-${{ github.sha }}
+          path: |
+            **/*.trx
+            evidence/fault-injection/**
+          if-no-files-found: ignore
+
+  stage10-invariant-checker:
+    name: Stage 10 Invariant Checker
+    runs-on: ubuntu-latest
+    needs: fault-injection
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Execute randomized fault session
+        run: |
+          dotnet test \
+            --configuration Release \
+            --no-build \
+            --filter "Category=RandomizedFaultInjection" \
+            --logger "trx;LogFileName=stage10.trx"
+
+      - name: Replay transaction histories
+        run: |
+          dotnet run \
+            --project tools/InvariantChecker/InvariantChecker.csproj \
+            --configuration Release \
+            -- \
+            --input evidence/fault-injection \
+            --invariant finalized-invoice
+
+      - name: Upload invariant evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: invariant-evidence-${{ github.sha }}
+          path: |
+            evidence/invariant-checker/**
+            **/stage10.trx
+          if-no-files-found: ignore
+
+  claims-freshness:
+    name: Claims Freshness / STALE Guard
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect controlled-boundary changes
+        id: boundary
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          HEAD="${{ github.sha }}"
+
+          git diff --name-only "$BASE" "$HEAD" > changed-files.txt
+
+          echo "Changed files:"
+          cat changed-files.txt
+
+          if grep -E \
+            '^(src/AuthorityPlane/|database/(migrations|functions|security)/|src/.*/Epoch|tests/(negative|positive|fault-injection)/)' \
+            changed-files.txt; then
+            echo "boundary_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "boundary_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Verified/Measured claims
+        run: |
+          if [ "${{ steps.boundary.outputs.boundary_changed }}" = "true" ]; then
+            echo "Controlled security boundary changed."
+            echo "Affected Verified/Measured claims must be re-run."
+            echo "Claims freshness policy must reject stale evidence."
+          fi
+
+          if [ -f evidence/claims-ledger.yml ]; then
+            echo "Claims ledger found."
+          else
+            echo "::warning::No claims ledger found yet."
+          fi
+
+  evidence-ledger:
+    name: Evidence Ledger Validation
+    runs-on: ubuntu-latest
+    needs:
+      - tests
+      - fault-injection
+      - stage10-invariant-checker
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate evidence ledger
+        run: |
+          if [ ! -f evidence/Engineering_Evidence_Ledger.yml ]; then
+            echo "::error::Engineering Evidence Ledger is missing."
+            exit 1
+          fi
+
+          echo "Engineering Evidence Ledger exists."
+
+      - name: Record commit/build identity
+        run: |
+          mkdir -p evidence/ci
+
+          cat > evidence/ci/build-identity.txt <<EOF
+          Commit: $GITHUB_SHA
+          Workflow: $GITHUB_WORKFLOW
+          Run ID: $GITHUB_RUN_ID
+          Run Number: $GITHUB_RUN_NUMBER
+          Repository: $GITHUB_REPOSITORY
+          Ref: $GITHUB_REF
+          Date: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          EOF
+
+      - name: Upload CI evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-evidence-${{ github.sha }}
+          path: evidence/ci/build-identity.txt
+
+  ci-gate:
+    name: CHANDANALA CORE CI Gate
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - database-security
+      - tests
+      - fault-injection
+      - stage10-invariant-checker
+      - claims-freshness
+      - evidence-ledger
+
+    steps:
+      - name: All gates passed
+        run: |
+          echo "CHANDANALA CORE CI GATE PASSED"
+          echo "Commit: $GITHUB_SHA"
+          echo "Authority boundary: PASS"
+          echo "Positive tests: PASS"
+          echo "Negative tests: PASS"
+          echo "Fault injection: PASS"
+          echo "Stage 10 invariant checker: PASS"
+          echo "Claims freshness: PASS"
+          echo "Evidence ledger: PASS"
