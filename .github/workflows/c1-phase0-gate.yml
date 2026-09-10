@@ -1,0 +1,73 @@
+name: Phase 0 - Baseline Reconciliation Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  verify-baseline:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ChandanalaERP_C1_Gate
+          POSTGRES_USER: runner_admin
+          POSTGRES_PASSWORD: runner_password_sec1
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install EF Core CLI Tools
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Restore Dependencies
+        run: dotnet restore Chandanala.ERP.Web/Chandanala.ERP.Web.csproj
+
+      - name: Gate 0.1-E - Strict Build Verification
+        run: dotnet build Chandanala.ERP.Web/Chandanala.ERP.Web.csproj --no-restore --configuration Release
+
+      - name: Gate 0.2 - Canonical Baseline DDL Extraction
+        run: |
+          mkdir -p ./artifacts
+          dotnet ef migrations script \
+            --project Chandanala.ERP.Web/Chandanala.ERP.Web.csproj \
+            --context AppDbContext \
+            --idempotent \
+            --output ./artifacts/c1_canonical_baseline.sql
+
+      - name: Gate 0.2-C - Apply DDL to Cold Substrate
+        env:
+          PGPASSWORD: runner_password_sec1
+        run: |
+          psql -h localhost -U runner_admin -d ChandanalaERP_C1_Gate -f ./artifacts/c1_canonical_baseline.sql
+
+      - name: Gate 0.3 - Verify Catalog State & XID Primitives
+        env:
+          PGPASSWORD: runner_password_sec1
+        run: |
+          psql -h localhost -U runner_admin -d ChandanalaERP_C1_Gate -c "
+            SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
+            SELECT version(), pg_backend_pid(), pg_current_xact_id_if_assigned();
+          "
+
+      - name: Upload Canonical Baseline Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-canonical-baseline-sql
+          path: ./artifacts/c1_canonical_baseline.sql
