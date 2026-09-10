@@ -1,73 +1,27 @@
-# The version of the compose specification. '3.8' is a stable, widely supported standard.
 version: '3.8'
 
 services:
-  # ---------------------------------------------------------
-  # Service 1: The Application API (.NET / C#)
-  # ---------------------------------------------------------
-  api:
-    # The name of the image to build or pull.
-    image: chandanala-erp-api:latest
-    
-    # Tells Docker how to build this image if it doesn't exist.
-    build:
-      context: . # The directory containing the Dockerfile (current directory)
-      dockerfile: Dockerfile
-    
-    # Maps ports from the host machine to the container. 
-    # Format: "HOST_PORT:CONTAINER_PORT"
-    ports:
-      - "5000:80"   # HTTP traffic
-      - "5001:443"  # HTTPS traffic
-    
-    # Environment variables injected into the .NET application at runtime.
+  c1-postgres-gate:
+    image: postgres:16-alpine
+    container_name: chandanala-c1-postgres
+    restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      # The connection string points to the 'db' service name, not localhost, 
-      # because Docker handles the internal DNS resolution.
-      - ConnectionStrings__DefaultConnection=Host=db;Database=chandanala_core;Username=postgres;Password=YourSecurePassword123!
-    
-    # Ensures the API container doesn't start until the database container is up.
-    depends_on:
-      - db
-      
-    # Connects this service to the custom network defined below.
-    networks:
-      - erp-network
-
-  # ---------------------------------------------------------
-  # Service 2: The Authoritative Persistence Substrate
-  # ---------------------------------------------------------
-  db:
-    # Uses the official PostgreSQL image from Docker Hub.
-    image: postgres:15-alpine
-    
-    # Exposes the default Postgres port to pgAdmin or other local SQL clients.
+      POSTGRES_DB: ChandanalaERP_C1_Gate
+      POSTGRES_USER: ${C1_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${C1_DB_PASSWORD:-postgres_c1_secret}
     ports:
       - "5432:5432"
-    
-    # Essential environment variables to initialize the database cluster.
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=YourSecurePassword123!
-      - POSTGRES_DB=chandanala_core
-    
-    # Maps a persistent Docker volume to the container's data directory.
-    # Without this, all database state is destroyed when the container stops.
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-      
-    networks:
-      - erp-network
+      - c1_postgres_data:/var/lib/postgresql/data
+      # Mount baseline script directly into container entrypoint for cold init
+      - ./artifacts/c1_canonical_baseline.sql:/docker-entrypoint-initdb.d/01_baseline.sql:ro
+    command: >
+      postgres 
+      -c log_connections=on 
+      -c log_disconnections=on 
+      -c log_statement=all 
+      -c synchronous_commit=on
 
-# ---------------------------------------------------------
-# Volumes & Networks Definitions
-# ---------------------------------------------------------
 volumes:
-  # Declares a named volume managed by Docker for persistent storage.
-  postgres-data:
-
-networks:
-  # Creates an isolated bridge network so 'api' and 'db' can communicate securely.
-  erp-network:
-    driver: bridge
+  c1_postgres_data:
+    driver: local
