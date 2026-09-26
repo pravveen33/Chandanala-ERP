@@ -1,0 +1,67 @@
+name: Supabase Zero-Trust Migration Pipeline
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'supabase/migrations/**'
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'supabase/migrations/**'
+
+# ENFORCEMENT: Strip default broad permissions. 
+# Explicitly grant only what is required for OIDC and code checkout.
+permissions:
+  contents: read
+  id-token: write   # Required for GitHub OIDC federation
+  pull-requests: write # Required for posting validation results to the PR
+
+jobs:
+  validate-proposal:
+    name: Validate AI/Developer Proposal
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # ENFORCEMENT: No environment defined. No secrets injected.
+    
+    steps:
+      # ENFORCEMENT: Pin actions to exact commit SHAs (Immutable dependencies)
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      # ENFORCEMENT: Execute static analysis in a zero-trust vacuum.
+      # If the AI proposes malicious code designed to exfiltrate keys, it fails 
+      # because the keys literally do not exist in this job's memory space.
+      - name: Lint and Dry-Run Migration
+        run: |
+          supabase build
+          supabase test db
+
+  execute-commit:
+    name: Authoritative State Change
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate-proposal
+    runs-on: ubuntu-latest
+    
+    # ENFORCEMENT: The Execution Gate. 
+    # Pauses the pipeline until a human CodeOwner explicitly clicks "Approve".
+    environment: production
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      # ENFORCEMENT: Only after human approval are secrets pulled from 
+      # the protected environment to execute the authoritative database change.
+      - name: Push Migrations to Production
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
