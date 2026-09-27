@@ -1,0 +1,63 @@
+# /specs/competitive-benchmark/controls/INV-001.yaml
+
+control_id: INV-001
+domain: Inventory / WMS
+capability: Batch-Aware Pharmaceutical Inventory
+capability_question: >
+  Can the system track pharmaceutical batch/lot, expiry, FEFO-relevant state,
+  godown/location, manufacturer, quantity, and blocked/recalled state?
+control_question: >
+  Is explicit authorization required before restricted stock is adjusted,
+  released, transferred, or otherwise mutated when policy prohibits the action?
+benchmark:
+  description: >
+    The system must maintain authoritative pharmaceutical inventory state
+    across batch/lot, expiry, location, manufacturer, quantity, and applicable
+    blocked/recalled status. Allocation and mutation must obey deterministic
+    inventory and regulatory rules.
+vendors:
+  sap:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: SAP_BATCH_INVENTORY_2026
+  oracle:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: ORACLE_SCM_BATCH_2026
+  dynamics365:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: MS_D365_BATCH_TRACKING_2026
+  odoo:
+    status: VERIFIED_PUBLIC
+    evidence_refs:
+      - id: ODOO_INVENTORY_LOTS_2026
+  marg:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: MARG_PHARMA_ERP_2026
+chandanala:
+  architectural_capability: SPECIFIED
+  implementation_status: REQUIRES_IMPLEMENTATION
+  test_status: NOT_TESTED
+  verification_status: NOT_VERIFIED
+  qualification_status: NOT_QUALIFIED
+  production_status: NOT_ESTABLISHED
+evidence:
+  source_type: architecture_specification
+  source_reference: "BL-013"
+  verification_method: architectural_review
+  evidence_date: "2026-09-27"
+  limitation: >
+    BL-013 is a specification/backlog item and does not constitute
+    implementation or qualification evidence.
+gap:
+  exists: true
+  description: >
+    Pharmaceutical batch/expiry and authorization controls await database
+    substrate stabilization and subsequent implementation.
+  action: >
+    Hold BL-013 until BL-003 is stabilized and Artifact A establishes
+    authoritative ΩX atomicity.
+governance:
+  status: REQUIRES_EVIDENCE
