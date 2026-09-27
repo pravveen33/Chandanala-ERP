@@ -1,0 +1,64 @@
+# /specs/competitive-benchmark/controls/FIN-001.yaml
+
+control_id: FIN-001
+domain: Finance
+capability: Authoritative General Ledger
+capability_question: >
+  Can the system support authoritative double-entry general ledger posting?
+control_question: >
+  Does the system enforce balanced ledger posting and prevent unauthorized
+  authoritative ledger mutations, with cryptographic evidence used for
+  integrity/provenance rather than as a substitute for accounting controls?
+benchmark:
+  description: >
+    The system must enforce double-entry accounting principles such that every
+    authoritative posting is balanced according to the applicable accounting
+    rules. Authorization and integrity controls must prevent unauthorized
+    authoritative mutations. Cryptographic evidence may establish integrity and
+    provenance but does not itself enforce accounting balance.
+vendors:
+  sap:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: SAP_S4HANA_FICO_DOC_2026
+  oracle:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: ORACLE_FUSION_FIN_2026
+  dynamics365:
+    status: VERIFIED_PUBLIC
+    evidence_refs:
+      - id: MS_D365_FIN_DOC_2026
+  odoo:
+    status: VERIFIED_PUBLIC
+    evidence_refs:
+      - id: ODOO_ACCOUNTING_DOC_2026
+  marg:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: MARG_ERP_GL_2026
+chandanala:
+  architectural_capability: SPECIFIED
+  implementation_status: REQUIRES_IMPLEMENTATION
+  test_status: NOT_TESTED
+  verification_status: NOT_VERIFIED
+  qualification_status: NOT_QUALIFIED
+  production_status: NOT_ESTABLISHED
+evidence:
+  source_type: architecture_specification
+  source_reference: "/specs/architecture/finance-ledger.md"
+  verification_method: architectural_review
+  evidence_date: "2026-09-27"
+  limitation: >
+    Architecture specification is not empirical implementation or
+    production evidence.
+gap:
+  exists: true
+  description: >
+    Authoritative general-ledger implementation and database enforcement
+    are not yet empirically established.
+  action: >
+    Stabilize SQL-first migration lineage, implement ledger invariants,
+    then execute deterministic ΩX atomicity and ledger-balance tests.
+governance:
+  status: REQUIRES_EVIDENCE
