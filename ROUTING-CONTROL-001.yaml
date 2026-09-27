@@ -1,0 +1,44 @@
+apiVersion: chandanala.core/v1alpha
+kind: GovernanceControlSchema
+
+metadata:
+  control_id: ROUTING-CONTROL-001
+  title: AI Fabric Routing & Admissibility Governance
+  status: FROZEN
+  domain: Execution Envelopes & Routing Constraints
+  enforces:
+    - CORE-PLANES-FROZEN-001
+
+  architecture_banner: "REQ → INT → CAP → RQM → RTE → BND → GWY → FAB → Ω"
+
+  canonical_doctrine: >
+    REQ defines the requirement; INT establishes governed intake/context;
+    CAP expresses required capability; RQM establishes admissibility;
+    RTE selects within that boundary; BND binds qualified resources and
+    harnesses; GWY enforces and dispatches; FAB provides realization
+    substrates; Ω closes the governed consequence chain.
+
+  execution_chain:
+    REQ: "ERP Requirement & Intent Classification"
+    INT: "Multimodal Intake & Context Engine"
+    CAP: "Capability Graph"
+    RQM: "Admissible Execution Envelope (Qualification Boundary)"
+    RTE: "Routing Fabric (Tier-A & Tier-B Selection)"
+    BND: "Qualified Resource & Harness Binding (Binding ≠ Qualification)"
+    GWY: "Unified Fabric Gateway (Enforcement & Dispatch Boundary)"
+    FAB: "Governed Execution Substrates (AI, APIs, MCP, Plugins)"
+    Ω: "Consequence Planes (ΩC → ΩE → ΩA → ΩX)"
+
+  critical_invariants:
+    - "RTE cannot qualify resources."
+    - "BND cannot expand qualification."
+    - "GWY cannot create authority."
+    - "FAB cannot bypass GWY."
+    - "FAB cannot create authority."
+    - "ΩX remains the sole authoritative consequence boundary."
+
+schema:
+  type: object
+  required:
+    - transaction_id
+    # Add the remaining ROUTING-CONTROL-001 schema requirements here.
