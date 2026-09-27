@@ -1,0 +1,121 @@
+artifact_id: CB-001-ADJUDICATION-001
+benchmark: CHANDANALA-ERP-COMPETITIVE-BENCHMARK-001
+version: 1.0
+status: DRAFT_FOR_REVIEW
+effective_date: 2026-09-27
+governing_principle: "No Evidence = No Completion"
+
+rules:
+  evidence_classes:
+    - UNKNOWN
+    - CLAIMED
+    - DOCUMENTED
+    - VERIFIED_PUBLIC
+    - INDEPENDENTLY_VERIFIED
+    - NOT_APPLICABLE
+    - REQUIRES_SOURCE_VERIFICATION
+
+  chandanala_lifecycle:
+    - SPECIFIED
+    - IMPLEMENTED
+    - TESTED
+    - VERIFIED
+    - QUALIFIED
+    - PRODUCTION_ESTABLISHED
+
+  blocked_states:
+    - BLOCKED
+    - REQUIRES_IMPLEMENTATION
+    - REQUIRES_EVIDENCE
+    - REQUIRES_VERIFICATION
+    - REQUIRES_DECISION
+    - SUPERSEDED
+
+  transitions:
+    SPECIFIED_TO_IMPLEMENTED:
+      required_evidence:
+        - repository_reference
+        - commit_sha
+        - file_path
+    IMPLEMENTED_TO_TESTED:
+      required_evidence:
+        - test_id
+        - test_source
+        - observed_result
+    TESTED_TO_VERIFIED:
+      required_evidence:
+        - independent_verifier
+        - verification_method
+        - evidence_reference
+    VERIFIED_TO_QUALIFIED:
+      required_evidence:
+        - qualification_manifest
+        - qualification_criteria
+        - verifier_result
+    QUALIFIED_TO_PRODUCTION_ESTABLISHED:
+      required_evidence:
+        - operational_evidence
+        - deployment_record
+
+  verified_public_requirements:
+    - source_url
+    - source_title
+    - publisher
+    - access_date
+    - product
+    - version
+    - evidence_location
+    - reviewer
+    - limitations
+
+  adjudication_logic:
+    - rule_id: ADJ-001
+      description: "A control cannot progress without required evidence for its transition."
+      enforcement: "fail"
+    - rule_id: ADJ-002
+      description: "Workflow existence alone does not imply qualification."
+      enforcement: "warn"
+    - rule_id: ADJ-003
+      description: "Marketing material cannot establish VERIFIED_PUBLIC."
+      enforcement: "fail"
+    - rule_id: ADJ-004
+      description: "Conflicting sources must result in UNKNOWN."
+      enforcement: "fail"
+    - rule_id: ADJ-005
+      description: "AI-generated findings require REQUIRES_SOURCE_VERIFICATION until validated."
+      enforcement: "warn"
+    - rule_id: ADJ-006
+      description: "Benchmark must not produce rankings or superiority scores."
+      enforcement: "fail"
+    - rule_id: ADJ-007
+      description: "Qualification workflows must include deterministic tests, evidence generation, and independent verification."
+      enforcement: "warn"
+    - rule_id: ADJ-008
+      description: "Architecture validation workflows must record invariant, validator, result, and commit."
+      enforcement: "warn"
+
+governance:
+  publication_gate:
+    - yaml_syntax_valid
+    - unique_control_ids
+    - resolved_evidence_references
+    - valid_status_vocabulary
+    - required_fields_present
+    - source_classifications_verified
+    - repository_evidence_bound
+    - unresolved_uncertainty_preserved
+
+  authority_boundary:
+    prohibits:
+      - execution_ticket_issue
+      - ERP_mutation_authorization
+      - ΩA_bypass
+      - ΩX_invocation
+      - production_state_modification
+
+  relationship_to_architecture:
+    recognizes:
+      - ΩC: "proposal"
+      - ΩE: "evidence verification"
+      - ΩA: "authorization"
+      - ΩX: "authoritative consequence"
