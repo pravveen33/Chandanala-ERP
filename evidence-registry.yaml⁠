@@ -1,0 +1,12 @@
+  CHANDANALA_CORE_DBCONTEXT_SQL:
+    url: "https://github.com/pravveen33/Chandanala-ERP/blob/main/CoreDbContext.sql"
+    publisher: "Chandanala ERP Repository"
+    retrieved_at: "2026-09-27T13:10:07+05:30"
+    content_hash: null
+    independence: SELF
+    admissible_for: [architectural_capability, implementation_status]
+    max_status: REQUIRES_SOURCE_VERIFICATION
+    notes: >
+      Establishes 'CoreDbContext' as the canonical naming convention. 
+      Requires inspection to determine if this file is the deployment source of truth 
+      or an outdated EF Core script dump.
