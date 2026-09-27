@@ -1,0 +1,62 @@
+# /specs/competitive-benchmark/controls/AI-001.yaml
+
+control_id: AI-001
+domain: AI / Agentic Controls
+capability: Model / Provider Abstraction
+capability_question: >
+  Can the platform select and substitute qualified AI resources through a
+  provider-independent abstraction and RQM layer?
+control_question: >
+  Does substitution of an underlying qualified model/provider/resource preserve
+  the required safety, verification, authorization, and ΩX enforcement
+  invariants?
+benchmark:
+  description: >
+    The platform should permit substitution among qualified AI resources
+    without allowing provider or model identity to bypass deterministic
+    verification, authorization, or consequence controls.
+vendors:
+  sap:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: SAP_AI_PLATFORM_2026
+  oracle:
+    status: DOCUMENTED
+    evidence_refs:
+      - id: ORACLE_PROCUREMENT_AI_2026
+  dynamics365:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: MS_AI_PLATFORM_2026
+  odoo:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: ODOO_AI_EXTENSIBILITY_2026
+  marg:
+    status: UNKNOWN
+    evidence_refs: []
+chandanala:
+  architectural_capability: SPECIFIED
+  implementation_status: REQUIRES_IMPLEMENTATION
+  test_status: NOT_TESTED
+  verification_status: NOT_VERIFIED
+  qualification_status: NOT_QUALIFIED
+  production_status: NOT_ESTABLISHED
+evidence:
+  source_type: architecture_specification
+  source_reference: "/specs/architecture/rqm-gateway.md"
+  verification_method: architectural_review
+  evidence_date: "2026-09-27"
+  limitation: >
+    Substitution invariance is a proposed invariant and has not yet been
+    empirically demonstrated across qualified resources.
+gap:
+  exists: true
+  description: >
+    AI Gateway and RQM require implementation and adversarial substitution
+    testing.
+  action: >
+    Implement provider-neutral resource selection and execute substitution
+    tests across independently qualified current resources selected by RQM.
+governance:
+  status: REQUIRES_EVIDENCE
