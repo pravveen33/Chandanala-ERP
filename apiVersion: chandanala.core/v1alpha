@@ -1,0 +1,73 @@
+apiVersion: chandanala.core/v1alpha
+kind: GovernanceControlSchema
+metadata:
+  control_id: ROUTING-CONTROL-001
+  title: AI Fabric Routing & Admissibility Governance
+  status: FROZEN
+  domain: Execution Envelopes & Routing Constraints
+  enforces: [CORE-PLANES-FROZEN-001]
+
+schema:
+  type: object
+  required:
+    - transaction_id
+    - rqm_policy_version
+    - admissible_envelope
+    - routing_decision
+    - admissibility_verification
+  
+  properties:
+    transaction_id:
+      type: string
+      description: "Unique trace ID linking the routing event to the originating ERP intent."
+      
+    rqm_policy_version:
+      type: string
+      description: "The version of the Requirement Qualification Matrix (RQM) used to generate the execution envelope. Must be actively qualified, preventing shadow policy modifications."
+
+    admissible_envelope:
+      type: object
+      description: "The strictly bounded set of resources permitted for this transaction."
+      properties:
+        qualified_resources:
+          type: array
+          description: "List of authorized models/providers. An empty array triggers immediate escalation, not fallback."
+          items: 
+            type: string
+        hard_constraints:
+          type: array
+          description: "Non-negotiable filters applied before scoring (e.g., data_residency_in, tenant_isolation_strict, phi_compliant)."
+          items: 
+            type: string
+            
+    routing_decision:
+      type: object
+      description: "The optimization outcome restricted entirely within the admissible_envelope."
+      properties:
+        selected_resource: 
+          type: string
+          description: "The model/provider chosen for execution."
+        qualified_harness:
+          type: string
+          description: "The execution harness binding the resource's output to the required schema."
+        optimization_factors:
+          type: object
+          description: "The dimensions scored to make the selection (latency, cost, capability_fit). Never includes hard constraints."
+        is_fallback:
+          type: boolean
+          description: "If true, the fallback resource MUST independently exist within the qualified_resources array."
+          
+    admissibility_verification:
+      type: object
+      description: "Runtime checks ensuring qualification is active at the millisecond of execution."
+      properties:
+        status:
+          type: string
+          enum: 
+            - CURRENT
+            - STALE_QUALIFICATION
+            - REVOKED_CIRCUIT_BREAKER
+            - EMPTY_SET_ESCALATION
+        escalation_action:
+          type: string
+          description: "Populated only if status is not CURRENT. Defines the governanced failure path (e.g., DEFER, ESCALATE_TO_HUMAN, REFUSE)."
