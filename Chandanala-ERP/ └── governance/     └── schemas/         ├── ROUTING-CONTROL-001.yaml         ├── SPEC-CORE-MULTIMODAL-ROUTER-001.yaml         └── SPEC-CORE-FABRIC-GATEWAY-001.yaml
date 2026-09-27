@@ -1,0 +1,6 @@
+Chandanala-ERP/
+└── governance/
+    └── schemas/
+        ├── ROUTING-CONTROL-001.yaml
+        ├── SPEC-CORE-MULTIMODAL-ROUTER-001.yaml
+        └── SPEC-CORE-FABRIC-GATEWAY-001.yaml
