@@ -1,0 +1,60 @@
+# /specs/competitive-benchmark/controls/PROC-001.yaml
+
+control_id: PROC-001
+domain: Procurement
+capability: AI-Assisted Purchase Order Generation
+capability_question: >
+  Can AI recommend or draft purchase orders based on inventory, demand,
+  supplier, pricing, and policy signals?
+control_question: >
+  Can an AI agent create or finalize an authoritative procurement commitment
+  without the required ΩA authorization and execution controls?
+benchmark:
+  description: >
+    AI may analyze procurement data and draft or automate eligible procurement
+    workflows. Authoritative purchasing commitments must remain subject to the
+    platform's defined authorization, policy, segregation-of-duties, and
+    execution controls.
+vendors:
+  sap:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: SAP_PROCUREMENT_AI_2026
+  oracle:
+    status: VERIFIED_PUBLIC
+    evidence_refs:
+      - id: ORACLE_PROCUREMENT_AI_2026
+  dynamics365:
+    status: REQUIRES_SOURCE_VERIFICATION
+    evidence_refs:
+      - id: MS_D365_PROCUREMENT_AI_2026
+  odoo:
+    status: UNKNOWN
+    evidence_refs: []
+  marg:
+    status: UNKNOWN
+    evidence_refs: []
+chandanala:
+  architectural_capability: SPECIFIED
+  implementation_status: REQUIRES_IMPLEMENTATION
+  test_status: NOT_TESTED
+  verification_status: NOT_VERIFIED
+  qualification_status: NOT_QUALIFIED
+  production_status: NOT_ESTABLISHED
+evidence:
+  source_type: architecture_specification
+  source_reference: "/specs/architecture/agent-governance.md"
+  verification_method: architectural_review
+  evidence_date: "2026-09-27"
+  limitation: >
+    The ΩA/ΩX procurement boundary has not yet been empirically tested.
+gap:
+  exists: true
+  description: >
+    AI procurement proposal and authoritative procurement execution boundaries
+    require implementation and adversarial verification.
+  action: >
+    Complete BL-003 stabilization and Artifact A before procurement consequence
+    testing; subsequently execute procurement-specific ΩA/ΩX tests.
+governance:
+  status: REQUIRES_EVIDENCE
