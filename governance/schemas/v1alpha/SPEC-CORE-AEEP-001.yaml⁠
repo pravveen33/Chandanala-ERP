@@ -1,0 +1,156 @@
+# ------------------------------------------------------------
+# SPEC-CORE-AEEP-001
+# Admissible Execution Envelope Primitive (AEEP)
+# ------------------------------------------------------------
+apiVersion: chandanala.core/v1alpha
+kind: GovernanceControlSchema
+metadata:
+  control_id: SPEC-CORE-AEEP-001
+  title: Admissible Execution Envelope Primitive (AEEP)
+  domain: Cryptographic Payload & Execution Binding
+  status:
+    architecture: FROZEN
+    interface_contract: FROZEN
+    machine_readable_schema: PROPOSED
+    implementation: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+    codegen_targets: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+    conformance_tests: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+    adversarial_tests: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+    empirical_evidence: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+  dependencies:
+    - SPEC-CORE-SC1-001        # Provenance and Signatures
+    - SPEC-CORE-SC2-001        # Non-Reproduction (Single-Use Ledger)
+    - SPEC-CORE-SC3-001        # Resolution Failures
+    - SPEC-CORE-RQM-DECISION-001 # The Admissibility Decision being bound
+  canonical_doctrine: >
+    A cryptographically valid AEEP authenticates and binds an admissible 
+    execution decision to a specific, single-use invocation. It does not 
+    authorize arbitrary execution. Enforcement MUST verify that the actual 
+    execution parameters conform to the bound RQM decision and current 
+    authoritative state before the ΩX consequence boundary.
+
+frozen_primitives:
+  canonicalization: RFC8785
+  hash_algorithm: SHA-256
+  signature_algorithm: Ed25519
+
+# ---------------------------------------------------------------
+# Record Schema Definition
+# ---------------------------------------------------------------
+schema_definition:
+  $schema: "https://json-schema.org/draft/2020-12/schema"
+  $id: "urn:chandanala-core:schema:aeep:1"
+  type: object
+  additionalProperties: false
+  required:
+    - envelope_identity
+    - rqm_binding
+    - actual_execution_binding
+    - non_reproduction
+    - provenance
+  properties:
+    
+    envelope_identity:
+      type: object
+      required: [envelope_id, parent_execution_id]
+      properties:
+        envelope_id: { type: string, format: uuidv7 }
+        parent_execution_id:
+          anyOf:
+            - { type: string, format: uuidv7 }
+            - { type: "null" }
+            
+    rqm_binding:
+      type: object
+      description: "Cryptographic link to the multi-use RqmDecisionRecord."
+      required: [decision_id, decision_self_hash]
+      properties:
+        decision_id: { type: string, format: uuidv7 }
+        decision_self_hash: 
+          type: string
+          pattern: "^[0-9a-fA-F]{64}$"
+          description: "Must perfectly match the self_hash of the referenced SPEC-CORE-RQM-DECISION-001."
+          
+    actual_execution_binding:
+      type: object
+      description: "The concrete invocation details. GWY enforces that this is a strict subset (⊆) of RQMD.execution_binding."
+      required: [principal_id, tenant_id, audience, capability, operation, resource, harness, data_classification, parameter_binding]
+      properties:
+        principal_id: { type: string, minLength: 1 }
+        tenant_id: { type: string, minLength: 1 }
+        audience: { type: string, minLength: 1 }
+        capability: { type: string, minLength: 1 }
+        operation:
+          type: object
+          required: [operation_id, operation_version]
+          properties:
+            operation_id: { type: string }
+            operation_version: { type: string }
+        resource:
+          type: object
+          required: [resource_id, resource_version]
+          properties:
+            resource_id: { type: string }
+            resource_version: { type: string }
+        harness:
+          type: object
+          required: [harness_id, harness_contract_version]
+          properties:
+            harness_id: { type: string }
+            harness_contract_version: { type: string }
+        target:
+          type: object
+          required: [target_type, target_identifier, target_hash]
+          properties:
+            target_type: { type: string }
+            target_identifier: { type: string }
+            target_hash: { type: string, pattern: "^[0-9a-fA-F]{64}$" }
+        parameter_binding:
+          type: object
+          required: [parameter_hash, normalization_profile]
+          properties:
+            parameter_hash: { type: string, pattern: "^[0-9a-fA-F]{64}$" }
+            normalization_profile: { const: "RFC8785-JCS-v1" }
+        data_classification: { enum: [PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED] }
+        requested_authority_scope: 
+          type: string
+          description: "Contextual intent ONLY. Does not grant authority. Checked at ΩA."
+          
+    non_reproduction:
+      type: object
+      description: "Composes SC-2 to make this specific AEEP strictly single-use."
+      $ref: "urn:chandanala-core:schema:sc2-non-reproduction-envelope:1"
+      
+    provenance:
+      type: object
+      description: "Composes SC-1 to provide authenticity, carrying AEEP's own self_hash and signature."
+      $ref: "urn:chandanala-core:schema:sc1-provenance-record:1"
+
+# ---------------------------------------------------------------
+# Invariants
+# ---------------------------------------------------------------
+invariants:
+  - id: AEEP-001
+    name: ActualsSubsetOfAdmissible
+    rule: >
+      Enforcement (GWY/ΩX) SHALL verify that `actual_execution_binding` 
+      is a strict subset (⊆) of the `execution_binding` defined in the 
+      referenced RqmDecisionRecord. Any divergence SHALL yield SC-3 
+      RQMD_BINDING_MISMATCH.
+  - id: AEEP-002
+    name: EnvelopeAuthorityNonGrant
+    rule: >
+      The AdmissibleExecutionEnvelope SHALL NOT grant, establish, or 
+      independently prove business authorization. `requested_authority_scope` 
+      SHALL be treated as contextual binding information only.
+  - id: AEEP-003
+    name: SingleUseEnforcement
+    rule: >
+      AEEP is strictly single-use per SC-2. The execution_id/nonce MUST 
+      be atomically claimed in the consequence ledger.
+  - id: AEEP-004
+    name: MutableStateRevalidation
+    rule: >
+      A valid signature on AEEP proves authenticity only. Revocation, 
+      qualification, and temporal validity (TOCTOU) MUST be revalidated 
+      against live state at the ΩX boundary.
