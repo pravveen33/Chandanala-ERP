@@ -1,0 +1,223 @@
+# /specs/competitive-benchmark/CB-001-ADJUDICATION-001.yaml
+
+benchmark_id: CB-001
+adjudication_id: CB-001-ADJUDICATION-001
+title: CHANDANALA ERP Competitive Benchmark Adjudication Rules
+version: "1.0"
+effective_date: "2026-09-27"
+status: DRAFT_FOR_REVIEW
+
+governing_principle:
+  name: NO_EVIDENCE_NO_COMPLETION
+  rule: >
+    A benchmark control must not be classified above the strength of its
+    supporting evidence.
+
+scope:
+  applies_to:
+    - ERP functional controls
+    - pharmaceutical controls
+    - AI and agentic controls
+    - authority controls
+    - evidence controls
+    - security controls
+    - extensibility controls
+    - reliability controls
+  does_not_establish:
+    - production qualification
+    - regulatory compliance
+    - security certification
+    - vendor superiority
+    - CHANDANALA production readiness
+    - authorization to execute ERP consequences
+
+principles:
+  P001:
+    name: Evidence_Precedence
+    rule: "Classification is determined by evidence, not by vendor reputation, architectural sophistication, marketing claims, or prior benchmark entries."
+  P002:
+    name: Specificity
+    rule: "Evidence must support the specific capability/control being evaluated. Evidence for an adjacent capability must not be silently generalized."
+  P003:
+    name: Currentness
+    rule: "Vendor capability claims must be evaluated against the benchmark's declared time period. Historical evidence must not be presented as current capability without qualification."
+  P004:
+    name: Source_Traceability
+    rule: "Every VERIFIED_PUBLIC classification requires a retrievable public source reference."
+  P005:
+    name: Independent_Evidence
+    rule: "Multiple sources originating from the same vendor or source lineage do not constitute independent corroboration."
+  P006:
+    name: Capability_Control_Separation
+    rule: "The existence of a capability does not establish the existence of the corresponding security, authorization, evidence, or governance control."
+  P007:
+    name: Architecture_Implementation_Separation
+    rule: "A specified architecture does not establish implementation."
+  P008:
+    name: Implementation_Test_Separation
+    rule: "Implemented code does not establish successful testing."
+  P009:
+    name: Test_Verification_Separation
+    rule: "Passing a local or developer test does not establish independent verification."
+  P010:
+    name: Verification_Qualification_Separation
+    rule: "Independent verification of a capability does not automatically establish production qualification."
+  P011:
+    name: No_Inference_From_Absence
+    rule: "Absence of publicly discoverable evidence must not be interpreted as proof that the capability does not exist."
+  P012:
+    name: No_Inference_From_Presence
+    rule: "Presence of a vendor document must not be interpreted as proof of universal production behavior, deployment quality, or security effectiveness."
+  P013:
+    name: No_Ranking
+    rule: "CB-001 must not produce overall winners, losers, rankings, scores, tiers, or superiority conclusions."
+  P014:
+    name: Architecture_Is_Not_Evidence
+    rule: "CHANDANALA architecture specifications are evidence of specification state, not evidence of empirical implementation or production behavior."
+  P015:
+    name: Cryptography_Is_Not_Control_Substitution
+    rule: "Cryptographic integrity/provenance evidence must not be treated as a substitute for accounting, authorization, database, or business-rule enforcement."
+  P016:
+    name: Unknown_Is_First_Class
+    rule: "UNKNOWN is a valid adjudication outcome and must not be converted into NOT_APPLICABLE or FAIL without supporting evidence."
+  P017:
+    name: Evidence_Date_Semantics
+    rule: "evidence_date records when the benchmark evidence was captured or reviewed; it does not imply that the underlying vendor capability originated on that date."
+  P018:
+    name: Version_Binding
+    rule: "Where capability behavior depends on product/model/version/edition, the evaluated version must be recorded whenever it is material."
+  P019:
+    name: Jurisdiction_Binding
+    rule: "Regulatory or localization claims must identify the applicable jurisdiction and relevant product/localization version."
+  P020:
+    name: Reproducibility
+    rule: "Empirical claims require sufficient information to reproduce the observation or independently inspect the supporting artifact."
+
+evidence_statuses:
+  UNKNOWN:
+    meaning: "Insufficient evidence to establish whether the capability/control exists."
+    allowed_claim: "No determination."
+    prohibited_claims: ["Capability absent.", "Capability present."]
+  CLAIMED:
+    meaning: "Vendor or other source claims the capability, but the benchmark has not established sufficient documentary evidence."
+    allowed_claim: "Claimed by source."
+    prohibited_claims: ["Verified capability."]
+  DOCUMENTED:
+    meaning: "An authoritative or credible public document explicitly describes the capability."
+    allowed_claim: "Documented capability."
+    does_not_establish: ["deployment quality", "universal availability", "security effectiveness", "production outcome"]
+  VERIFIED_PUBLIC:
+    meaning: "The benchmark reviewer has inspected a current public source that directly supports the specific control."
+    required: ["source_url", "source_title", "access_date", "relevant_excerpt_or_location", "product_version_scope"]
+  INDEPENDENTLY_VERIFIED:
+    meaning: "The capability/control has been independently tested or otherwise verified using evidence not solely generated by the evaluated implementation/vendor."
+    required: ["test_or_verification_method", "environment", "result", "reproducibility_information"]
+  NOT_APPLICABLE:
+    meaning: "The control demonstrably falls outside the platform's declared scope."
+    required: ["scope_evidence", "rationale"]
+  REQUIRES_SOURCE_VERIFICATION:
+    meaning: "A provisional benchmark entry exists but the cited evidence has not yet been inspected and validated."
+
+chandanala_status_model:
+  SPECIFIED:
+    meaning: "Architecture or specification defines the capability/control."
+  IMPLEMENTED:
+    meaning: "Repository evidence demonstrates implementation exists."
+  TESTED:
+    meaning: "Reproducible execution demonstrates the specified behavior."
+  VERIFIED:
+    meaning: "Independent verification confirms the tested behavior."
+  QUALIFIED:
+    meaning: "Formal qualification criteria are satisfied and evidence has been admitted."
+  PRODUCTION_ESTABLISHED:
+    meaning: "Production operation has been demonstrated with appropriate operational evidence."
+  BLOCKED:
+    meaning: "A prerequisite prevents valid progression."
+  REQUIRES_IMPLEMENTATION:
+    meaning: "Specification exists but implementation evidence is insufficient."
+  REQUIRES_EVIDENCE:
+    meaning: "Implementation or claim may exist, but required evidence is absent."
+  NOT_ESTABLISHED:
+    meaning: "The benchmark cannot establish the claimed state from available evidence."
+
+adjudication_decision_table:
+  vendor_promotion:
+    - evidence_available: "No source"
+      maximum_permissible_classification: UNKNOWN
+    - evidence_available: "Vendor assertion"
+      maximum_permissible_classification: CLAIMED
+    - evidence_available: "Public vendor documentation"
+      maximum_permissible_classification: DOCUMENTED
+    - evidence_available: "Directly inspected current source"
+      maximum_permissible_classification: VERIFIED_PUBLIC
+    - evidence_available: "Independent reproducible test"
+      maximum_permissible_classification: INDEPENDENTLY_VERIFIED
+    - evidence_available: "Scope evidence proving irrelevance"
+      maximum_permissible_classification: NOT_APPLICABLE
+  chandanala_promotion:
+    - evidence: "Specification"
+      maximum_state: SPECIFIED
+    - evidence: "Repository implementation"
+      maximum_state: IMPLEMENTED
+    - evidence: "Reproducible test"
+      maximum_state: TESTED
+    - evidence: "Independent verifier"
+      maximum_state: VERIFIED
+    - evidence: "Qualification manifest/admission"
+      maximum_state: QUALIFIED
+    - evidence: "Production operational evidence"
+      maximum_state: PRODUCTION_ESTABLISHED
+
+conflict_resolution:
+  priority:
+    - current_product_documentation
+    - current_product_reference_documentation
+    - current_product_release_notes
+    - official_api_or_technical_documentation
+    - official_product_security_documentation
+    - independent_reproducible_test
+    - reputable_secondary_analysis
+    - community_content
+  rule: >
+    Higher-priority evidence does not automatically invalidate lower-priority
+    evidence. Differences in version, edition, deployment model, jurisdiction,
+    feature flags, or scope must be investigated before adjudication.
+  unresolved_conflict:
+    status: UNKNOWN
+
+epistemic_layers:
+  axes:
+    axis_1: ["CAPABILITY (Can it do X?)", "CONTROL (Can X be governed?)"]
+    axis_2: ["DOCUMENTARY EVIDENCE", "EMPIRICAL EVIDENCE"]
+  rule: >
+    Evaluations must be symmetric across vendors. A vendor may have
+    Capability=DOCUMENTED and Control=UNKNOWN. CHANDANALA may have
+    Capability=SPECIFIED, Control=SPECIFIED, Implementation=PARTIAL,
+    Empirical evidence=NOT_ESTABLISHED. These are valid and required distinctions.
+
+benchmark_integrity:
+  B001:
+    rule: "Benchmark source references must be immutable once a published benchmark version is released."
+  B002:
+    rule: "Source replacement requires a new benchmark revision rather than silent modification."
+  B003:
+    rule: "Historical results must remain distinguishable from current results."
+  B004:
+    rule: "Generated benchmark summaries must never become the authoritative source for the underlying evidence."
+  B005:
+    rule: "AI-generated research findings are hypotheses until source-verified."
+  B006:
+    rule: "Benchmark artifacts must not self-certify their own correctness."
+  B007:
+    rule: "A benchmark control cannot grant execution authority to any CHANDANALA component."
+  B008:
+    rule: "Benchmark results must preserve uncertainty and unresolved conflicts."
+
+self_application:
+  rule: "CB-001-ADJUDICATION-001 is subject to its own rules."
+  status:
+    specification: SPECIFIED
+    adjudication_rules: SPECIFIED
+    machine_validator: REQUIRES_IMPLEMENTATION
+    validator_tests: NOT_TESTED
+    independent_verification: NOT_VERIFIED
