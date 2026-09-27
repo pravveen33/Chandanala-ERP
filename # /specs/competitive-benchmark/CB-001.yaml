@@ -1,0 +1,7 @@
+# /specs/competitive-benchmark/CB-001.yaml
+
+benchmark_id: CB-001
+title: CHANDANALA ERP Competitive Benchmark
+version: "1.0.0-draft"
+governance_ref: "CB-001-ADJUDICATION-001"
+repository_status: PENDING_PHASE_0
