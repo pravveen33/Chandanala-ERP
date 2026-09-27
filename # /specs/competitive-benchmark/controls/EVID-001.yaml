@@ -1,0 +1,59 @@
+# /specs/competitive-benchmark/controls/EVID-001.yaml
+
+control_id: EVID-001
+domain: Authority / Evidence
+capability: Independently Verifiable Execution Evidence
+capability_question: >
+  Does the system produce evidence covering authoritative state-changing
+  execution?
+control_question: >
+  Can an independent verifier cryptographically validate the integrity,
+  provenance, completeness, and relevant authorization evidence without
+  trusting the primary application's internal assertion alone?
+benchmark:
+  description: >
+    Authoritative ΩX state mutations should produce evidence sufficient for
+    independent verification. Evidence integrity, provenance, completeness,
+    and authorization context must be distinguishable from the application's
+    own claim that execution succeeded.
+vendors:
+  sap:
+    status: UNKNOWN
+    evidence_refs: []
+  oracle:
+    status: UNKNOWN
+    evidence_refs: []
+  dynamics365:
+    status: UNKNOWN
+    evidence_refs: []
+  odoo:
+    status: UNKNOWN
+    evidence_refs: []
+  marg:
+    status: UNKNOWN
+    evidence_refs: []
+chandanala:
+  architectural_capability: SPECIFIED
+  implementation_status: PARTIAL
+  test_status: NOT_TESTED
+  verification_status: NOT_VERIFIED
+  qualification_status: NOT_QUALIFIED
+  production_status: NOT_ESTABLISHED
+evidence:
+  source_type: architecture_specification
+  source_reference: "/specs/architecture/ev-iv.md"
+  verification_method: architectural_review
+  evidence_date: "2026-09-27"
+  limitation: >
+    EV-IV architecture and portions of the evidence pipeline have been
+    specified/implemented, but independent empirical qualification is pending.
+gap:
+  exists: true
+  description: >
+    Independent EV-IV verification, complete evidence-chain validation,
+    CloudTrail reconciliation, and adversarial qualification remain incomplete.
+  action: >
+    Complete BL-001, stabilize EV-IV, execute evidence-integrity tests,
+    reconcile authoritative telemetry, and obtain independent EV-IV evidence.
+governance:
+  status: REQUIRES_EVIDENCE
