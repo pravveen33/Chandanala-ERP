@@ -1,0 +1,164 @@
+apiVersion: chandanala.core/v1alpha
+kind: GovernanceControlSchema
+metadata:
+  control_id: SPEC-CORE-MODEL-REGISTRY-001
+  title: Model Registry & Qualification Metadata Governance
+  status: PROPOSED
+  domain: Resource Registry & Qualification Constraints
+  enforces: 
+    - ROUTING-CONTROL-001
+    - INV-19_BENCHMARK_AUTHORITY_SEPARATION
+    - INV-20_REGISTRY_STATE_ISOLATION
+  architecture_banner: "REQ → INT → CAP → RQM → RTE[Jev] → BND → GWY → FAB → Ω"
+  critical_invariants:
+    - "INV-19: Benchmark-Authority Separation - External benchmarks or catalog claims SHALL NOT independently confer production qualification or admissibility."
+    - "INV-20: Registry State Isolation - Model name identity is insufficient. Qualification applies strictly to a specific, immutable model version and expires at a defined timestamp."
+
+schema:
+  type: object
+  required:
+    - registry_id
+    - model_version_identity
+    - registry_state
+    - model
+    - governance
+    - evidence
+  
+  properties:
+    registry_id:
+      type: string
+      description: "Internal CHANDANALA CORE primary key for this registry entry."
+
+    model_version_identity:
+      type: string
+      description: "MANDATORY. Exact version/hash of the model (e.g., 'claude-3-5-sonnet-20240620'). Prevents provider shadow-updates."
+
+    registry_state:
+      type: string
+      description: "Current position in the registry state machine."
+      enum: 
+        # Active Progression States
+        - DISCOVERED
+        - NORMALIZED
+        - EVIDENCE_PENDING
+        - EVALUATED
+        - QUALIFICATION_REVIEW
+        - QUALIFIED
+        - RQM_ADMISSIBLE
+        - ROUTABLE
+        # Failure / Terminal States
+        - STALE
+        - REVOKED
+        - INACTIVE
+        - UNQUALIFIED
+        - INADMISSIBLE
+        - BLOCKED
+
+    # ------------------------------------------------------------
+    # 1. MODEL DEFINITION
+    # ------------------------------------------------------------
+    model:
+      type: object
+      properties:
+        identity: 
+          type: object
+          properties:
+            catalog_name: type: string
+            version_hash: type: string
+        capabilities: 
+          type: object
+          properties:
+            input_modalities: type: array
+            tool_calling: type: boolean
+            context_length: type: integer
+        interface:
+          type: object
+          description: "Supported parameters (e.g., temperature, max_tokens, reasoning_effort)."
+        deployment:
+          type: object
+          description: "Execution substrate details (cloud, local, edge)."
+
+    # ------------------------------------------------------------
+    # 2. GOVERNANCE & QUALIFICATION
+    # ------------------------------------------------------------
+    governance:
+      type: object
+      required: [qualification]
+      properties:
+        qualification:
+          type: object
+          required: [status, valid_until]
+          properties:
+            status: type: string
+            valid_from: type: string # ISO8601
+            valid_until: 
+              type: string # ISO8601 - MANDATORY EXPIRY
+            qualification_record: type: string # Pointer to the formal review document
+        admissibility_attributes:
+          type: object
+          properties:
+            zero_data_retention: type: boolean
+            phi_compliant: type: boolean
+        residency:
+          type: object
+          properties:
+            in_region_routing_supported: type: boolean
+            regions: type: array
+        data_handling:
+          type: object
+          description: "Normalization of provider ToS regarding data usage."
+
+    # ------------------------------------------------------------
+    # 3. ECONOMICS (JEV OPTIMIZATION TARGETS)
+    # ------------------------------------------------------------
+    economics:
+      type: object
+      properties:
+        prompt_pricing: type: number
+        output_pricing: type: number
+        discounts: type: boolean
+
+    # ------------------------------------------------------------
+    # 4. METADATA (ROUTING MATCHING)
+    # ------------------------------------------------------------
+    metadata:
+      type: object
+      properties:
+        series: type: string
+        categories: type: array
+        model_age: type: string
+        provider: type: string
+        author: type: string
+
+    # ------------------------------------------------------------
+    # 5. EVIDENCE (STRICTLY ISOLATED FROM QUALIFICATION)
+    # ------------------------------------------------------------
+    evidence:
+      type: object
+      description: "Signals for review or Jev optimization. Contains NO authority flags."
+      properties:
+        external_benchmarks:
+          type: object
+          properties:
+            artificial_analysis:
+              type: object
+              properties:
+                reference: type: string
+                observed_at: type: string
+                status: 
+                  type: string
+                  enum: [external-evidence]
+            design_arena:
+              type: object
+              properties:
+                reference: type: string
+                observed_at: type: string
+                status: 
+                  type: string
+                  enum: [external-evidence]
+        internal_evaluation:
+          type: object
+          description: "CHANDANALA-specific workload test results."
+        verification:
+          type: object
+          description: "Cryptographic or procedural proofs of provider claims."
