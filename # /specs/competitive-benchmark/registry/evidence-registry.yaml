@@ -1,0 +1,42 @@
+# /specs/competitive-benchmark/registry/evidence-registry.yaml
+
+registry_version: 1
+freshness_window_default: P365D
+
+entries:
+  MS_D365_FIN_DOC_2026:
+    url: "https://learn.microsoft.com/en-us/dynamics365/finance/general-ledger/general-ledger"
+    publisher: "Microsoft"
+    retrieved_at: "2026-09-27"
+    content_hash: "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    independence: VENDOR_SELF_ATTESTED
+    admissible_for: [vendor_status]
+    max_status: VERIFIED_PUBLIC
+
+  ODOO_ACCOUNTING_DOC_2026:
+    url: "https://www.odoo.com/documentation/18.0/applications/finance/accounting.html"
+    publisher: "Odoo"
+    retrieved_at: "2026-09-27"
+    content_hash: "sha256:8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdbea027"
+    independence: VENDOR_SELF_ATTESTED
+    admissible_for: [vendor_status]
+    max_status: VERIFIED_PUBLIC
+
+  ORACLE_PROCUREMENT_AI_2026:
+    url: "https://docs.oracle.com/en/cloud/saas/readiness/scm/26a/proc26a/26A-procurement-wn-f41767.htm"
+    publisher: "Oracle"
+    retrieved_at: "2026-09-27"
+    content_hash: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
+    independence: VENDOR_SELF_ATTESTED
+    admissible_for: [vendor_status]
+    max_status: VERIFIED_PUBLIC
+
+  SAP_S4HANA_FICO_DOC_2026:
+    url: null
+    publisher: "SAP SE"
+    retrieved_at: null
+    content_hash: null
+    independence: VENDOR_SELF_ATTESTED
+    admissible_for: [vendor_status]
+    max_status: CLAIMED
+    flags: [REQUIRES_SOURCE_VERIFICATION]
