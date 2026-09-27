@@ -1,0 +1,334 @@
+# ------------------------------------------------------------
+# SPEC-CORE-RQM-DECISION-001
+# RQM Decision Record (Admissibility Governance)
+# ------------------------------------------------------------
+apiVersion: chandanala.core/v1alpha
+kind: GovernanceControlSchema
+metadata:
+  control_id: SPEC-CORE-RQM-DECISION-001
+  title: RQM Decision Record
+  domain: Admissibility Governance
+  status:
+    architecture: FROZEN
+    interface_contract: FROZEN
+    machine_readable_schema: FROZEN
+    implementation: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+    codegen_targets: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+    conformance_tests: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+    adversarial_tests: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+    empirical_evidence: NOT_ESTABLISHED_BY_THIS_ARTIFACT
+  dependencies:
+    - SPEC-CORE-PIPELINE-INTERFACES-001
+    - SPEC-CORE-SC1-001        # ProvenanceRecord, hash domains, signing
+    - SPEC-CORE-SC2-001        # Referenced by contrast only; RQM is multi-use
+    - SPEC-CORE-SC3-001        # Resolution failure taxonomy
+  canonical_doctrine: >
+    RQM establishes the admissible execution envelope for a governed
+    requirement under the applicable context, capability requirements,
+    qualification state, policy state, environmental constraints, and
+    risk constraints. RqmDecisionRecord records that decision and its
+    evidence. The record does not itself grant business authorization
+    and does not commit authoritative ERP consequence.
+
+frozen_primitives:
+  canonicalization: RFC8785
+  canonicalization_version: RFC8785-2020
+  hash_algorithm: SHA-256
+  signature_algorithm: Ed25519
+  signature_encoding: BASE64_STANDARD
+  signature_byte_length: 64
+  signature_encoded_length: 88
+  signature_pattern: "^[A-Za-z0-9+/]{86}==$"
+
+hash_domains:
+  self_hash:
+    algorithm: SHA-256
+    subject: "RFC8785 canonical representation of this RQMD record, with `self_hash` and `signature` excluded."
+  execution_binding_hash:
+    algorithm: SHA-256
+    subject: "RFC8785 canonical representation of `execution_binding`."
+  evidence_set_hash:
+    algorithm: SHA-256
+    subject: "RFC8785 canonical representation of the deterministically ordered `evidence` descriptor set."
+  decision_key:
+    algorithm: SHA-256
+    subject: >
+      SHA-256("RQMD-DECISION-v1" || 0x00 || JCS(
+        requirement_id + requirement_version + execution_binding_hash + 
+        policy_id + policy_version + rqm_engine_id + rqm_engine_version
+      ))
+
+construction_sequence:
+  - construct_record_without_self_hash_or_signature
+  - canonicalize_rfc8785
+  - compute_self_hash
+  - insert_self_hash
+  - construct_signing_subject_without_signature
+  - canonicalize_rfc8785
+  - compute_ed25519_signature
+  - insert_signature
+
+# ---------------------------------------------------------------
+# Record Schema Definition
+# ---------------------------------------------------------------
+schema_definition:
+  $schema: "https://json-schema.org/draft/2020-12/schema"
+  $id: "urn:chandanala-core:schema:rqmd-record:1"
+  type: object
+  additionalProperties: false
+  required:
+    - identity
+    - provenance
+    - engine
+    - decision
+    - requirement
+    - execution_binding
+    - constraints
+    - policy_binding
+    - evidence
+    - validity
+    - lifecycle
+    - revalidation
+    - decision_key
+    - self_hash
+    - signature
+  properties:
+    identity:
+      type: object
+      required: [decision_id, decision_schema_version]
+      properties:
+        decision_id: { type: string, format: uuidv7 }
+        decision_schema_version: { const: "RQMD-1" }
+        
+    provenance:
+      type: object
+      required: [provenance_id, signing_key_id]
+      properties:
+        provenance_id: { type: string, format: uuidv7 }
+        signing_key_id: { type: string, minLength: 1 }
+        
+    engine:
+      type: object
+      required: [rqm_engine_id, rqm_engine_version, rqm_spec_version]
+      properties:
+        rqm_engine_id: { type: string, minLength: 1 }
+        rqm_engine_version: { type: string, minLength: 1 }
+        rqm_spec_version: { type: string, minLength: 1 }
+        
+    decision:
+      type: object
+      required: [outcome, rationale_code]
+      properties:
+        outcome: { enum: [ADMISSIBLE, ADMISSIBLE_WITH_CONSTRAINTS, INADMISSIBLE] }
+        rationale_code: { type: string, minLength: 1 }
+        denial_detail: { type: string, nullable: true }
+        
+    requirement:
+      type: object
+      required: [requirement_id, requirement_version, requirement_hash]
+      properties:
+        requirement_id: { type: string }
+        requirement_version: { type: string }
+        requirement_hash: { type: string, pattern: "^[a-f0-9]{64}$" }
+        
+    execution_binding:
+      type: object
+      description: "The ADMISSIBLE boundary. AEEP contains the actual invocation; GWY enforces actual ⊆ boundary."
+      required: [principal_id, principal_type, tenant_id, audience, capability, operations, trust_domain, data_classification]
+      properties:
+        principal_id: { type: string }
+        principal_type: { enum: [HUMAN, WORKLOAD, SERVICE, COMPOSITE] }
+        tenant_id: { type: string }
+        audience: { type: string, description: "Single-valued, exact match enforcement target" }
+        capability: { type: string }
+        operations:
+          type: array
+          items:
+            type: object
+            required: [operation_id, operation_version]
+            properties:
+              operation_id: { type: string }
+              operation_version: { type: string }
+        resources:
+          type: array
+          items:
+            type: object
+            required: [resource_id, resource_version, resource_hash]
+            properties:
+              resource_id: { type: string }
+              resource_version: { type: string }
+              resource_hash: { type: string, pattern: "^[a-f0-9]{64}$" }
+        harnesses:
+          type: array
+          items:
+            type: object
+            required: [harness_id, harness_contract_version]
+            properties:
+              harness_id: { type: string }
+              harness_contract_version: { type: string }
+        targets:
+          type: array
+          items:
+            type: object
+            required: [target_type, target_identifier, target_hash]
+            properties:
+              target_type: { type: string }
+              target_identifier: { type: string }
+              target_hash: { type: string, pattern: "^[a-f0-9]{64}$" }
+        parameter_binding:
+          type: object
+          required: [parameter_hash, normalization_profile]
+          properties:
+            parameter_hash: { type: string, pattern: "^[a-f0-9]{64}$" }
+            normalization_profile: { const: "RFC8785-JCS-v1" }
+        trust_domain: { type: string, minLength: 1 }
+        data_classification: { enum: [PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED] }
+        
+    constraints:
+      type: array
+      items:
+        type: object
+        required: [constraint_id, constraint_type, expression, enforceable_at]
+        properties:
+          constraint_id: { type: string }
+          constraint_type: { type: string }
+          expression: { type: string }
+          enforceable_at: { enum: [GWY, OMEGA_X, BOTH] }
+          
+    policy_binding:
+      type: object
+      required: [policy_id, policy_version, policy_hash]
+      properties:
+        policy_id: { type: string }
+        policy_version: { type: string }
+        policy_hash: { type: string, pattern: "^[a-f0-9]{64}$" }
+        
+    evidence:
+      type: object
+      required: [qualification_refs, revocation_snapshot, evidence_set_hash]
+      properties:
+        qualification_refs:
+          type: array
+          items:
+            type: object
+            required: [qualification_id, qualification_hash, qualification_state_snapshot]
+            properties:
+              qualification_id: { type: string }
+              qualification_hash: { type: string, pattern: "^[a-f0-9]{64}$" }
+              qualification_state_snapshot: { enum: [QUALIFIED, PROBATIONARY, SUSPENDED, UNKNOWN] }
+        revocation_snapshot:
+          type: object
+          required: [revocation_store_id, snapshot_at, snapshot_hash, authority]
+          properties:
+            revocation_store_id: { type: string }
+            snapshot_at: { type: string, format: date-time }
+            snapshot_hash: { type: string, pattern: "^[a-f0-9]{64}$" }
+            authority: { const: AUTHORITATIVE }
+        threat_signals:
+          type: array
+          items:
+            type: object
+            required: [signal_id, signal_source, signal_role]
+            properties:
+              signal_id: { type: string }
+              signal_source: { type: string }
+              signal_role: { const: ADVISORY }
+        evidence_set_hash: { type: string, pattern: "^[a-f0-9]{64}$" }
+        
+    validity:
+      type: object
+      required: [issued_at, not_before, not_after, maximum_enforcement_age_seconds, maximum_clock_skew_seconds]
+      properties:
+        issued_at: { type: string, format: date-time }
+        not_before: { type: string, format: date-time }
+        not_after: { type: string, format: date-time }
+        maximum_enforcement_age_seconds: { type: integer, minimum: 0 }
+        maximum_clock_skew_seconds: { type: integer, minimum: 0 }
+        
+    lifecycle:
+      type: object
+      required: [multi_use, supersession_check]
+      properties:
+        multi_use: { const: true }
+        supersedes: { type: string, nullable: true }
+        superseded_by: { type: string, nullable: true }
+        supersession_check: { const: MANDATORY_AT_GWY }
+        
+    revalidation:
+      type: object
+      description: "TOCTOU Contract dividing snapshot trust from live-state enforcement."
+      required: [snapshot_only, revalidate_at_enforcement]
+      properties:
+        snapshot_only:
+          type: array
+          items: { enum: [execution_binding, requirement_hash, policy_binding, evidence_set_hash] }
+        revalidate_at_enforcement:
+          type: array
+          items: { enum: [qualification_state, revocation_state, policy_applicability, supersession_state, current_execution_binding_conformance] }
+
+    decision_key: { type: string, pattern: "^[a-f0-9]{64}$" }
+    self_hash: { type: string, pattern: "^[a-f0-9]{64}$" }
+    signature: { type: string, pattern: "^[A-Za-z0-9+/]{86}==$" }
+
+# ---------------------------------------------------------------
+# Invariants
+# ---------------------------------------------------------------
+invariants:
+  - id: RQMD-001
+    rule: >
+      An RQMD decision is an admissibility record, not an authorization.
+      It MUST NOT be treated as satisfying Omega-A.
+  - id: RQMD-002
+    rule: >
+      An RQMD decision SHALL NOT authorize execution whose actual binding
+      differs from `execution_binding` under any bound field.
+  - id: RQMD-003
+    rule: >
+      Deterministic Re-derivation: given identical requirement, execution_binding,
+      policy_version, engine identity, and evidence set snapshot, a conformant
+      engine MUST produce the same `outcome`. Divergence is a conformance
+      failure, not an operational variance.
+  - id: RQMD-004
+    rule: >
+      An RQMD decision is multi-use across distinct replay identities.
+      It is NOT single-use. SC-2 consumption applies to AEEP, not to RQMD.
+  - id: RQMD-005
+    rule: >
+      A decision MUST NOT be honored if `superseded_by` resolves to a
+      non-null successor. Decision shopping is a binding failure.
+  - id: RQMD-006
+    rule: >
+      A signed INADMISSIBLE decision MUST be recorded for audit and MUST
+      NOT be usable as authority in any direction.
+  - id: RQMD-007
+    rule: >
+      Constraint evaluation is part of enforcement. Presence of
+      ADMISSIBLE_WITH_CONSTRAINTS without constraint evaluation
+      SHALL be treated as INADMISSIBLE.
+  - id: RQMD-008
+    rule: >
+      `threat_signals` are ADVISORY. They MUST NOT authorize, and their
+      absence MUST NOT be read as qualification.
+  - id: RQMD-009
+    rule: >
+      Any evidence reference that fails to resolve, or resolves to a state
+      outside its snapshot, MUST fail closed via SC-3.
+  - id: RQMD-010
+    rule: >
+      Operation-Capability Containment: All admitted `operations` MUST be formally 
+      bounded by the declared `capability`. Operations ⊈ Capability SHALL result 
+      in INADMISSIBLE.
+
+# ---------------------------------------------------------------
+# SC-3 Resolution Failures Propagated
+# ---------------------------------------------------------------
+resolution_failures:
+  - RQMD_BINDING_MISMATCH
+  - RQMD_SUPERSEDED
+  - RQMD_ENGINE_VERSION_UNSUPPORTED
+  - RQMD_EVIDENCE_UNRESOLVED
+  - RQMD_CONSTRAINT_UNEVALUABLE
+  - RQMD_REVOCATION_SNAPSHOT_STALE
+  - RQMD_CLOCK_SKEW_EXCEEDED
+  - RQMD_OPERATION_CAPABILITY_MISMATCH
+  - RQMD_UNCLASSIFIED_RESOLUTION_FAILURE
