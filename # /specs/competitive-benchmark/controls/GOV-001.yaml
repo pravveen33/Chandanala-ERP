@@ -1,0 +1,206 @@
+# /specs/competitive-benchmark/controls/GOV-001.yaml
+
+control_id: GOV-001
+domain: Governance / Meta
+capability: Benchmark Adjudication & Evidence Admission
+capability_question: "Can the benchmark adjudicate its own controls under a uniform, evidence-bound rule set?"
+control_question: >
+  Can any control, vendor claim, or CHANDANALA status be promoted without an admissible,
+  independently retrievable evidence artifact whose independence class satisfies the target status?
+
+benchmark:
+  description: >
+    This control governs every other control in /specs/competitive-benchmark/controls/.
+    It defines what counts as evidence, who may promote a status, the monotonic gates that
+    forbid skipped rungs, and the invariant classes that must never be conflated.
+    It applies to itself under the same rules it imposes.
+
+admissible_evidence:
+  source_type_enum:
+    architecture_specification:
+      admissible_for: [architectural_capability]
+      independence: SELF
+      note: "Intent. Never sufficient to advance implementation or beyond."
+    repository_ref:
+      admissible_for: [implementation_status]
+      independence: SELF
+      requires: [commit_hash, tree_ref, reviewed_by]
+    test_run:
+      admissible_for: [test_status]
+      independence: SELF_OR_PEER
+      requires: [harness_id, input_digest, output_digest, executed_at, environment_digest]
+    independent_verification:
+      admissible_for: [verification_status]
+      independence: INDEPENDENT
+      requires: [verifier_identity, verifier_independence_attestation, artifact_digest]
+      note: "EV-IV qualification lands here. Verifier must not be the implementer."
+    qualification_harness_run:
+      admissible_for: [qualification_status]
+      independence: INDEPENDENT
+      requires: [harness_version, pass_criteria_ref, full_transcript_digest]
+    production_telemetry:
+      admissible_for: [production_status]
+      independence: INDEPENDENT
+      requires: [window_start, window_end, sample_size, telemetry_source_ref]
+    vendor_documentation:
+      admissible_for: [vendor_status]
+      independence: VENDOR_SELF_ATTESTED
+      requires: [url, publisher, retrieved_at, content_hash]
+    third_party_audit:
+      admissible_for: [vendor_status, verification_status]
+      independence: INDEPENDENT
+      requires: [auditor_identity, scope_ref, report_digest]
+
+  admissibility_rules:
+    - id: ADM-01
+      rule: "No artifact enters the benchmark without a registry entry."
+      enforcement: "evidence_ref MUST resolve in evidence-registry.yaml."
+    - id: ADM-02
+      rule: "Every registry entry MUST carry a resolvable URL or a content-addressed digest."
+      enforcement: "Opcode-style strings (e.g. SAP_S4HANA_FICO_DOC_2026) are identifiers, not evidence."
+    - id: ADM-03
+      rule: "Retrieval date MUST be within the control's freshness_window."
+    - id: ADM-04
+      rule: "An artifact's independence class MUST be >= the independence required by the target status."
+    - id: ADM-05
+      rule: "The promoting party MUST NOT be the sole author of the artifact used to promote."
+      exception: "Architectural capability self-declaration is permitted; nothing above it is."
+
+promotion_ladder:
+  monotonic: true
+  skip_forbidden: true
+  fields:
+    - field: architectural_capability
+      values: [SPECIFIED]
+      requires_source_type: architecture_specification
+    - field: implementation_status
+      values: [REQUIRES_IMPLEMENTATION, PARTIAL, IMPLEMENTED]
+      requires_source_type: repository_ref
+    - field: test_status
+      values: [NOT_TESTED, TESTED]
+      requires_source_type: test_run
+    - field: verification_status
+      values: [NOT_VERIFIED, VERIFIED]
+      requires_source_type: independent_verification
+    - field: qualification_status
+      values: [NOT_QUALIFIED, QUALIFIED]
+      requires_source_type: qualification_harness_run
+    - field: production_status
+      values: [NOT_ESTABLISHED, ESTABLISHED]
+      requires_source_type: production_telemetry
+  gate:
+    rule: >
+      Field N+1 MUST NOT advance while field N is unmet, regardless of evidence presented.
+      A control may be IMPLEMENTED and TESTED while still NOT_VERIFIED; it may never be
+      VERIFIED while NOT_TESTED.
+
+invariant_classes:
+  description: >
+    Distinct classes of correctness that must be evidenced separately. Conflation of these
+    is a prohibited inference, not a stylistic preference.
+  classes:
+    mathematical: "Internal consistency of the domain (e.g. debits == credits)."
+    cryptographic: "Tamper-evidence and attribution of the act (who, what, when, unaltered)."
+    procedural: "Authorization boundaries and sequencing (who was permitted to act)."
+  rules:
+    - "Cryptography cannot establish mathematical correctness."
+    - "Mathematical correctness cannot establish authorization."
+    - "Authorization cannot establish tamper-evidence."
+    - "A control_question spanning classes requires evidence per class."
+
+vendor_status_semantics:
+  ladder: [UNKNOWN, CLAIMED, DOCUMENTED, VERIFIED_PUBLIC, VERIFIED_INDEPENDENT, NOT_APPLICABLE]
+  rules:
+    - status: UNKNOWN
+      requires: none
+    - status: CLAIMED
+      requires: [vendor_public_statement_ref]
+    - status: DOCUMENTED
+      requires: [vendor_documentation]
+    - status: VERIFIED_PUBLIC
+      requires: [vendor_documentation]
+      additional: ["URL REQUIRED. Opcode-only refs downgrade to REQUIRES_SOURCE_VERIFICATION."]
+    - status: VERIFIED_INDEPENDENT
+      requires: [third_party_audit]
+    - status: NOT_APPLICABLE
+      requires: [justification_ref]
+  intermediate:
+    - status: REQUIRES_SOURCE_VERIFICATION
+      meaning: "Claim asserted; admission blocked pending registry entry. Not a rung — a flag."
+
+invalidation_triggers:
+  description: "Status is not permanent. These events demote to the lowest affected rung."
+  triggers:
+    - event: foundational_model_substitution
+      affects: [test_status, verification_status]
+      rationale: "Substitution invariance must be re-demonstrated, not assumed."
+    - event: schema_migration
+      affects: [verification_status]
+    - event: control_question_amendment
+      affects: [all]
+      rationale: "Amended question invalidates prior answers."
+    - event: verifier_independence_lapse
+      affects: [verification_status, qualification_status]
+    - event: registry_entry_unresolvable
+      affects: [all rungs that cited it]
+    - event: freshness_window_elapsed
+      affects: [vendor_status, production_status]
+
+adjudication_roles:
+  - role: CONTROL_AUTHOR
+    may: [author_control_files, declare_architectural_capability]
+    may_not: [promote_verification_status, promote_qualification_status]
+  - role: IMPLEMENTER
+    may: [submit_repository_ref, submit_test_run]
+    may_not: [self_verify]
+  - role: INDEPENDENT_VERIFIER
+    may: [promote_verification_status, promote_qualification_status]
+    constraint: "Must not be IMPLEMENTER for the same control."
+  - role: REGISTRY_CUSTODIAN
+    may: [admit_artifacts, flag_REQUIRES_SOURCE_VERIFICATION]
+    may_not: [promote_control_status]
+
+prohibited_inferences:
+  - id: PI-01
+    inference: "Ledger balances therefore the mutation is attributable."
+    violates: [mathematical, cryptographic]
+  - id: PI-02
+    inference: "Agent has permissions therefore the agent's action is authorized."
+    violates: [procedural]
+    note: "Permission is a precondition, not an authorization event."
+  - id: PI-03
+    inference: "Abstraction layer exists therefore substitution invariance holds."
+    violates: [structural_integrity]
+    note: "Invariance is a tested property, not an architectural one."
+  - id: PI-04
+    inference: "Vendor DOCUMENTED therefore capability is operationally present."
+    violates: [vendor_status_semantics]
+  - id: PI-05
+    inference: "Passed on model A therefore passes on model B."
+    violates: [invalidation_triggers]
+
+self_application:
+  rule: "GOV-001 is subject to GOV-001."
+  current: "This control is SPECIFIED only. It is not IMPLEMENTED as an enforced gate until a validator executes these rules."
+
+chandanala:
+  architectural_capability: SPECIFIED
+  implementation_status: REQUIRES_IMPLEMENTATION
+  test_status: NOT_TESTED
+  verification_status: NOT_VERIFIED
+  qualification_status: NOT_QUALIFIED
+  production_status: NOT_ESTABLISHED
+
+evidence:
+  source_type: architecture_specification
+  source_reference: "/specs/competitive-benchmark/controls/GOV-001.yaml"
+  verification_method: specification_only
+  evidence_date: 2026-09-27
+
+gap:
+  exists: true
+  description: "Rules are stated but not executable. No validator currently enforces the promotion gate, so compliance remains a manual discipline."
+  action: "Implement benchmark-lint (Phase 0 of the benchmark itself): parse all controls, resolve all evidence_refs against the registry, fail on gate violations."
+
+governance:
+  status: REQUIRES_EVIDENCE
